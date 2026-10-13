@@ -99,6 +99,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
   const errorKey = serverError ? (`auth.error.${serverError}` as MessageKey) : null
   const errorText = errorKey ? (t(errorKey) === errorKey ? t('auth.error.generic') : t(errorKey)) : null
   const closed = signUpMode && !signupOpen
+  const notice = errorText ?? (closed ? t('auth.error.signup_disabled') : null)
 
   return (
     <div className="relative mx-auto grid min-h-dvh w-full max-w-[1280px] items-stretch gap-6 px-4 py-4 sm:px-6 sm:py-6 lg:grid-cols-[1.05fr_1fr] lg:gap-8 lg:py-8">
@@ -137,9 +138,9 @@ export function AuthPage({ mode }: { mode: Mode }) {
             </AnimatePresence>
 
             <AnimatePresence initial={false}>
-              {errorText && (
+              {notice && (
                 <m.div
-                  key={serverError}
+                  key={serverError ?? 'closed'}
                   role="alert"
                   initial={motionOn ? { opacity: 0, height: 0 } : false}
                   animate={{ opacity: 1, height: 'auto', x: motionOn ? [0, -6, 6, -4, 4, 0] : 0 }}
@@ -149,7 +150,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
                 >
                   <p className="flex items-start gap-2.5 rounded-control bg-rumor/10 px-3.5 py-3 text-[13.5px] leading-snug font-medium text-rumor ring-1 ring-rumor/20">
                     <TriangleAlert size={16} aria-hidden className="mt-0.5 shrink-0" />
-                    {errorText}
+                    {notice}
                   </p>
                 </m.div>
               )}

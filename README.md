@@ -121,6 +121,17 @@ Par défaut l'application web est ouverte, comme avant. Pour la protéger par de
 "auth": { "enabled": true }
 ```
 
+Pour **fermer les inscriptions** (recommandé dès que l'application est accessible à d'autres personnes), ajoutez `"allow_signup": false`. Les comptes se créent alors en terminal, par quelqu'un qui a accès au serveur :
+
+```bash
+uv run lucidnews-users add vous@example.com --name "Votre nom"   # demande le mot de passe, sans l'afficher
+uv run lucidnews-users list
+uv run lucidnews-users passwd vous@example.com                   # ferme aussi les sessions ouvertes
+uv run lucidnews-users remove vous@example.com
+```
+
+**Créez votre compte avant d'activer `auth.enabled` avec les inscriptions fermées** : sinon plus personne ne peut se connecter.
+
 Redémarrez `uv run lucidnews-api`. Toute l'API (sauf `/api/auth/*`) exige alors une session, et l'interface renvoie vers la page de connexion. **Aucune vérification d'e-mail** n'est demandée : le compte est utilisable tout de suite après l'inscription.
 
 | Réglage (`auth.*`) | Défaut | Rôle |
@@ -285,6 +296,8 @@ tests/                 tests automatisés (pytest)
 | [Fiabilité](docs/fiabilite.md) | Niveaux de confiance, vérification des affirmations, étiquettes, réglages |
 | [Catégories et langues](docs/categories-et-langues.md) | Taxonomie IT, importance, langues, ajout d'une langue |
 | [Newsletter](docs/newsletter.md) | Abonnés, préférences, plans, envoi |
+| [Plan de lancement](Plan.md) | Lots restants jusqu'à la commercialisation, dépendances, critères mesurables |
+| [Étude de marché](docs/etude-marche/rapport-lucidnews-2026-10.html) | Benchmark concurrentiel, besoins, audit, priorités, hébergement (octobre 2026) |
 | [Roadmap technique](docs/roadmap.md) | Prochaines étapes |
 | Références (en anglais) | [configuration](docs/configuration.md), [profils](docs/profiles.md), [score](docs/scoring.md), [scrapers](docs/scrapers.md), [extracteurs](docs/extractors.md), [cookies X](docs/twitter-cookies.md), [MCP](lucidnews/mcp/README.md) |
 

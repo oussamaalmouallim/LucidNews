@@ -41,6 +41,7 @@ lucidnews-webhook = "lucidnews.services.webhook_cli:main"
 lucidnews-sources = "lucidnews.sources_cli:main"
 lucidnews-api = "lucidnews.web_api:main"
 lucidnews-public = "lucidnews.public_api:main"
+lucidnews-users = "lucidnews.auth.cli:main"
 lucidnews-eval = "lucidnews.evaluation.cli:main"
 lucidnews-reassess = "lucidnews.reassess_cli:main"
 

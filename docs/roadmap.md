@@ -51,3 +51,19 @@ Objectif : utiliser LucidNews sans terminal pour les opérations courantes. Dét
 - `orchestrator.py` concentre beaucoup de responsabilités (≈ 1 100 lignes). À découper en étapes (`collect`, `select`, `deliver`) quand l'archive d'items arrivera.
 - L'email HTML est un gabarit minimal ; il sera refait avec la phase UI.
 - Les métadonnées fusionnées entre sources peuvent mélanger les auteurs (par exemple « Lobsters » affiché sur un item Hacker News).
+
+## Phase 4 — Lancement commercial (plan du 13 octobre 2026)
+
+Étude de marché, benchmark et audit : [rapport](etude-marche/rapport-lucidnews-2026-10.html).
+Plan détaillé avec critères : [Plan.md](../Plan.md).
+
+- **A. Finalisation fonctionnelle** : rôles et isolation (27), cycle de vie du compte avec
+  vérification de l'e-mail (28), newsletter gérée par le lecteur (29).
+- **B. Tests et sécurité** : ASVS niveau 1 (30), bout en bout et CI (31), preuve de qualité sur
+  100 news annotées (12 bis).
+- **C. Production** : exécution serveur hors macOS (32), e-mail authentifié et rebonds (33),
+  sauvegardes (34), observabilité et coûts (35), conformité et CNDP (36).
+- **D. Hébergement** : VPS + Docker Compose + Caddy (37), bêta privée de 20 à 50 lecteurs (38).
+- **E. Après le lancement** : fil d'un événement, tendances, alertes, offres et paiement,
+  équipes, sources personnelles, arabe, PostgreSQL (39 à 46).
+

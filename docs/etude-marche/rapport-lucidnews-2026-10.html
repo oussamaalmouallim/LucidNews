@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LucidNews — Étude de marché</title>
+<meta name="description" content="Étude de marché, benchmark concurrentiel, audit et plan de lancement de LucidNews (octobre 2026).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Charte LucidNews : mêmes jetons que frontend/src/styles.css */
+:root {
+  --ink: #0f1530; --muted: #5b6478; --faint: #667085; --line: #e6eaef;
+  --canvas: #f2f6f6; --surface: #ffffff;
+  --accent: #4c3fd8; --accent-deep: #362bb0; --accent-soft: #eeecfc; --on-fill: #ffffff;
+  --confirmed: #0e7c5a; --reliable: #1f6fb2; --unverified: #9a5b00; --rumor: #b4233c; --failing: #c2410c;
+  --shadow: 0 1px 2px rgb(15 21 48 / .04), 0 12px 40px -16px rgb(15 21 48 / .12);
+  --radius: 24px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #e9ecf8; --muted: #a6b0c6; --faint: #8d97ad; --line: #262d46;
+    --canvas: #0b0f1e; --surface: #151b30;
+    --accent: #a198f7; --accent-deep: #8176ee; --accent-soft: #25235a; --on-fill: #0b0f1e;
+    --confirmed: #3fd3a2; --reliable: #6db1ea; --unverified: #e4a640; --rumor: #f47d93; --failing: #f28b55;
+    --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 12px 40px -16px rgb(0 0 0 / .55);
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body { margin: 0; background: var(--canvas); color: var(--ink); font: 15px/1.6 'Plus Jakarta Sans', system-ui, sans-serif; }
+a { color: var(--accent); text-underline-offset: 3px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+h1, h2, h3 { margin: 0; }
+h2 { font: 500 34px/1.12 'Newsreader', Georgia, serif; letter-spacing: -.01em; }
+h3 { font-size: 17px; font-weight: 700; }
+p { margin: .6em 0; }
+.kicker { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.muted { color: var(--muted); }
+small, .small { font-size: 13px; }
+
+/* Couverture */
+.hero { position: relative; overflow: hidden; margin: 24px 0 0; border-radius: 32px; padding: 56px 40px; color: var(--on-fill);
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep)); box-shadow: 0 30px 70px -30px rgb(76 63 216 / .55); }
+.hero::before, .hero::after { content: ''; position: absolute; border-radius: 999px; background: color-mix(in oklab, var(--on-fill) 9%, transparent); }
+.hero::before { width: 420px; height: 420px; right: -120px; top: -160px; }
+.hero::after { width: 300px; height: 300px; right: 220px; bottom: -200px; }
+.hero h1 { font: 500 clamp(36px, 6vw, 60px)/1.03 'Newsreader', Georgia, serif; letter-spacing: -.02em; max-width: 14em; position: relative; }
+.hero p { position: relative; max-width: 46em; font-size: 17px; opacity: .88; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; position: relative; margin-bottom: 36px; }
+.logo { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: color-mix(in oklab, var(--on-fill) 16%, transparent); }
+.meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; position: relative; }
+.pill { border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 600; background: color-mix(in oklab, var(--on-fill) 14%, transparent); }
+
+/* Sommaire */
+nav.toc { margin: 24px 0; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px 28px; }
+nav.toc ol { columns: 2; column-gap: 32px; margin: 12px 0 0; padding-left: 20px; }
+nav.toc li { margin: 4px 0; break-inside: avoid; }
+@media (max-width: 720px) { nav.toc ol { columns: 1; } .hero { padding: 40px 22px; } }
+
+section { margin: 56px 0; }
+section > header { margin-bottom: 20px; }
+section > header p { color: var(--muted); max-width: 52em; }
+.card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px; }
+.grid { display: grid; gap: 20px; }
+.g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 900px) { .g3 { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 640px) { .g2, .g3 { grid-template-columns: 1fr; } .card { padding: 20px; } }
+.kpi b { display: block; font-size: 30px; font-weight: 800; letter-spacing: -.02em; }
+.kpi span { color: var(--muted); font-size: 13.5px; }
+
+/* Étiquettes : couleur + texte, jamais la couleur seule */
+.tag { display: inline-block; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.t-ok { background: color-mix(in oklab, var(--confirmed) 12%, transparent); color: var(--confirmed); }
+.t-part { background: color-mix(in oklab, var(--unverified) 13%, transparent); color: var(--unverified); }
+.t-no { background: color-mix(in oklab, var(--rumor) 11%, transparent); color: var(--rumor); }
+.t-info { background: var(--accent-soft); color: var(--accent); }
+.p1 { background: var(--rumor); color: var(--on-fill); }
+.p2 { background: var(--accent); color: var(--on-fill); }
+.p3 { background: color-mix(in oklab, var(--reliable) 14%, transparent); color: var(--reliable); }
+.p4 { background: color-mix(in oklab, var(--muted) 15%, transparent); color: var(--muted); }
+.src-off { color: var(--confirmed); font-weight: 600; }
+.src-sec { color: var(--unverified); font-weight: 600; }
+
+/* Tableaux */
+.table { overflow-x: auto; border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th, td { text-align: left; vertical-align: top; padding: 11px 14px; border-bottom: 1px solid var(--line); }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: color-mix(in oklab, var(--canvas) 60%, var(--surface)); position: sticky; top: 0; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-weight: 600; }
+.min { min-width: 760px; }
+
+/* Fiches concurrents */
+.comp h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.comp dl { display: grid; grid-template-columns: 120px 1fr; gap: 6px 12px; margin: 14px 0 0; font-size: 13.5px; }
+.comp dt { color: var(--muted); font-weight: 600; }
+.comp dd { margin: 0; }
+@media (max-width: 520px) { .comp dl { grid-template-columns: 1fr; } .comp dt { margin-top: 6px; } }
+
+ul.clean { padding-left: 18px; margin: 8px 0; }
+ul.clean li { margin: 4px 0; }
+.callout { border-left: 4px solid var(--accent); background: var(--accent-soft); border-radius: 0 16px 16px 0; padding: 14px 18px; margin: 16px 0; }
+.callout.warn { border-color: var(--unverified); background: color-mix(in oklab, var(--unverified) 9%, var(--surface)); }
+.phase { border-top: 4px solid var(--accent); }
+.phase h3 { margin-bottom: 6px; }
+.lot { padding: 12px 0; border-top: 1px solid var(--line); }
+.lot:first-of-type { border-top: 0; }
+.lot b { display: block; }
+.lot .crit { font-size: 13px; color: var(--muted); }
+footer { margin: 64px 0 40px; color: var(--muted); font-size: 13px; }
+@media print { .hero { box-shadow: none; } section { break-inside: avoid-page; } th { position: static; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="brand"><span class="logo"><svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="10" cy="10" r="2.2" fill="currentColor"/></svg></span>LucidNews</div>
+  <div class="kicker" style="color:inherit;opacity:.8">Étude de marché · Audit · Plan de lancement</div>
+  <h1>Une veille tech fiable, prête à être vendue</h1>
+  <p>Benchmark de 20 solutions, besoins de 8 profils d'utilisateurs, audit du code réel de LucidNews, écarts et priorités, marché marocain et international, plan de finalisation et d'hébergement.</p>
+  <div class="meta"><span class="pill">13 octobre 2026</span><span class="pill">Sources vérifiées et datées</span><span class="pill">Code audité : 22 000 lignes Python, 10 000 lignes TypeScript, 856 tests</span></div>
+</header>
+
+<nav class="toc" aria-label="Sommaire">
+  <div class="kicker">Sommaire</div>
+  <ol>
+    <li><a href="#synthese">Synthèse et réponses directes</a></li>
+    <li><a href="#marche">Synthèse du marché</a></li>
+    <li><a href="#benchmark">Benchmark concurrentiel</a></li>
+    <li><a href="#fiches">Fiches concurrents</a></li>
+    <li><a href="#besoins">Besoins des utilisateurs</a></li>
+    <li><a href="#audit">Audit fonctionnel de LucidNews</a></li>
+    <li><a href="#matrice">Matrice des fonctionnalités manquantes</a></li>
+    <li><a href="#reco">Recommandations argumentées</a></li>
+    <li><a href="#maroc">Maroc et international</a></li>
+    <li><a href="#technique">Sujets techniques restants</a></li>
+    <li><a href="#plan">Plan de finalisation (5 phases)</a></li>
+    <li><a href="#hebergement">Hébergement et coûts</a></li>
+    <li><a href="#evolution">Pistes d'évolution</a></li>
+    <li><a href="#sources">Sources et méthode</a></li>
+  </ol>
+</nav>
+
+<!-- 1 -->
+<section id="synthese">
+  <header><div class="kicker">1 · Synthèse</div><h2>Ce qu'il faut retenir</h2></header>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Ce que LucidNews fait déjà</h3>
+      <ul class="clean">
+        <li>Collecte multi-sources réelle : 23 flux RSS, GitHub, Hacker News, Reddit, Telegram, plus X, GDELT et Google News en option.</li>
+        <li>Doublons fusionnés par URL, puis regroupés par sujet avec l'IA. Sélection par score et digest équilibré par catégorie.</li>
+        <li><b>Étiquette de fiabilité sur chaque news</b> (Confirmé, Fiable, Non vérifié, Rumeur), corroborée par des sources indépendantes. Aucun concurrent tech grand public ne le fait.</li>
+        <li>Résumés en FR et EN. L'IA est facultative et coupée par défaut. Quota épuisé ou IA coupée : les news sont listées sans analyse.</li>
+        <li>Newsletter quotidienne ou hebdomadaire : préférences par lecteur, aperçu, double opt-in, désabonnement en un clic, journal des envois, fournisseur Resend.</li>
+        <li>Application web complète : archive avec recherche plein texte, santé des sources, domaines couverts, qualité, réglages, comptes (e-mail et Google).</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Ce qui manque réellement pour vendre</h3>
+      <ul class="clean">
+        <li><b>Isolation des comptes et rôles.</b> Un compte connecté voit tout. Les pages d'administration ne sont protégées que par l'écoute en local, ce qui ne tient pas derrière un serveur public.</li>
+        <li><b>Cycle de vie du compte.</b> Pas de vérification d'e-mail, pas de réinitialisation ni de suppression du compte depuis l'application.</li>
+        <li><b>Exécution en production.</b> La planification ne marche que sur macOS (launchd). Rien ne sert l'interface en production. Le Docker ne lance que le pipeline.</li>
+        <li><b>E-mail en production.</b> Les rebonds et les plaintes ne sont pas traités. Aucun envoi réel n'a encore été vérifié.</li>
+        <li><b>Données.</b> Ni sauvegarde automatique ni mode WAL de SQLite. Pas de mentions légales ni de politique de confidentialité.</li>
+        <li><b>Preuve de qualité.</b> La fiabilité est l'argument de vente, mais elle n'est mesurée sur aucun échantillon annoté (lot 12 en attente).</li>
+      </ul>
+    </div>
+  </div>
+  <div class="grid g2" style="margin-top:20px">
+    <div class="card">
+      <h3>Indispensable avant la commercialisation</h3>
+      <p>Rôles et isolation, vérification de l'e-mail et réinitialisation du mot de passe, newsletter gérée par le lecteur lui-même, exécution serveur (planificateur, interface servie, HTTPS), e-mail de production, sauvegardes, observabilité, mentions légales et CNDP, tests de bout en bout et CI, preuve de qualité sur 100 news annotées.</p>
+    </div>
+    <div class="card">
+      <h3>Ce qui peut attendre</h3>
+      <p>Paiement en ligne (bloqué au Maroc pour Stripe, voir section 9), espaces d'équipe, sources personnelles par utilisateur, suivi d'entités et alertes, fil d'un événement, arabe, PostgreSQL et plusieurs serveurs, application mobile.</p>
+    </div>
+  </div>
+  <div class="callout"><b>Prochain lot à réaliser : lot 27, rôles et isolation des comptes.</b> Tout le reste en dépend. Aujourd'hui, ouvrir l'application à des clients donnerait à chacun l'accès aux réglages, aux sources et à la liste des abonnés.</div>
+</section>
+
+<!-- 2 -->
+<section id="marche">
+  <header><div class="kicker">2 · Marché</div><h2>Trois étages, et un espace libre entre eux</h2>
+  <p>Le marché observé se répartit en trois niveaux de prix. LucidNews peut se placer entre les newsletters gratuites généralistes et les plateformes d'intelligence d'entreprise.</p></header>
+  <div class="grid g3">
+    <div class="card kpi"><b>Gratuit</b><span>Curation financée par la publicité ou le parrainage : Techmeme (parrainage de 7 000 à 21 000 $ par mois), TLDR (plus de 5 millions d'abonnés revendiqués), Google News, AlphaSignal.</span></div>
+    <div class="card kpi"><b>5 à 13 $ / mois</b><span>Lecteurs « pro » individuels : Inoreader Pro (7,50 $), Feedly Pro+, Readwise (9,99 $), NewsBlur (36 à 99 $ par an), Readless (4,90 à 9 $), Ground News (8,33 $).</span></div>
+    <div class="card kpi"><b>15 000 à 45 000 $ / an</b><span>Intelligence d'entreprise : Feedly Market Intelligence (1 600 $ par mois annoncés par des sources secondaires), Klue et Crayon (médiane d'environ 30 000 $ par an d'après Vendr).</span></div>
+  </div>
+  <div class="callout"><b>L'espace libre.</b> Aucune solution étudiée n'associe les trois éléments suivants :
+    <ul class="clean">
+      <li>une veille <b>tech</b> déjà triée par domaine ;</li>
+      <li>une <b>étiquette de fiabilité</b> par news (Ground News le fait, mais pour l'actualité générale et sur les médias, pas sur l'affirmation) ;</li>
+      <li>une newsletter <b>bilingue FR/EN</b> personnalisée, à un prix « pro individuel ».</li>
+    </ul>
+    C'est le créneau de lancement recommandé.</div>
+  <p class="muted small">Tendances confirmées : le résumé IA est devenu un standard (Inoreader Intelligence en 2025, NewsBlur Ask AI, Feedly Leo). Le regroupement d'articles en « histoires » se généralise (Google Full Coverage, Particle, NewsBlur Archive). Le résumé seul ne différencie donc plus. La confiance et le regroupement, si.</p>
+</section>
+
+<!-- 3 -->
+<section id="benchmark">
+  <header><div class="kicker">3 · Benchmark</div><h2>Comparatif des fonctions clés</h2>
+  <p>✔ confirmé sur le site officiel · ◐ partiel ou confirmé par une source secondaire · ✗ absent · ? non vérifié. Prix au 13 octobre 2026.</p></header>
+  <div class="table"><table class="min">
+    <thead><tr><th>Solution</th><th>Cible</th><th>Doublons / regroupement</th><th>Résumés IA</th><th>Fiabilité</th><th>Newsletter</th><th>Alertes / suivi</th><th>Prix d'entrée payant</th></tr></thead>
+    <tbody>
+      <tr><td>Feedly</td><td>Individus → entreprises (veille marché, cyber)</td><td>◐ Leo : déduplication, filtres « mute »</td><td>◐ Leo, AI Feeds</td><td>✗</td><td>◐ modèles de newsletter (Enterprise)</td><td>◐ AI Feeds, tendances</td><td>◐ ≈ 6 $/mois (Pro) ; Enterprise 1 600 $/mois (secondaire)</td></tr>
+      <tr><td>Inoreader</td><td>Individus et équipes de veille</td><td>✔ filtre doublons (URL, titre, titre proche)</td><td>✔ résumés (Pro) ; rapports (Team)</td><td>✗</td><td>✔ lecture de newsletters reçues</td><td>✔ flux de surveillance, règles</td><td>✔ 7,50 $/mois annuel</td></tr>
+      <tr><td>Readwise Reader</td><td>Lecture approfondie</td><td>?</td><td>? Ghostreader (non confirmé sur la page tarifs)</td><td>✗</td><td>✔ e-mail de révision quotidien</td><td>✗</td><td>✔ 9,99 $/mois annuel</td></tr>
+      <tr><td>Techmeme</td><td>Décideurs tech</td><td>✔ une histoire = N articles (éditeurs + algorithme)</td><td>✗ titres écrits par des humains</td><td>◐ choix éditorial humain</td><td>◐ newsletter quotidienne</td><td>✗</td><td>Gratuit ; parrainage 7 000–21 000 $/mois</td></tr>
+      <tr><td>Google News</td><td>Grand public</td><td>✔ Full Coverage (chronologie, points de vue)</td><td>◐</td><td>◐ vérifications mises en avant</td><td>✗</td><td>◐ sujets suivis</td><td>Gratuit</td></tr>
+      <tr><td>Flipboard Surf</td><td>Grand public, fédivers</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>◐ flux personnalisés</td><td>Modèle non défini</td></tr>
+      <tr><td>Ground News</td><td>Grand public, biais des médias</td><td>✔ comparaison de couverture</td><td>◐</td><td>✔ biais et factualité par média</td><td>?</td><td>◐ angles morts</td><td>✔ 8,33 $/mois annuel (Vantage)</td></tr>
+      <tr><td>Particle</td><td>Grand public</td><td>✔ résumé par histoire multi-sources</td><td>✔</td><td>◐ plusieurs points de vue</td><td>?</td><td>?</td><td>? non publié</td></tr>
+      <tr><td>NewsBlur</td><td>Lecteurs RSS avancés</td><td>✔ regroupement (Archive)</td><td>✔ Ask AI, briefing quotidien</td><td>✗</td><td>◐ briefing quotidien</td><td>✔ notifications par classifieur</td><td>✔ 36 $/an ; 99 $/an</td></tr>
+      <tr><td>Miniflux</td><td>Auto-hébergement</td><td>✗ (non mentionné)</td><td>✗</td><td>✗</td><td>✗</td><td>◐ filtres regex, 25+ intégrations</td><td>Logiciel libre</td></tr>
+      <tr><td>daily.dev</td><td>Développeurs</td><td>?</td><td>◐ titres nettoyés (Plus)</td><td>✗</td><td>?</td><td>◐ flux personnalisés</td><td>◐ 5–10 $/mois (secondaire)</td></tr>
+      <tr><td>TLDR</td><td>Ingénieurs, fondateurs</td><td>✔ curation humaine</td><td>✗ résumés humains</td><td>◐ éditorial</td><td>✔ 16 newsletters thématiques</td><td>✗</td><td>Gratuit (parrainage)</td></tr>
+      <tr><td>Readless</td><td>Lecteurs de newsletters</td><td>? (non mentionné sur la page)</td><td>✔</td><td>✗</td><td>✔ digests planifiés, langue au choix</td><td>✗</td><td>✔ 4,90 $/mois</td></tr>
+      <tr><td>changedetection.io</td><td>Surveillance de pages</td><td>—</td><td>✗</td><td>✗</td><td>✗</td><td>✔ 85+ canaux d'alerte</td><td>✔ 8,99 $/mois</td></tr>
+      <tr><td>Klue / Crayon</td><td>Équipes commerciales B2B</td><td>✔</td><td>✔</td><td>◐ analystes</td><td>✔ synthèses</td><td>✔ concurrents suivis</td><td>◐ ≈ 20 000–40 000 $/an (secondaire)</td></tr>
+      <tr style="background:var(--accent-soft)"><td>LucidNews (aujourd'hui)</td><td>Pros de la tech FR/EN</td><td>✔ URL + sujet (IA), corroboration</td><td>✔ facultatif, FR/EN</td><td>✔ <b>étiquette par news</b></td><td>✔ quotidienne/hebdo, aperçu, opt-in</td><td>✗ (domaines suivis seulement)</td><td>Aucun paiement</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 4 -->
+<section id="fiches">
+  <header><div class="kicker">4 · Fiches</div><h2>Fiches détaillées des concurrents</h2>
+  <p><span class="src-off">Vert</span> : vérifié sur le site officiel. <span class="src-sec">Orange</span> : source secondaire, à reconfirmer avant de la citer commercialement.</p></header>
+  <div class="grid g2">
+    <article class="card comp"><h3>Inoreader <span class="tag t-info">Lecteur pro</span></h3><dl>
+      <dt>Valeur</dt><dd>Centraliser, filtrer et automatiser une veille de nombreux flux.</dd>
+      <dt>Collecte</dt><dd><span class="src-off">2 500 flux RSS (Pro), 20 « web feeds », 20 newsletters, 30 flux de surveillance, réseaux sociaux.</span></dd>
+      <dt>Doublons</dt><dd><span class="src-off">Filtre par URL, titre ou titre presque identique, sur une fenêtre de 6 h à 1 mois.</span></dd>
+      <dt>IA</dt><dd><span class="src-off">Résumés d'article (Pro), rapports « Intelligence » en masse (Team ou option).</span> <span class="src-sec">Quota de tokens par mois (1 ou 6 millions selon les sources).</span></dd>
+      <dt>Prix</dt><dd><span class="src-off">Gratuit (150 flux) · Pro 7,50 $/mois annuel ou 9,99 $ au mois · Custom sur devis.</span></dd>
+      <dt>Limite</dt><dd>Ni fiabilité, ni newsletter générée pour d'autres lecteurs. C'est un outil, pas une veille livrée.</dd>
+    </dl></article>
+    <article class="card comp"><h3>Feedly <span class="tag t-info">Lecteur → entreprise</span></h3><dl>
+      <dt>Valeur</dt><dd>Lecteur RSS complété par une IA (Leo) qui trie, déduplique et surveille.</dd>
+      <dt>IA</dt><dd><span class="src-off">La documentation a des rubriques « AI Feeds », « Mute filters » et « Deduplication ».</span> Leo signale les articles déjà lus ailleurs (billet de blog officiel ancien).</dd>
+      <dt>Prix</dt><dd><span class="src-sec">Pro ≈ 6 $/mois, Pro+ ≈ 8,25 $/mois annuel ; Market Intelligence de 1 600 $ à 2 400 $ par mois, 10 à 25 places.</span> La page tarifs officielle n'a pas pu être lue (chargement en JavaScript).</dd>
+      <dt>Limite</dt><dd>Fossé de prix entre l'individu et l'entreprise. Pas d'étiquette de fiabilité.</dd>
+    </dl></article>
+    <article class="card comp"><h3>Techmeme <span class="tag t-info">Curation</span></h3><dl>
+      <dt>Valeur</dt><dd>La page de référence de l'actualité tech : chaque histoire regroupe ses articles.</dd>
+      <dt>Sélection</dt><dd><span class="src-off">Éditeurs humains pour les choix et les titres. Outils de filtrage et d'exploration en appui. Exploration de milliers de médias.</span></dd>
+      <dt>Modèle</dt><dd><span class="src-off">Auto-financé depuis 2005. Posts sponsorisés de 7 000 à 21 000 $ par mois, événements 2 900 $ par mois, vente de données.</span></dd>
+      <dt>Leçon</dt><dd>Le regroupement par histoire et la crédibilité éditoriale valent plus que le volume.</dd>
+    </dl></article>
+    <article class="card comp"><h3>Google News <span class="tag t-info">Grand public</span></h3><dl>
+      <dt>Valeur</dt><dd>Couverture exhaustive et gratuite.</dd>
+      <dt>Regroupement</dt><dd><span class="src-off">« Full Coverage » : une histoire en développement avec une chronologie, des points de vue variés et des vérifications. La même pour tous, pour éviter les bulles de filtre.</span> Sources de 2018 à 2021 : la version actuelle est à confirmer.</dd>
+      <dt>Leçon</dt><dd>La chronologie d'un événement est une attente établie du public.</dd>
+    </dl></article>
+    <article class="card comp"><h3>NewsBlur <span class="tag t-info">Libre + payant</span></h3><dl>
+      <dt>Prix</dt><dd><span class="src-off">Gratuit (64 sites) · Premium 36 $/an · Premium Archive 99 $/an (regroupement d'histoires, briefing quotidien, Ask AI, serveur MCP) · Pro 29 $/mois · auto-hébergé gratuit (MIT).</span></dd>
+      <dt>Filtres</dt><dd><span class="src-off">Entraînement par auteur, tag, titre, puis classifieurs en langage naturel et regex.</span></dd>
+      <dt>Leçon</dt><dd>Un modèle « libre + offre hébergée » viable, avec un plan intermédiaire qui inclut l'IA.</dd>
+    </dl></article>
+    <article class="card comp"><h3>Ground News <span class="tag t-info">Fiabilité</span></h3><dl>
+      <dt>Valeur</dt><dd>Voir comment chaque bord politique couvre une histoire.</dd>
+      <dt>Fonctions</dt><dd><span class="src-off">Analyse des angles morts, notes de biais et de factualité par média, propriété et financement des médias, comparaison de couverture.</span></dd>
+      <dt>Prix</dt><dd><span class="src-off">Vantage 8,33 $/mois annuel.</span></dd>
+      <dt>Leçon</dt><dd>Des lecteurs paient pour une information sur la fiabilité. C'est le précédent le plus proche de l'étiquette LucidNews, sur un autre marché.</dd>
+    </dl></article>
+    <article class="card comp"><h3>Particle <span class="tag t-info">IA grand public</span></h3><dl>
+      <dt>Valeur</dt><dd>Lire l'histoire, pas l'article : un résumé couvre plusieurs médias.</dd>
+      <dt>Faits</dt><dd><span class="src-sec">Série A de 10,9 M$ (Lightspeed, Axel Springer). Résumés par GPT-4o (presse, 2024).</span> Prix non publié.</dd>
+      <dt>Leçon</dt><dd>Le résumé par histoire multi-sources attire des investisseurs du secteur des médias.</dd>
+    </dl></article>
+    <article class="card comp"><h3>Readwise Reader <span class="tag t-info">Lecture</span></h3><dl>
+      <dt>Prix</dt><dd><span class="src-off">Lite 5,59 $/mois annuel · complet 9,99 $/mois annuel (12,99 $ au mois) · essai 30 jours · −50 % étudiants.</span></dd>
+      <dt>Note</dt><dd>La page tarifs ne mentionne ni le RSS ni Ghostreader : à confirmer sur la documentation.</dd>
+      <dt>Leçon</dt><dd>Ce n'est pas un concurrent direct : il sert à lire, pas à faire la veille.</dd>
+    </dl></article>
+    <article class="card comp"><h3>TLDR · AlphaSignal <span class="tag t-info">Newsletters</span></h3><dl>
+      <dt>TLDR</dt><dd><span class="src-off">Collectif de newsletters techniques, plus de 5 millions d'abonnés revendiqués.</span> <span class="src-sec">Jusqu'à 18 000 $ par placement, environ 22 salariés.</span></dd>
+      <dt>AlphaSignal</dt><dd><span class="src-sec">Newsletter IA pour ingénieurs, 250 000 abonnés selon son kit média.</span></dd>
+      <dt>Leçon</dt><dd>La newsletter tech gratuite financée par le parrainage est un modèle prouvé, mais en anglais uniquement.</dd>
+    </dl></article>
+    <article class="card comp"><h3>Readless <span class="tag t-info">Digest IA</span></h3><dl>
+      <dt>Prix</dt><dd><span class="src-off">Pro 4,90 $/mois (3 planifications) · Max 9 $/mois (8 planifications, synthèse narrative). Langue au choix. Pas d'abonnement annuel.</span></dd>
+      <dt>Leçon</dt><dd>Le prix plancher d'un digest IA personnel est d'environ 5 $ par mois.</dd>
+    </dl></article>
+    <article class="card comp"><h3>Klue · Crayon <span class="tag t-info">Veille concurrentielle</span></h3><dl>
+      <dt>Prix</dt><dd><span class="src-sec">Non publié. Environ 16 000 à 44 000 $ par an pour Klue (médiane de 30 000 $ selon Vendr, 76 achats). Fourchette comparable pour Crayon.</span></dd>
+      <dt>Leçon</dt><dd>La veille concurrentielle se vend cher aux équipes commerciales. Cela demande des intégrations CRM et un accompagnement : hors périmètre de la V1.</dd>
+    </dl></article>
+    <article class="card comp"><h3>Open source <span class="tag t-info">GitHub</span></h3><dl>
+      <dt>Horizon</dt><dd>Projet d'origine de LucidNews, sous licence MIT : la notice est conservée, l'usage commercial est autorisé. <span class="src-sec">Environ 1 200 étoiles (index tiers).</span></dd>
+      <dt>Autres</dt><dd><span class="src-sec">auto-news (≈ 750 étoiles), FeedMe (MIT, ≈ 710), RSSbrew (AGPL, ≈ 260).</span> Miniflux et FreshRSS pour la lecture. changedetection.io pour surveiller des pages (hébergé à 8,99 $/mois).</dd>
+      <dt>Leçon</dt><dd>Le moteur seul se copie facilement. La valeur vendable est le service : la curation tenue à jour, la fiabilité mesurée, l'e-mail délivré, l'absence d'installation.</dd>
+    </dl></article>
+  </div>
+  <p class="muted small">Également examinés : Flipboard Surf (application d'avril 2026 qui agrège le fédivers, Bluesky et le RSS, sans modèle économique annoncé), Perplexity Discover (flux par catégories, sources secondaires de 2025) et daily.dev (plus de 1 300 sources pour développeurs, communautés « Squads », offre Plus).</p>
+</section>
+
+<!-- 5 -->
+<section id="besoins">
+  <header><div class="kicker">5 · Utilisateurs</div><h2>Besoins par profil</h2>
+  <p>Ces besoins sont déduits des fonctions que les concurrents vendent et des usages qu'ils mettent en avant. Ce ne sont pas des entretiens : ils sont à valider pendant la bêta.</p></header>
+  <div class="table"><table class="min">
+    <thead><tr><th>Profil</th><th>Besoin principal</th><th>Ce qui compte</th><th>Réponse LucidNews</th></tr></thead>
+    <tbody>
+      <tr><td>Développeurs, ingénieurs</td><td>Sorties, versions, failles des outils utilisés</td><td>Rapidité, peu de bruit, lien vers la source</td><td>Domaines suivis, GitHub, HN. Manque : suivi d'un produit précis.</td></tr>
+      <tr><td>Professionnels de l'IA</td><td>Modèles, articles, annonces, au milieu de nombreuses rumeurs</td><td>Distinguer l'annonce officielle de la fuite</td><td><b>Étiquette Rumeur / Confirmé</b> : avantage direct.</td></tr>
+      <tr><td>Cloud, DevOps</td><td>Changements de service, pannes, dépréciations</td><td>Exhaustivité sur quelques fournisseurs</td><td>Sources officielles. Manque : alertes par mot-clé.</td></tr>
+      <tr><td>Cybersécurité</td><td>CVE, incidents, avis</td><td>Temps réel, fiabilité, pas de doublon</td><td>Doublons et corroboration présents. Manque : alertes (Feedly vend une offre Threat Intelligence).</td></tr>
+      <tr><td>Fondateurs SaaS</td><td>Tendances, concurrents, financements</td><td>Synthèse hebdo, « ce qui a changé »</td><td>Hebdo présent. Manque : synthèse de tendances, suivi d'entreprises.</td></tr>
+      <tr><td>Équipes techniques</td><td>Partager une veille commune</td><td>Espace partagé, Slack ou Teams</td><td>Webhooks globaux seulement. Manque : espace d'équipe.</td></tr>
+      <tr><td>Veille concurrentielle</td><td>Suivre des concurrents nommés</td><td>Entités, alertes, rapports</td><td>Hors V1 : marché cher, accompagnement lourd.</td></tr>
+      <tr><td>Lecteur de newsletter</td><td>Un e-mail court, fiable, dans sa langue</td><td>Fréquence, niveau de détail, désabonnement facile</td><td>Présent et testé. Manque : gestion depuis son propre compte.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid g3" style="margin-top:20px">
+    <div class="card"><h3>Communs à tous</h3><p>Moins de bruit, une source vérifiable, une fréquence maîtrisée, savoir ce qui est confirmé.</p></div>
+    <div class="card"><h3>Individus</h3><p>Prix bas, aucune configuration, une newsletter dans sa langue. C'est le cœur de la V1.</p></div>
+    <div class="card"><h3>Équipes et entreprises</h3><p>Partage, intégrations, facturation, sécurité (SSO). À ouvrir après la preuve de valeur auprès des individus.</p></div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="audit">
+  <header><div class="kicker">6 · Audit</div><h2>LucidNews, vérifié dans le code</h2>
+  <p>Chaque ligne a été contrôlée dans le dépôt (fichiers, tests, base locale), pas seulement dans la documentation.</p></header>
+  <div class="table"><table class="min">
+    <thead><tr><th>Domaine</th><th>État réel</th><th>Preuve</th><th>Écart pour un SaaS</th></tr></thead>
+    <tbody>
+      <tr><td>Architecture</td><td><span class="tag t-ok">Solide</span> API Python (bibliothèque standard), React 19, SQLite</td><td>Paquet <code>lucidnews/</code>, pipeline découpé en collecte, sélection et envoi</td><td>L'interface n'est pas servie en production ; aucune configuration serveur</td></tr>
+      <tr><td>Collecte</td><td><span class="tag t-ok">Opérationnelle</span> 9 types de connecteurs</td><td>23 flux RSS, 5 GitHub configurés ; run réel du 12 octobre : 45 news collectées</td><td>—</td></tr>
+      <tr><td>Doublons</td><td><span class="tag t-ok">Opérationnelle</span> URL normalisée + sujet par l'IA</td><td>Tests de doublons multi-sources ; correction de l'identité des sources au lot 25 bis</td><td>Pas de vue « histoire » pour le lecteur</td></tr>
+      <tr><td>Fiabilité</td><td><span class="tag t-ok">Différenciante</span> 4 étiquettes, corroboration, registre de confiance</td><td><code>reliability/</code>, <code>docs/fiabilite.md</code></td><td>Taux d'erreur non mesuré (lot 12 : 0 news annotée)</td></tr>
+      <tr><td>IA</td><td><span class="tag t-ok">Facultative</span> 9 fournisseurs, budget de tokens, quota géré</td><td>Run réel : 99 274 tokens pour 33 news (≈ 3 000 par news)</td><td>Pas de suivi mensuel des coûts ni d'alerte</td></tr>
+      <tr><td>Langues</td><td><span class="tag t-part">EN, FR, ZH</span></td><td><code>lucidnews/i18n.py</code></td><td>Pas d'arabe (à tester, voir section 9)</td></tr>
+      <tr><td>Newsletter</td><td><span class="tag t-ok">Complète</span> quotidienne et hebdo, aperçu, opt-in, désabonnement RFC 8058, journal</td><td><code>newsletter/</code>, <code>public_api.py</code></td><td>Aucun envoi réel vérifié ; rebonds non gérés ; contenu envoyé non archivé</td></tr>
+      <tr><td>Préférences</td><td><span class="tag t-part">Gérées par l'administrateur</span></td><td>L'écran Préférences liste tous les abonnés</td><td>Le lecteur ne gère pas sa newsletter depuis son compte</td></tr>
+      <tr><td>Comptes</td><td><span class="tag t-part">Authentification seule</span> e-mail et Google OAuth, sessions, déconnexion, inscriptions fermables</td><td><code>lucidnews/auth/</code>, 37 tests</td><td><b>Pas de rôles ni d'isolation</b> ; ni vérification d'e-mail, ni réinitialisation, ni suppression en libre-service</td></tr>
+      <tr><td>Accès admin</td><td><span class="tag t-no">Fragile en production</span></td><td>Routes « locales » autorisées selon l'écoute en local (<code>is_loopback</code>) et l'en-tête Host</td><td>Derrière un reverse proxy : soit inaccessibles, soit ouvertes à tout compte</td></tr>
+      <tr><td>Planification</td><td><span class="tag t-no">macOS seulement</span></td><td><code>runs_api.py</code> : launchd</td><td>Il faut un planificateur serveur (conteneur ou systemd)</td></tr>
+      <tr><td>Stockage</td><td><span class="tag t-part">SQLite × 3</span> archive, newsletter, comptes</td><td>Aucun <code>journal_mode=WAL</code></td><td>Ni sauvegarde automatique ni restauration testée</td></tr>
+      <tr><td>Observabilité</td><td><span class="tag t-no">Absente</span></td><td>Ni Sentry, ni métriques ; journaux par run</td><td>Erreurs et coûts invisibles en production</td></tr>
+      <tr><td>Tests</td><td><span class="tag t-ok">Bons</span> 856 Python, 152 interface, contrastes AA</td><td><code>tests/</code>, <code>vitest</code></td><td>Pas de test de bout en bout, pas d'intégration continue (aucun dossier <code>.github</code>)</td></tr>
+      <tr><td>Conformité</td><td><span class="tag t-no">Absente</span></td><td>Aucune page légale</td><td>Confidentialité, CGU, mentions, CNDP</td></tr>
+      <tr><td>Documentation</td><td><span class="tag t-ok">Riche</span> README, 14 documents, journal des lots</td><td><code>docs/</code></td><td>Guide d'exploitation en production à écrire</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 7 -->
+<section id="matrice">
+  <header><div class="kicker">7 · Écarts</div><h2>Matrice des fonctionnalités</h2>
+  <p><span class="tag p1">P1 Lancement</span> <span class="tag p2">P2 Différenciante</span> <span class="tag p3">P3 Post-lancement</span> <span class="tag p4">P4 Non prioritaire</span>. Effort : S ≈ 1 à 3 jours · M ≈ 1 semaine · L ≈ 2 semaines et plus.</p></header>
+  <div class="table"><table class="min">
+    <thead><tr><th>Fonctionnalité</th><th>Concurrents concernés</th><th>État réel de LucidNews</th><th>Valeur utilisateur</th><th>Dépendances · effort</th><th>Priorité</th></tr></thead>
+    <tbody>
+      <tr><td>Rôles admin / lecteur, isolation des données</td><td>Tous les SaaS (Feedly Enterprise, Inoreader Team)</td><td><span class="tag t-no">Absent</span></td><td>Sécurité : condition pour ouvrir à des clients</td><td>Comptes · M</td><td><span class="tag p1">P1</span></td></tr>
+      <tr><td>Vérification de l'e-mail du compte</td><td>Standard SaaS</td><td><span class="tag t-no">Absent</span> (exclu à la demande initiale)</td><td>Anti-abus, délivrabilité, récupération du compte</td><td>E-mail prod · S</td><td><span class="tag p1">P1</span></td></tr>
+      <tr><td>Réinitialisation et changement du mot de passe</td><td>Standard SaaS</td><td><span class="tag t-part">Terminal seulement</span></td><td>Sans cela, un oubli fait perdre le compte</td><td>Vérification e-mail · S</td><td><span class="tag p1">P1</span></td></tr>
+      <tr><td>Suppression et export du compte</td><td>Exigence RGPD et loi 09-08</td><td><span class="tag t-part">Terminal seulement</span></td><td>Droit des personnes</td><td>Rôles · S</td><td><span class="tag p1">P1</span></td></tr>
+      <tr><td>Newsletter gérée depuis son compte</td><td>Readless, TLDR (préférences)</td><td><span class="tag t-part">Côté admin uniquement</span></td><td>Autonomie du lecteur</td><td>Rôles · M</td><td><span class="tag p1">P1</span></td></tr>
+      <tr><td>Historique des newsletters reçues</td><td>TLDR, Readless (archives)</td><td><span class="tag t-part">Journal sans contenu</span></td><td>Retrouver un envoi</td><td>Newsletter en libre-service · S</td><td><span class="tag p3">P3</span></td></tr>
+      <tr><td>Planificateur serveur, interface servie, HTTPS</td><td>—</td><td><span class="tag t-no">macOS seulement</span></td><td>Le service tourne sans intervention</td><td>Hébergement · M</td><td><span class="tag p1">P1</span></td></tr>
+      <tr><td>E-mail de production (SPF, DKIM, DMARC, rebonds, plaintes)</td><td>Toutes les newsletters</td><td><span class="tag t-part">Code prêt, non vérifié, rebonds absents</span></td><td>L'e-mail arrive en boîte de réception</td><td>Domaine · S–M</td><td><span class="tag p1">P1</span></td></tr>
+      <tr><td>Sauvegardes et restauration testées</td><td>—</td><td><span class="tag t-no">Absent</span></td><td>Pas de perte de données</td><td>Hébergement · S</td><td><span class="tag p1">P1</span></td></tr>
+      <tr><td>Suivi d'erreurs, disponibilité, coûts IA</td><td>—</td><td><span class="tag t-part">Tokens par run seulement</span></td><td>Maîtrise des incidents et des coûts</td><td>Hébergement · S</td><td><span class="tag p1">P1</span></td></tr>
+      <tr><td>Pages légales, CNDP, attribution des sources</td><td>Obligation légale</td><td><span class="tag t-no">Absent</span></td><td>Vendre légalement</td><td>— · S (et un juriste)</td><td><span class="tag p1">P1</span></td></tr>
+      <tr><td>Tests de bout en bout et intégration continue</td><td>—</td><td><span class="tag t-part">Tests unitaires seulement</span></td><td>Pas de régression à chaque livraison</td><td>— · M</td><td><span class="tag p1">P1</span></td></tr>
+      <tr><td>Preuve de qualité (100 news annotées)</td><td>Ground News (méthode publiée)</td><td><span class="tag t-part">Outil prêt, 0 annotation</span></td><td>Rend l'argument de fiabilité crédible</td><td>Action humaine · M</td><td><span class="tag p1">P1</span></td></tr>
+      <tr><td>Étiquette de fiabilité par news</td><td>Ground News (par média)</td><td><span class="tag t-ok">Fait</span></td><td>Ne pas prendre une rumeur pour un fait</td><td>—</td><td><span class="tag p2">P2 acquis</span></td></tr>
+      <tr><td>Fil d'un événement (N sources, chronologie, « nouveau »)</td><td>Google Full Coverage, Techmeme, Particle, NewsBlur</td><td><span class="tag t-part">Données présentes, aucune vue</span></td><td>Comprendre une histoire en une page</td><td>Archive · L</td><td><span class="tag p2">P2</span></td></tr>
+      <tr><td>Synthèse hebdo des tendances d'un domaine</td><td>Feedly (tendances), Readless Max</td><td><span class="tag t-part">Digest hebdo sans analyse de tendance</span></td><td>Le « ce qui a changé » des fondateurs</td><td>IA · M</td><td><span class="tag p2">P2</span></td></tr>
+      <tr><td>Bilingue FR/EN natif</td><td>TLDR : EN seulement</td><td><span class="tag t-ok">Fait</span></td><td>Marché francophone peu servi</td><td>—</td><td><span class="tag p2">P2 acquis</span></td></tr>
+      <tr><td>Suivi d'entités et alertes par mot-clé</td><td>Feedly AI Feeds, Inoreader, NewsBlur</td><td><span class="tag t-no">Absent</span></td><td>Cyber, DevOps, veille concurrentielle</td><td>Rôles · L</td><td><span class="tag p3">P3</span></td></tr>
+      <tr><td>Paiement et limites d'offre</td><td>Tous les payants</td><td><span class="tag t-no">Absent</span></td><td>Revenus</td><td>Entité juridique, prestataire · M</td><td><span class="tag p3">P3</span> (facture manuelle au début)</td></tr>
+      <tr><td>Espaces d'équipe</td><td>Inoreader Team, Feedly Enterprise</td><td><span class="tag t-no">Absent</span></td><td>Vente B2B</td><td>Rôles, paiement · L</td><td><span class="tag p3">P3</span></td></tr>
+      <tr><td>Sources personnelles par utilisateur</td><td>Feedly, Inoreader, NewsBlur</td><td><span class="tag t-part">Sources globales</span></td><td>Pour les experts ; coût IA par utilisateur</td><td>Isolation · L</td><td><span class="tag p3">P3</span></td></tr>
+      <tr><td>Envoi vers Slack, Teams ou Telegram par lecteur</td><td>Miniflux, changedetection.io</td><td><span class="tag t-part">Webhook global</span></td><td>Équipes</td><td>Rôles · M</td><td><span class="tag p3">P3</span></td></tr>
+      <tr><td>Arabe</td><td>—</td><td><span class="tag t-no">Absent</span></td><td>Hypothèse à tester (section 9)</td><td>i18n · M</td><td><span class="tag p3">P3</span></td></tr>
+      <tr><td>PostgreSQL, plusieurs serveurs</td><td>—</td><td><span class="tag t-no">SQLite</span></td><td>Aucune pour un serveur unique</td><td>Choix d'hébergement · L</td><td><span class="tag p3">P3</span></td></tr>
+      <tr><td>Synthèse vocale, application mobile, extension</td><td>Inoreader, Readwise</td><td><span class="tag t-no">Absent</span></td><td>Confort</td><td>— · L</td><td><span class="tag p4">P4</span></td></tr>
+      <tr><td>Chat avec l'archive</td><td>NewsBlur Ask AI, Inoreader</td><td><span class="tag t-no">Absent</span> (recherche plein texte présente)</td><td>Valeur non démontrée pour la V1</td><td>IA · M</td><td><span class="tag p4">P4</span></td></tr>
+      <tr><td>Fonctions sociales, fédivers</td><td>Flipboard Surf, daily.dev Squads</td><td><span class="tag t-no">Absent</span></td><td>Hors cœur de valeur</td><td>—</td><td><span class="tag p4">P4</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 8 -->
+<section id="reco">
+  <header><div class="kicker">8 · Recommandations</div><h2>Le produit à vendre en premier</h2></header>
+  <div class="grid g2">
+    <div class="card"><h3>1. Une veille éditée, pas un lecteur RSS de plus</h3><p>Un seul pipeline par domaine, partagé par tous les lecteurs, chacun personnalisant sa newsletter (domaines, fréquence, niveau de détail, langue). C'est le modèle de Techmeme et de TLDR, et c'est déjà l'architecture de LucidNews. Le coût de l'IA est mutualisé : environ 3 000 tokens par news, quel que soit le nombre de lecteurs.</p><p class="muted small">Les sources par utilisateur (modèle Feedly ou Inoreader) multiplient ce coût par le nombre d'utilisateurs. Elles sont réservées à une offre Pro, plus tard.</p></div>
+    <div class="card"><h3>2. Vendre la confiance, mesurée</h3><p>L'étiquette « Confirmé / Rumeur » est l'argument unique. Il doit être prouvé : 100 news annotées, un taux de « faux fiables » publié et une méthode publique, comme Ground News le fait pour les médias.</p></div>
+    <div class="card"><h3>3. Lancer en gratuit, monétiser par paliers</h3><p>Une newsletter gratuite (1 domaine, hebdo) pour l'acquisition. Premium (tous les domaines, quotidien, archive et recherche) visé entre 5 et 8 $ par mois, au niveau de Readless et d'Inoreader. Des pilotes B2B facturés par virement au Maroc avant tout paiement en ligne.</p><p class="muted small">Ces prix sont des hypothèses à tester en bêta, pas des faits.</p></div>
+    <div class="card"><h3>4. Ne pas construire maintenant</h3><p>Veille concurrentielle d'entreprise (marché à 20 000–40 000 $ par an, cycle de vente long), application mobile, social, chat IA, PostgreSQL multi-serveurs. La valeur n'est pas démontrée pour la V1 et l'effort est disproportionné.</p></div>
+  </div>
+</section>
+
+<!-- 9 -->
+<section id="maroc">
+  <header><div class="kicker">9 · Marchés</div><h2>Maroc et international</h2></header>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Démontré par les sources</h3>
+      <ul class="clean">
+        <li><b>Paiement.</b> <span class="src-sec">Stripe n'est pas ouvert aux sociétés de droit marocain</span> (guides de paiement, 2026). <span class="src-sec">CMI n'offre pas de paiement récurrent</span> (guide Shopify). Le statut de Paddle pour un vendeur marocain n'est pas confirmé.</li>
+        <li><b>Données personnelles.</b> <span class="src-sec">Loi 09-08 : déclaration à la CNDP ; transfert vers un pays non adéquat soumis à une autorisation préalable (articles 43 et 44)</span>. Héberger hors du Maroc demande donc une vérification juridique.</li>
+        <li><b>Langues.</b> <span class="src-sec">La darija domine à l'oral, y compris au travail (69 %). Le français recule dans les préférences d'enseignement (de 63,5 % à 36,9 %), l'anglais monte (22 %).</span></li>
+        <li><b>Écosystème.</b> <span class="src-sec">Maroc Digital 2030 vise 3 000 startups et 100 000 jeunes formés au numérique par an.</span></li>
+        <li><b>Concurrence locale.</b> Aucun agrégateur de veille tech marocain identifié.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Hypothèses à tester en bêta</h3>
+      <ul class="clean">
+        <li>Les équipes tech marocaines (ESN, startups, écoles) paieraient une veille en français avec étiquette de fiabilité.</li>
+        <li>L'arabe apporterait des lecteurs. Rien ne le prouve pour un public tech : à mesurer par une liste d'attente avant d'investir.</li>
+        <li>Les écoles et les centres de formation (OFPPT, universités) sont un canal de distribution.</li>
+        <li>À l'international, le créneau francophone (France, Belgique, Suisse, Canada, Afrique francophone) est moins servi que l'anglais.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout warn"><b>Redistribution des contenus.</b> Dans l'Union européenne, le droit voisin des éditeurs de presse (article 15 de la directive 2019/790) exclut les liens et les « très courts extraits ». Le statut des résumés générés par IA n'est tranché ni par un tribunal ni par une autorité (sources de 2026). Règles recommandées :
+    <ul class="clean">
+      <li>résumés courts et reformulés, jamais le texte intégral ;</li>
+      <li>lien et nom de la source toujours visibles ;</li>
+      <li>page publique listant les sources ;</li>
+      <li>retrait sur demande d'un éditeur ;</li>
+      <li>avis d'un juriste avant la vente dans l'UE.</li>
+    </ul>
+    LucidNews stocke le texte des articles pour l'analyse mais ne l'affiche pas : c'est à garder ainsi.</div>
+</section>
+
+<!-- 10 -->
+<section id="technique">
+  <header><div class="kicker">10 · Sujets techniques</div><h2>Les trois sujets signalés, vérifiés</h2></header>
+  <div class="grid g3">
+    <div class="card"><h3>Vérification de l'e-mail</h3><p><span class="tag t-no">Absente pour les comptes</span> <span class="tag t-ok">Présente pour les abonnés</span> (double opt-in).</p><p>Recommandation : la réintroduire, car un SaaS qui envoie des e-mails ne peut pas écrire à des adresses non prouvées. Elle réutilise les jetons signés et le service public existants. Elle débloque la réinitialisation du mot de passe et supprime le risque de squat d'adresse documenté au lot 26.</p></div>
+    <div class="card"><h3>Envoi d'e-mails</h3><p><span class="tag t-part">Code prêt</span> Resend et SMTP, rendu HTML et texte, désabonnement RFC 8058, journal.</p><p>Manque : un domaine d'envoi authentifié (SPF, DKIM, DMARC), le traitement des rebonds et des plaintes, un premier envoi réel vérifié. Resend gratuit : 3 000 e-mails par mois et 100 par jour. Pro à 20 $ pour 50 000 par mois (page officielle).</p></div>
+    <div class="card"><h3>PostgreSQL</h3><p><span class="tag t-info">Pas nécessaire pour la V1</span></p><p>Un seul serveur et peu d'écritures concurrentes : SQLite en mode WAL avec des sauvegardes à chaud suffit, et reste plus simple. PostgreSQL devient nécessaire si l'hébergement n'a pas de disque persistant (PaaS) ou s'il faut plusieurs instances. Décision liée au choix d'hébergement (lot 34).</p></div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section id="plan">
+  <header><div class="kicker">11 · Plan</div><h2>Plan de finalisation en cinq phases</h2>
+  <p>La numérotation suit l'historique des lots (0 à 26). Le détail, les dépendances et les critères sont dans <code>Plan.md</code> et <code>docs/lots.md</code>.</p></header>
+  <div class="grid g2">
+    <div class="card phase"><div class="kicker">Phase A</div><h3>Finalisation fonctionnelle</h3>
+      <div class="lot"><b>Lot 27 — Rôles et isolation</b><span class="crit">Chaque route d'administration répond 403 à un lecteur (test qui parcourt toutes les routes). Un lecteur ne lit et ne modifie que ses propres données.</span></div>
+      <div class="lot"><b>Lot 28 — Cycle de vie du compte</b><span class="crit">Vérification de l'e-mail (lien valable 24 h), mot de passe oublié et changé, suppression et export du compte. Tous testés.</span></div>
+      <div class="lot"><b>Lot 29 — Newsletter en libre-service</b><span class="crit">Un lecteur s'abonne et règle domaines, fréquence, niveau et langue depuis son compte. Un abonné = un compte vérifié.</span></div>
+    </div>
+    <div class="card phase"><div class="kicker">Phase B</div><h3>Tests et sécurité</h3>
+      <div class="lot"><b>Lot 30 — Sécurité applicative</b><span class="crit">Liste OWASP ASVS niveau 1 couverte. pip-audit et npm audit sans vulnérabilité haute. En-têtes de sécurité et CSP sur l'interface.</span></div>
+      <div class="lot"><b>Lot 31 — Bout en bout et CI</b><span class="crit">Parcours Playwright : inscription → vérification → préférences → aperçu → déconnexion. GitHub Actions passe en vert à chaque push.</span></div>
+      <div class="lot"><b>Lot 12 bis — Preuve de qualité</b><span class="crit">100 news annotées. Taux de « faux fiables » mesuré et publié. Objectif : moins de 5 %.</span></div>
+    </div>
+    <div class="card phase"><div class="kicker">Phase C</div><h3>Préparation de la production</h3>
+      <div class="lot"><b>Lot 32 — Exécution serveur</b><span class="crit">docker compose : API, pipeline planifié, service public, Caddy. Interface servie en HTTPS. Planificateur hors macOS. SQLite en WAL.</span></div>
+      <div class="lot"><b>Lot 33 — E-mail en production</b><span class="crit">SPF, DKIM et DMARC valides. Rebonds et plaintes désinscrivent automatiquement. Premier envoi réel reçu en boîte de réception chez Gmail et Outlook.</span></div>
+      <div class="lot"><b>Lot 34 — Données</b><span class="crit">Sauvegarde chiffrée hors serveur chaque jour. Restauration testée en moins de 30 minutes. Décision PostgreSQL écrite.</span></div>
+      <div class="lot"><b>Lot 35 — Observabilité et coûts</b><span class="crit">Erreurs remontées en moins de 5 minutes. Disponibilité surveillée. Alerte si le coût IA mensuel dépasse le budget.</span></div>
+      <div class="lot"><b>Lot 36 — Conformité</b><span class="crit">Confidentialité, CGU, mentions légales, page des sources. Déclaration CNDP déposée. Accords de traitement avec les prestataires.</span></div>
+    </div>
+    <div class="card phase"><div class="kicker">Phases D et E</div><h3>Hébergement, puis post-lancement</h3>
+      <div class="lot"><b>Lot 37 — Hébergement et déploiement</b><span class="crit">Serveur, domaine, HTTPS, pare-feu, environnement de préproduction. Déploiement en une commande depuis la CI. Retour arrière testé.</span></div>
+      <div class="lot"><b>Lot 38 — Bêta privée</b><span class="crit">20 à 50 lecteurs pendant 4 semaines. Taux d'ouverture et de désabonnement mesurés. 10 entretiens.</span></div>
+      <div class="lot"><b>Après le lancement</b><span class="crit">Fil d'un événement · synthèse des tendances · alertes et suivi d'entités · paiement et offres · équipes · sources personnelles · arabe si la bêta le justifie · PostgreSQL si plusieurs instances.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section id="hebergement">
+  <header><div class="kicker">12 · Hébergement</div><h2>Coûts réels et choix recommandé</h2>
+  <p>Coût mensuel estimé pour la bêta (moins de 1 000 lecteurs). Chaque prix indique sa source.</p></header>
+  <div class="table"><table class="min">
+    <thead><tr><th>Poste</th><th>Option recommandée</th><th>Prix constaté</th><th>Risque de coût imprévu</th></tr></thead>
+    <tbody>
+      <tr><td>Serveur</td><td>VPS : Docker Compose + Caddy</td><td><span class="src-sec">Hetzner CX23 (2 vCPU, 4 Go) : 5,49 € HT/mois depuis juin 2026, plus 0,50 € pour l'IPv4</span></td><td>Faible (plafond mensuel). <span class="src-sec">Mais 4 hausses de prix en 2026 et des ruptures de stock signalées</span> : prévoir OVHcloud ou Scaleway en alternative (tarifs à confirmer).</td></tr>
+      <tr><td>Alternative PaaS</td><td>Render, Railway, Fly.io</td><td><span class="src-sec">≈ 14 à 26 $/mois pour un service web + Postgres (Render)</span></td><td>Moyen : facturation à l'usage, frais de stockage et de réseau ajoutés en 2026 (Fly.io)</td></tr>
+      <tr><td>Base de données</td><td>SQLite sur le disque du VPS</td><td>0 €</td><td>Aucun. Si PostgreSQL devient nécessaire : <span class="src-off">Neon gratuit (0,5 Go par projet) ; Launch à 0,106 $ par CU-heure</span></td></tr>
+      <tr><td>E-mail</td><td>Resend</td><td><span class="src-off">0 $ jusqu'à 3 000 e-mails par mois (100 par jour) ; 20 $ pour 50 000</span></td><td>Faible : paliers fixes</td></tr>
+      <tr><td>IA</td><td>Gemini Flash-Lite, ou désactivée</td><td><span class="src-sec">2.5 Flash-Lite : 0,10 $ / 0,40 $ par million de tokens</span>. Mesuré : ≈ 100 000 tokens par run, soit ≈ 0,02 à 0,05 $ par run et environ 1 à 3 $ par mois à 2 runs par jour</td><td>Faible grâce au budget de tokens par run. Le prix du modèle utilisé aujourd'hui (3.5 Flash-Lite) est à confirmer.</td></tr>
+      <tr><td>Domaine, HTTPS</td><td>Registrar + Let's Encrypt (Caddy)</td><td>≈ 10 à 15 € par an (estimation)</td><td>Aucun</td></tr>
+      <tr><td>Erreurs, disponibilité</td><td>GlitchTip auto-hébergé ou une offre gratuite de suivi d'erreurs ; sonde externe gratuite</td><td>0 € visé (offres gratuites à confirmer au lot 35)</td><td>Faible</td></tr>
+      <tr><td>Sauvegardes</td><td>Sauvegarde SQLite à chaud vers un stockage objet</td><td>Quelques centimes par Go (à confirmer selon le fournisseur)</td><td>Faible</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout"><b>Total visé pour la bêta : environ 10 à 15 € par mois</b>, IA comprise, si le service tient sur un VPS. Un PaaS coûterait environ 2 fois plus, et sa facture dépend de l'usage. Le lieu d'hébergement (Maroc ou Union européenne) est à valider avec un juriste au regard de la loi 09-08.</div>
+</section>
+
+<!-- 13 -->
+<section id="evolution">
+  <header><div class="kicker">13 · Évolution</div><h2>Pistes après le lancement</h2></header>
+  <div class="grid g3">
+    <div class="card"><h3>Fil d'un événement</h3><p>Une page par histoire : les sources qui en parlent, la chronologie, ce qui est nouveau depuis la dernière lecture, l'évolution de l'étiquette (rumeur puis confirmé). Les données existent déjà (regroupement par sujet, corroboration, archive).</p></div>
+    <div class="card"><h3>Alertes et suivi</h3><p>Suivre une entreprise, un produit ou une CVE, avec une alerte par e-mail ou Slack. C'est le passage vers les équipes cyber et DevOps, et un argument pour une offre Pro.</p></div>
+    <div class="card"><h3>Équipes</h3><p>Espace partagé, envoi vers Slack ou Teams, facturation par place. À ouvrir après les premiers pilotes B2B.</p></div>
+  </div>
+</section>
+
+<!-- 14 -->
+<section id="sources">
+  <header><div class="kicker">14 · Sources</div><h2>Sources et méthode</h2>
+  <p>Méthode : recherche web → pages officielles → sources secondaires datées → audit du dépôt (code, tests, base locale) → écarts → priorités. Les pages officielles ont été lues le 13 octobre 2026. Les prix changent : à reconfirmer avant toute communication commerciale.</p></header>
+  <div class="grid g2">
+    <div class="card"><h3>Officielles</h3><ul class="clean small">
+      <li><a href="https://www.inoreader.com/pricing">Inoreader — tarifs</a> · <a href="https://www.inoreader.com/blog/2020/08/win-the-clone-wars-with-duplicate-filters.html">filtres de doublons</a> · <a href="https://www.inoreader.com/blog/2026/01/get-insights-with-inoreader-intelligence.html">Inoreader Intelligence (janv. 2026)</a></li>
+      <li><a href="https://readwise.io/pricing">Readwise — tarifs</a></li>
+      <li><a href="https://www.techmeme.com/about">Techmeme — à propos</a></li>
+      <li><a href="https://ground.news/subscribe">Ground News — abonnements</a></li>
+      <li><a href="https://www.newsblur.com/">NewsBlur — offres</a></li>
+      <li><a href="https://miniflux.app/features.html">Miniflux — fonctions</a></li>
+      <li><a href="https://changedetection.io/">changedetection.io</a></li>
+      <li><a href="https://www.readless.app/pricing">Readless — tarifs</a></li>
+      <li><a href="https://sponsorships.tldr.tech/">TLDR — parrainage</a></li>
+      <li><a href="https://blog.google/products/news/get-full-news-story-full-coverage-search/">Google — Full Coverage</a></li>
+      <li><a href="https://docs.feedly.com/category/706-mute-filters">Feedly — documentation Mute filters</a> · <a href="https://blog.feedly.com/?p=11707">blog Leo</a></li>
+      <li><a href="https://resend.com/pricing">Resend — tarifs</a> · <a href="https://neon.com/pricing">Neon — tarifs</a> · <a href="https://www.hetzner.com/cloud/cost-optimized/">Hetzner — gamme Cost-Optimized</a></li>
+      <li><a href="https://developer.paddle.com/concepts/sell/supported-countries-locales">Paddle — pays acheteurs</a></li>
+      <li><a href="https://github.com/Thysrael/Horizon">Horizon (projet d'origine, MIT)</a></li>
+    </ul></div>
+    <div class="card"><h3>Secondaires (à reconfirmer)</h3><ul class="clean small">
+      <li><a href="https://www.readless.app/blog/feedly-pro-pricing-vs-readless-2026">Prix Feedly 2026 (Readless, concurrent)</a> · <a href="https://thegtmdirectory.com/tools/feedly">Feedly Market Intelligence</a> · <a href="https://www.capterra.com/p/202497/Feedly/">Capterra</a></li>
+      <li><a href="https://www.vendr.com/buyer-guides/klue">Klue — Vendr</a> · <a href="https://www.saashero.net/competitor/best-crayon-alternatives-2026/">Crayon — SaaSHero</a></li>
+      <li><a href="https://techcrunch.com/2024/02/29/former-twitter-engineers-are-building-particle-an-ai-powered-news-reader/">Particle — TechCrunch</a> · <a href="https://www.maginative.com/article/particle-raises-10-9m-for-its-ai-powered-news-platform/">Série A</a></li>
+      <li><a href="https://www.webpronews.com/flipboard-bets-its-future-on-surf-a-customizable-feed-that-treats-users-like-adults/">Flipboard Surf</a> · <a href="https://docs.daily.dev/plus-overview.md">daily.dev Plus</a> · <a href="https://discover.buysellads.com/alphasignal-ai">AlphaSignal</a></li>
+      <li><a href="https://www.creativeainews.com/blog/ai-newsletter-landscape-2026/">Paysage des newsletters IA 2026</a></li>
+      <li><a href="https://www.sourcepulse.org/projects/25458284">Index des dépôts (étoiles)</a> · <a href="https://github.com/finaldie/auto-news">auto-news</a> · <a href="https://github.com/yinan-c/RSSbrew">RSSbrew</a></li>
+      <li><a href="https://kolonell.com/fr/blog/choisir-passerelle-paiement-cmi-ou-stripe-pme-casablanca-2026">CMI ou Stripe (Maroc, 2026)</a> · <a href="https://cartdna.com/en/shopify-payment-guide/africa/morocco">Paiement au Maroc (CartDNA)</a></li>
+      <li><a href="https://upsilon-consulting.com/transfert-international-donnees-personnelles-maroc/">Loi 09-08 : transferts</a> · <a href="https://upsilon-consulting.com/declarations-autorisations-cndp-guide-pratique/">Déclarations CNDP</a></li>
+      <li><a href="https://telquel.ma/instant-t/2025/04/21/darija-amazigh-francais-qui-parle-quoi-au-maroc-en-2025_1928078/">Langues au Maroc 2025 (TelQuel)</a> · <a href="https://fr.hespress.com/412982-enquete-73-des-marocains-privilegient-larabe-classique-pour-lenseignement.html">Enquête IRES (Hespress)</a></li>
+      <li><a href="https://fnh.ma/article/actualite-high-tech/digital-morocco-2030-strategie-maroc">Digital Morocco 2030 (FNH)</a></li>
+      <li><a href="https://dandi.media/en/new-ancillary-right/">Article 15 DSM</a> · <a href="https://link.springer.com/article/10.1007/s40319-024-01515-y">Article 15 et IA (IIC)</a></li>
+      <li><a href="https://wz-it.com/en/blog/hetzner-price-increase-june-2026-cpx-ccx-alternatives/">Hausse Hetzner juin 2026</a> · <a href="https://sota.io/blog/railway-vs-render-vs-fly-pricing-2026">PaaS 2026</a> · <a href="https://www.morphllm.com/gemini-api-pricing">Prix Gemini 2026</a></li>
+    </ul></div>
+  </div>
+  <p class="muted small">Non vérifié : la page tarifs officielle de Feedly (contenu chargé en JavaScript), le statut de Paddle pour un vendeur marocain, les prix de Particle et de daily.dev, et le comportement actuel de Google Full Coverage. Les besoins des utilisateurs viennent du marché, pas d'entretiens.</p>
+</section>
+
+<footer>LucidNews · étude du 13 octobre 2026 · rapport généré dans le dépôt (<code>docs/etude-marche/</code>). Les chiffres de LucidNews viennent du code et de la base locale à cette date.</footer>
+</div>
+</body>
+</html>

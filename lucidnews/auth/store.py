@@ -145,6 +145,22 @@ class AuthDB:
                 (sub, picture, user_id),
             )
 
+    def list_users(self) -> list[User]:
+        with closing(self._connect()) as conn:
+            rows = conn.execute("SELECT * FROM users ORDER BY created_at, email").fetchall()
+        return [_user(row) for row in rows]
+
+    def delete_user(self, user_id: str) -> bool:
+        """Remove the account; its sessions go with it (foreign key cascade)."""
+        with self._lock, closing(self._connect()) as conn, conn:
+            return conn.execute("DELETE FROM users WHERE id = ?", (user_id,)).rowcount == 1
+
+    def set_password(self, user_id: str, password_hash: str) -> None:
+        """New password; every session of the account ends."""
+        with self._lock, closing(self._connect()) as conn, conn:
+            conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (password_hash, user_id))
+            conn.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
+
     def touch_login(self, user_id: str) -> None:
         with self._lock, closing(self._connect()) as conn, conn:
             conn.execute("UPDATE users SET last_login_at = ? WHERE id = ?", (_iso(_now()), user_id))

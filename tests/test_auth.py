@@ -452,3 +452,47 @@ def test_auth_settings_are_validated() -> None:
     for bad in ("ftp://x.example", "https://x.example/path", "https://x.example?a=1", "not a url"):
         with pytest.raises(ValueError):
             AuthConfig(public_url=bad)
+
+
+# Terminal ---------------------------------------------------------------------------------------
+
+
+def run_cli(tmp_path, monkeypatch, capsys, *argv, stdin=""):  # type: ignore[no-untyped-def]
+    import io
+
+    from lucidnews.auth.cli import main
+
+    monkeypatch.setattr("sys.stdin", io.StringIO(stdin))
+    code = main(["--data-dir", str(tmp_path), *argv])
+    out = capsys.readouterr()
+    return code, out.out, out.err
+
+
+def test_accounts_can_be_managed_from_the_terminal_while_sign_up_is_closed(tmp_path, monkeypatch, capsys) -> None:
+    run = lambda *a, **k: run_cli(tmp_path, monkeypatch, capsys, *a, **k)  # noqa: E731
+
+    assert run("add", "Owner@Example.com", "--name", "Owner", "--password-stdin", stdin=PASSWORD + "\n")[0] == 0
+    code, _, err = run("add", "owner@example.com", "--password-stdin", stdin=PASSWORD + "\n")
+    assert code == 1 and "already" in err
+    code, _, err = run("add", "other@example.com", "--password-stdin", stdin="short\n")
+    assert code == 2 and "8 characters" in err
+    assert run("add", "not an address", "--password-stdin", stdin=PASSWORD)[0] == 2
+    assert run("list")[1].startswith("owner@example.com\tOwner\tpassword")
+
+    # The account made here signs in through the web app even though sign-up is closed.
+    ctx, server = start_api(tmp_path, monkeypatch, allow_signup=False)
+    try:
+        client = Client(server)
+        assert client.sign_up(email="new@example.com")[1]["code"] == "signup_disabled"
+        assert client.sign_in("owner@example.com", PASSWORD)[0] == 200
+        assert client.request("GET", "/api/editions")[0] == 200
+        # A new password ends the sessions that were open.
+        assert run("passwd", "owner@example.com", "--password-stdin", stdin="another long password\n")[0] == 0
+        assert client.request("GET", "/api/editions")[0] == 401
+        assert Client(server).sign_in("owner@example.com", "another long password")[0] == 200
+        assert run("remove", "owner@example.com")[0] == 0
+        assert run("remove", "owner@example.com")[0] == 1
+        assert Client(server).sign_in("owner@example.com", "another long password")[0] == 401
+    finally:
+        server.shutdown()
+        server.server_close()

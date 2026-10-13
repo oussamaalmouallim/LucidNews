@@ -3,7 +3,9 @@
 Ce document regroupe tous les lots : ceux qui sont **clôturés** et ceux qui
 **restent à faire**. Il complète la [roadmap](roadmap.md), qui donne les priorités.
 
-État au 9 octobre 2026. Dernier lot clôturé : lot 16.
+État au 13 octobre 2026. Dernier lot clôturé : lot 25 bis ; lot 26 commencé (authentification).
+
+**Suite du plan** : depuis l'étude de marché du 13 octobre 2026, les lots 27 à 46 sont décrits dans [Plan.md](../Plan.md), avec leurs critères mesurables. Ce fichier garde l'historique et les lots en cours.
 
 Légende : ✅ clôturé · 🟡 outil livré, action humaine attendue · ⏳ proposé, en attente de décision · 📋 planifié.
 
@@ -46,7 +48,8 @@ Légende : ✅ clôturé · 🟡 outil livré, action humaine attendue · ⏳ pr
 - [Lot 24 — Finitions de l'interface](#lot-24--finitions-de-linterface) ✅
 - [Lot 25 — Dette technique](#lot-25--dette-technique) ✅
 - [Lot 25 bis — IA facultative et clés hors de l'interface](#lot-25-bis--ia-facultative-et-clés-hors-de-linterface) ✅
-- [Lot 26 — Comptes et SaaS (phase 4)](#lot-26--comptes-et-saas-phase-4) 📋
+- [Lot 26 — Comptes et SaaS (phase 4)](#lot-26--comptes-et-saas-phase-4) 🟡
+- [Lots 27 à 46 — Plan de lancement](#lots-27-à-46--plan-de-lancement) 📋
 - [Paramètres : où ils vivent](#paramètres--où-ils-vivent-et-comment-ils-sappliquent)
 - [Blocages et décisions en attente](#blocages-et-décisions-en-attente)
 - [Analyse : besoins d'une newsletter moderne](#analyse--besoins-dune-newsletter-moderne)
@@ -630,7 +633,8 @@ Plan revu le 9 octobre 2026 pour intégrer le besoin « interface complète et g
 | ✅ | 24 — Finitions de l'interface | 15 à 23 | Clôturé. |
 | ✅ | 25 — Dette technique | — | Clôturé. |
 | ✅ | 25 bis — IA facultative | — | Clôturé. |
-| 3 | 26 — Comptes et SaaS | 22, 25 | Authentification faite ; rôles, offres et paiement hors périmètre actuel. |
+| 🟡 | 26 — Comptes et SaaS | 22, 25 | Authentification faite ; rôles → lot 27, offres et paiement → lot 42. |
+| 1 | 27 à 46 — Plan de lancement | 26 | Voir [Plan.md](../Plan.md). |
 | En parallèle | 12 — Annoter au moins 30 news | — | Action humaine ; donne les chiffres de filtrage du lot 19. |
 
 **Correspondance avec l'ancien plan** : ancien 15 (finitions) → 24 · ancien 16 (newsletter) → 21 et 22 · ancien 17 (comptes et SaaS) → 26 · ancien 18 (dette technique) → 25.
@@ -717,10 +721,29 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 - **Sans vérification d'e-mail, deux conséquences traitées** : une adresse inscrite avec mot de passe devenant ensuite un compte Google perd son mot de passe et ses autres sessions (sinon la personne inscrite en premier avec l'adresse d'un autre garderait l'accès) ; l'inscription révèle si une adresse est déjà utilisée.
 - **Vérifié** : inscription, connexion persistante après rechargement, déconnexion, et page de connexion sur téléphone (375 px) en clair et en sombre, sur une copie des données, avec le vrai serveur. L'adresse de redirection Google construite est la bonne (`http://localhost:5173/api/auth/google/callback`).
 - **Pas vérifié** : un vrai aller-retour avec Google (aucun identifiant client dans cet environnement). Le flux est testé contre un faux point d'accès « token » local qui répond comme Google ; le code appelé est le vrai.
-- **Tests** : 36 Python (`tests/test_auth.py`), 10 interface (`AuthPage.test.tsx`).
+- **Inscriptions fermées** (`auth.allow_signup: false`) : la page d'inscription le dit et son bouton est désactivé ; le serveur refuse aussi l'inscription par e-mail et par Google pour une nouvelle adresse. Les comptes se gèrent alors en terminal avec `lucidnews-users` (`add`, `list`, `passwd`, `remove` ; mot de passe lu sans écho, jamais en argument).
+- **Tests** : 37 Python (`tests/test_auth.py`), 10 interface (`AuthPage.test.tsx`).
 - **Reste du lot** : rôles (administrateur, abonné), limites des offres Gratuit et Premium, paiement (seulement après validation du produit).
 
 ---
+
+## Lots 27 à 46 — Plan de lancement
+
+📋 Planifiés le 13 octobre 2026 après l'étude de marché et l'audit
+([rapport](etude-marche/rapport-lucidnews-2026-10.html)). Détail, dépendances et critères :
+[Plan.md](../Plan.md).
+
+| Phase | Lots | Objet |
+|---|---|---|
+| A — Finalisation fonctionnelle | 27 Rôles et isolation · 28 Cycle de vie du compte · 29 Newsletter en libre-service | Rendre l'application vendable à plusieurs clients |
+| B — Tests et sécurité | 30 Sécurité applicative · 31 Bout en bout et CI · 12 bis Preuve de qualité | Livrer sans régression, prouver la fiabilité |
+| C — Préparation de la production | 32 Exécution serveur · 33 E-mail en production · 34 Données · 35 Observabilité et coûts · 36 Conformité | Tourner seul, sans perte, légalement |
+| D — Hébergement et déploiement | 37 Hébergement · 38 Bêta privée | Mettre en ligne, mesurer |
+| E — Après le lancement | 39 Fil d'un événement · 40 Tendances · 41 Alertes · 42 Offres et paiement · 43 Équipes · 44 Sources personnelles · 45 Arabe · 46 PostgreSQL | Différencier et monétiser |
+
+**Prochain lot : 27 — Rôles et isolation des comptes.** Constat de l'audit : un compte
+connecté a aujourd'hui accès à tout, et les routes d'administration dépendent de l'écoute en
+local, ce qui ne tient pas derrière un reverse proxy.
 
 ## Paramètres : où ils vivent et comment ils s'appliquent
 

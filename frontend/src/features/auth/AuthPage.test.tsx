@@ -152,6 +152,7 @@ test('a closed sign-up says so and cannot be submitted', async () => {
   await screen.findByRole('heading', { level: 1, name: 'Créez votre compte' }, { timeout: 5000 })
 
   expect(screen.getByRole('button', { name: 'Créer mon compte' })).toBeDisabled()
+  expect(screen.getByRole('alert')).toHaveTextContent('Les inscriptions sont fermées sur ce serveur.')
 })
 
 test('signed in, the sign-in page is skipped and the reader can sign out from the account menu', async () => {
