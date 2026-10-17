@@ -138,6 +138,8 @@ uv run lucidnews-users remove vous@example.com
 
 **Mon compte** (menu du compte, en haut à droite) : chacun change son nom et son mot de passe, voit les appareils connectés et les déconnecte, télécharge ses données (JSON) et supprime son compte. Rien ne passe par e-mail : un mot de passe oublié est réinitialisé par un administrateur avec `lucidnews-users passwd`.
 
+**Ma veille et Ma sélection** : dans Mon compte, chacun choisit ses domaines, une importance minimale, s'il veut voir les news non confirmées et des cartes complètes ou brèves. L'Édition affiche alors « Ma sélection », avec une bascule vers toute l'édition.
+
 Avec les comptes, les écrans d'administration ne dépendent plus de l'adresse d'écoute : ils marchent derrière un reverse proxy (renseignez `public_url`), et c'est le rôle qui les protège. Sans comptes, ils restent réservés aux requêtes locales, comme avant.
 
 Redémarrez `uv run lucidnews-api`. Toute l'API (sauf `/api/auth/*`) exige alors une session, et l'interface renvoie vers la page de connexion. **Aucune vérification d'e-mail** n'est demandée : le compte est utilisable tout de suite après l'inscription.

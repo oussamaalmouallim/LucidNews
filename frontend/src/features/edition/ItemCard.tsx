@@ -19,7 +19,8 @@ const importanceTone: Record<string, string> = {
 // Clicks on these keep their own behaviour instead of opening the card.
 const INTERACTIVE = 'a, button, input, select, textarea, label, summary, [role="button"]'
 
-export function ItemCard({ item, editionId }: { item: EditionItem; editionId?: string }) {
+/** ``brief``: the reader chose short cards; they do not unfold (the full page stays a click away). */
+export function ItemCard({ item, editionId, brief = false }: { item: EditionItem; editionId?: string; brief?: boolean }) {
   const { language, t } = useLanguage()
   const [open, setOpen] = useState(false)
   const detailsId = useId()
@@ -29,7 +30,7 @@ export function ItemCard({ item, editionId }: { item: EditionItem; editionId?: s
 
   // The whole card opens with the mouse; the keyboard uses the "Details" button.
   const onCardClick = (event: MouseEvent<HTMLElement>) => {
-    if ((event.target as HTMLElement).closest(INTERACTIVE)) return
+    if (brief || (event.target as HTMLElement).closest(INTERACTIVE)) return
     if (window.getSelection()?.toString()) return // the reader is selecting text
     setOpen((value) => !value)
   }
@@ -46,7 +47,7 @@ export function ItemCard({ item, editionId }: { item: EditionItem; editionId?: s
       id={`item-${item.id}`}
       onClick={onCardClick}
       onKeyDown={onKeyDown}
-      className={`group scroll-mt-28 cursor-pointer rounded-card bg-surface p-5 shadow-card ring-1 transition-[box-shadow,translate] duration-300 ease-soft hover:-translate-y-0.5 hover:shadow-card-hover sm:p-8 ${
+      className={`group scroll-mt-28 ${brief ? '' : 'cursor-pointer'} rounded-card bg-surface p-5 shadow-card ring-1 transition-[box-shadow,translate] duration-300 ease-soft hover:-translate-y-0.5 hover:shadow-card-hover sm:p-8 ${
         open ? 'shadow-card-hover ring-accent/20' : 'ring-ink/[0.03]'
       }`}
     >
@@ -164,17 +165,19 @@ export function ItemCard({ item, editionId }: { item: EditionItem; editionId?: s
             <FileText size={14} aria-hidden />
             {t('item.details')}
           </Link>
-          <button
-            ref={toggleRef}
-            type="button"
-            aria-expanded={open}
-            aria-controls={detailsId}
-            onClick={() => setOpen((value) => !value)}
-            className="flex items-center gap-1.5 rounded-full bg-accent-soft px-3.5 py-1.5 text-[13px] font-semibold text-accent transition-all duration-150 ease-soft hover:bg-accent hover:text-on-fill active:scale-95"
-          >
-            {t(open ? 'item.readLess' : 'card.open')}
-            <ChevronDown size={14} aria-hidden className={`transition-transform duration-250 ease-soft ${open ? 'rotate-180' : ''}`} />
-          </button>
+          {!brief && (
+            <button
+              ref={toggleRef}
+              type="button"
+              aria-expanded={open}
+              aria-controls={detailsId}
+              onClick={() => setOpen((value) => !value)}
+              className="flex items-center gap-1.5 rounded-full bg-accent-soft px-3.5 py-1.5 text-[13px] font-semibold text-accent transition-all duration-150 ease-soft hover:bg-accent hover:text-on-fill active:scale-95"
+            >
+              {t(open ? 'item.readLess' : 'card.open')}
+              <ChevronDown size={14} aria-hidden className={`transition-transform duration-250 ease-soft ${open ? 'rotate-180' : ''}`} />
+            </button>
+          )}
         </span>
       </footer>
     </m.article>

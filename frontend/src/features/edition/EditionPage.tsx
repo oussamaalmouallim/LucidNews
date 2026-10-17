@@ -3,7 +3,8 @@ import { m } from 'motion/react'
 import { useMemo, type ReactNode } from 'react'
 import { useParams, useSearchParams } from 'react-router'
 import { ApiErrorCard } from '../../design/PageState'
-import { domainCategories, fetchAllEditions, fetchEdition, fetchPeriod, type Edition, type Period } from '../../lib/api'
+import { domainCategories, fetchAllEditions, fetchEdition, fetchPeriod, fetchReaderPreferences, type Edition, type Period } from '../../lib/api'
+import { useAuth } from '../../lib/auth'
 import { capitalize, formatPeriod, periodBounds, type PeriodKind } from '../../lib/format'
 import { translatePlural, useLanguage } from '../../lib/i18n'
 import { listStagger, useMotionPreference } from '../../lib/motion'
@@ -12,6 +13,8 @@ import { EditionSidebar } from './EditionSidebar'
 import { PeriodFilter, type DomainOption, type PeriodChoice } from './PeriodFilter'
 import { DomainJumpBar, DomainSection } from './DomainSection'
 import { groupByDomain } from './domains'
+import { applySelection } from './selection'
+import { SelectionBar, SelectionEmpty } from './SelectionBar'
 import { UnanalyzedNote } from './Unanalyzed'
 
 const PERIOD_PARAMS: PeriodKind[] = ['day', 'month', 'year']
@@ -79,7 +82,27 @@ export function EditionPage() {
     enabled: !!bounds,
   })
   const active = choice ? period : query
-  const data = active.data
+  const raw = active.data
+
+  // "My selection": a signed-in reader's preferences filter the edition unless they ask for all of it.
+  const signedIn = Boolean(useAuth().session?.user)
+  const prefsQuery = useQuery({ queryKey: ['reader-preferences'], queryFn: ({ signal }) => fetchReaderPreferences(signal), enabled: signedIn })
+  const prefs = signedIn ? prefsQuery.data : undefined
+  const mine = Boolean(prefs?.filters) && params.get('view') !== 'all'
+  const data = useMemo(() => (raw && mine && prefs ? applySelection(raw, prefs.preferences) : raw), [raw, mine, prefs])
+  const display: Display = {
+    brief: prefs?.preferences.detail_level === 'brief',
+    followed: mine && prefs ? prefs.preferences.domains : [],
+  }
+  const setView = (next: 'mine' | 'all') =>
+    setParams(
+      (current) => {
+        if (next === 'all') current.set('view', 'all')
+        else current.delete('view')
+        return current
+      },
+      { replace: false },
+    )
 
   const setDomain = (next: string | null) =>
     setParams(
@@ -109,18 +132,22 @@ export function EditionPage() {
   // The filter stays mounted while the news load, so the open calendar and focus survive.
   let content
   if (active.isError) content = <ApiErrorCard error={active.error} onRetry={() => active.refetch()} />
-  else if (!data) content = <EditionSkeleton />
+  else if (!data || !raw) content = <EditionSkeleton />
+  else if (mine && countOf(data) === 0 && countOf(raw) > 0) content = <SelectionEmpty onShowAll={() => setView('all')} />
   else if (choice)
-    content = <PeriodView key={`${choice.kind}-${choice.value}`} period={data as Period} kind={choice.kind} value={choice.value} domain={domain} />
+    content = (
+      <PeriodView key={`${choice.kind}-${choice.value}`} period={data as Period} kind={choice.kind} value={choice.value} domain={domain} display={display} />
+    )
   else
     content = (
       <DomainNote edition={data} domain={domain}>
-        <EditionView key={data.id} edition={applyDomain(data, domain)} archived={editionId !== 'latest'} domain={domain} />
+        <EditionView key={data.id} edition={applyDomain(data, domain)} archived={editionId !== 'latest'} domain={domain} display={display} />
       </DomainNote>
     )
 
   return (
     <div className="space-y-6">
+      {signedIn && prefs && <SelectionBar state={prefs} mine={mine} onChange={setView} />}
       {filter}
       {content}
     </div>
@@ -140,7 +167,7 @@ function DomainNote({ edition, domain, children }: { edition: Edition; domain: s
   )
 }
 
-function PeriodView({ period, kind, value, domain }: { period: Period; kind: PeriodKind; value: string; domain: string | null }) {
+function PeriodView({ period, kind, value, domain, display }: { period: Period; kind: PeriodKind; value: string; domain: string | null; display: Display }) {
   const { language, t } = useLanguage()
   if (period.edition_count === 0) return <p className="px-1 text-muted">{t('filter.empty')}</p>
   const shown = applyDomain(period, domain)
@@ -150,6 +177,7 @@ function PeriodView({ period, kind, value, domain }: { period: Period; kind: Per
         edition={shown}
         archived={false}
         domain={domain}
+        display={display}
         period={{
           title: capitalize(formatPeriod(kind, value, language)),
           kicker: t('filter.kicker'),
@@ -164,10 +192,26 @@ function PeriodView({ period, kind, value, domain }: { period: Period; kind: Per
 }
 
 type PeriodInfo = { title: string; kicker: string; summary: string }
+/** How the reader's preferences shape the page: short cards, and the domains they follow first. */
+type Display = { brief: boolean; followed: readonly string[] }
 
-function EditionView({ edition, archived, period, domain }: { edition: Edition; archived: boolean; period?: PeriodInfo; domain: string | null }) {
+const countOf = (edition: Edition) => itemsOf(edition).length + edition.unanalyzed.length
+
+function EditionView({
+  edition,
+  archived,
+  period,
+  domain,
+  display,
+}: {
+  edition: Edition
+  archived: boolean
+  period?: PeriodInfo
+  domain: string | null
+  display: Display
+}) {
   const { enabled } = useMotionPreference()
-  const groups = useMemo(() => groupByDomain(edition, domain), [edition, domain])
+  const groups = useMemo(() => groupByDomain(edition, domain, display.followed), [edition, domain, display.followed])
   const editionId = period ? undefined : edition.id
   return (
     <m.div
@@ -183,7 +227,7 @@ function EditionView({ edition, archived, period, domain }: { edition: Edition; 
         <DomainJumpBar groups={groups} />
         {edition.unanalyzed.length > 0 && <UnanalyzedNote />}
         {groups.map((group) => (
-          <DomainSection key={group.key} group={group} editionId={editionId} />
+          <DomainSection key={group.key} group={group} editionId={editionId} brief={display.brief} />
         ))}
       </div>
       <EditionSidebar edition={edition} groups={groups} />

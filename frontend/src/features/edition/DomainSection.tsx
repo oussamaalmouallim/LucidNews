@@ -6,7 +6,7 @@ import { ItemCard } from './ItemCard'
 import { UnanalyzedList } from './Unanalyzed'
 
 /** One domain of the edition: its analyzed news as cards, then the unanalyzed ones, plain. */
-export function DomainSection({ group, editionId }: { group: DomainGroup; editionId?: string }) {
+export function DomainSection({ group, editionId, brief = false }: { group: DomainGroup; editionId?: string; brief?: boolean }) {
   const { language } = useLanguage()
   const Icon = domainIcons[group.key]
   const total = group.items.length + group.unanalyzed.length
@@ -29,7 +29,7 @@ export function DomainSection({ group, editionId }: { group: DomainGroup; editio
         <span aria-hidden className="ml-2 hidden h-px flex-1 bg-gradient-to-r from-ink/15 to-ink/0 sm:block" />
       </m.header>
       {group.items.map((item) => (
-        <ItemCard key={item.id} item={item} editionId={editionId} />
+        <ItemCard key={item.id} item={item} editionId={editionId} brief={brief} />
       ))}
       {group.unanalyzed.length > 0 && <UnanalyzedList items={group.unanalyzed} editionId={editionId} id={`domain-unanalyzed-${group.key}`} />}
     </m.section>

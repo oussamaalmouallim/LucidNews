@@ -28,6 +28,11 @@ type Call = { method: string; path: string; body: unknown }
 function mockAccountApi(replies: Record<string, [number, unknown]> = {}, account: Record<string, unknown> = {}) {
   let state = { user, sessions, can_delete: true, session_days: 30, ...account }
   let current: unknown = session
+  let prefs = {
+    preferences: { domains: [], min_importance: null, include_unconfirmed: true, detail_level: 'complete' },
+    filters: false,
+    updated_at: null as string | null,
+  }
   const calls: Call[] = []
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
     const path = new URL(String(input), 'http://localhost').pathname
@@ -43,6 +48,10 @@ function mockAccountApi(replies: Record<string, [number, unknown]> = {}, account
     if (path === '/api/auth/account/delete') {
       current = { ...session, authenticated: false, user: null }
       return reply(200, current)
+    }
+    if (path === '/api/auth/account/preferences') {
+      if (method === 'PUT') prefs = { preferences: body, filters: body.domains.length > 0, updated_at: '2026-10-17T12:00:00Z' }
+      return reply(200, prefs)
     }
     if (path.startsWith('/api/auth/account')) return reply(200, state)
     if (path.startsWith('/api/editions')) return reply(200, { editions: [] })
@@ -134,4 +143,30 @@ test('the last administrator is told why they cannot delete their account', asyn
 test('without accounts the page does not exist', async () => {
   renderAt('/account?lang=fr')
   await waitFor(() => expect(window.location.pathname).toBe('/'))
+})
+
+test('chooses the domains to follow and saves the watch', async () => {
+  const calls = mockAccountApi()
+  renderAt('/account?lang=fr', null)
+  await open()
+
+  const watch = within(await screen.findByRole('region', { name: 'Ma veille' }))
+  const save = await watch.findByRole('button', { name: 'Enregistrer ma veille' })
+  expect(save).toBeDisabled()
+
+  fireEvent.click(watch.getByRole('button', { name: /Cybersécurité/ }))
+  fireEvent.click(watch.getByRole('button', { name: /IA \/ LLM \/ Agents/ }))
+  expect(watch.getByRole('button', { name: /Cybersécurité/ })).toHaveAttribute('aria-pressed', 'true')
+  fireEvent.click(watch.getByRole('button', { name: 'Élevée' }))
+  fireEvent.click(watch.getByRole('switch', { name: 'Afficher les news non confirmées' }))
+  fireEvent.click(save)
+
+  await watch.findByRole('button', { name: 'Enregistré' })
+  // Kept in the taxonomy order, whatever the order of the clicks.
+  expect(calls.find((call) => call.path.endsWith('/preferences') && call.method === 'PUT')?.body).toEqual({
+    domains: ['ai', 'cybersecurity'],
+    min_importance: 'high',
+    include_unconfirmed: false,
+    detail_level: 'complete',
+  })
 })

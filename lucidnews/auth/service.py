@@ -27,10 +27,13 @@ from pathlib import Path
 from typing import Any, Deque, Dict, List, Mapping, Optional
 from urllib.parse import urlsplit
 
+from pydantic import ValidationError
+
 from ..models import AuthConfig
 from ..newsletter.provider import secret
 from .google import GoogleError, GoogleOAuth
 from .passwords import DUMMY_HASH, hash_password, password_problem, verify_password
+from .preferences import ReaderPreferences
 from .store import AuthDB, User
 
 
@@ -263,6 +266,16 @@ class AuthService:
             if not self.db.delete_session_by_id(user.id, session_id):
                 return _error(HTTPStatus.NOT_FOUND, "not_found", "no such session")
             return AuthResult(HTTPStatus.OK, self._account_state(user, token))
+        if route == ("GET", "/preferences"):
+            return AuthResult(HTTPStatus.OK, self._preferences_state(user))
+        if route == ("PUT", "/preferences"):
+            try:
+                preferences = ReaderPreferences.model_validate(request.body)
+            except ValidationError as exc:
+                fields = {".".join(str(p) for p in err["loc"]) or "body": err["msg"] for err in exc.errors()}
+                return _error(HTTPStatus.UNPROCESSABLE_ENTITY, "invalid_preferences", "invalid preferences", fields=fields)
+            self.db.save_preferences(user.id, preferences.model_dump_json())
+            return AuthResult(HTTPStatus.OK, self._preferences_state(user))
         if route == ("GET", "/export"):
             return AuthResult(HTTPStatus.OK, self._export(user, token))
         if route == ("POST", "/delete"):
@@ -301,6 +314,21 @@ class AuthService:
         self.db.change_password(user.id, hash_password(request.body["password"]), token)
         return AuthResult(HTTPStatus.OK, self._account_state(self.db.get(user.id) or user, token))
 
+    def preferences_of(self, user: User) -> tuple[ReaderPreferences, Optional[str]]:
+        """The reader's saved preferences (defaults before the first save) and when they were saved.
+        A stored value that no longer validates (a domain removed since) falls back to the defaults."""
+        stored = self.db.preferences(user.id)
+        if stored is None:
+            return ReaderPreferences(), None
+        try:
+            return ReaderPreferences.model_validate_json(stored[0]), stored[1]
+        except ValidationError:
+            return ReaderPreferences(), stored[1]
+
+    def _preferences_state(self, user: User) -> Dict[str, Any]:
+        preferences, updated_at = self.preferences_of(user)
+        return {"preferences": preferences.model_dump(mode="json"), "filters": preferences.filters, "updated_at": updated_at}
+
     def _export(self, user: User, token: str) -> Dict[str, Any]:
         """Everything kept about the person (loi 09-08, RGPD): never a hash, a token or the Google id."""
         dates = self.db.account_row(user.id) or {}
@@ -320,6 +348,7 @@ class AuthService:
                 {key: session[key] for key in ("created_at", "last_seen_at", "expires_at", "device")}
                 for session in self.db.list_sessions(user.id)
             ],
+            "preferences": self._preferences_state(user),
         }
 
     def _delete(self, request: AuthRequest, user: User) -> AuthResult:

@@ -3,7 +3,7 @@
 Ce document regroupe tous les lots : ceux qui sont **clôturés** et ceux qui
 **restent à faire**. Il complète la [roadmap](roadmap.md), qui donne les priorités.
 
-État au 17 octobre 2026. Dernier lot clôturé : lot 28 (compte en libre-service, sans e-mail).
+État au 17 octobre 2026. Dernier lot clôturé : lot 29 (préférences du lecteur et veille personnelle).
 
 **Suite du plan** : depuis l'étude de marché du 13 octobre 2026, les lots 27 à 46 sont décrits dans [Plan.md](../Plan.md), avec leurs critères mesurables. Ce fichier garde l'historique et les lots en cours.
 
@@ -52,6 +52,7 @@ Légende : ✅ clôturé · 🟡 outil livré, action humaine attendue · ⏳ pr
 - [Lot 27 — Rôles et isolation des comptes](#lot-27--rôles-et-isolation-des-comptes) ✅
 - [Lot 27 bis — Édition rangée par domaine](#lot-27-bis--édition-rangée-par-domaine) ✅
 - [Lot 28 — Compte en libre-service, sans e-mail](#lot-28--compte-en-libre-service-sans-e-mail) ✅
+- [Lot 29 — Préférences du lecteur et veille personnelle](#lot-29--préférences-du-lecteur-et-veille-personnelle) ✅
 - [Lots 27 à 46 — Plan de lancement](#lots-27-à-46--plan-de-lancement) 📋
 - [Paramètres : où ils vivent](#paramètres--où-ils-vivent-et-comment-ils-sappliquent)
 - [Blocages et décisions en attente](#blocages-et-décisions-en-attente)
@@ -640,6 +641,7 @@ Plan revu le 9 octobre 2026 pour intégrer le besoin « interface complète et g
 | ✅ | 27 — Rôles et isolation | 26 | Clôturé. |
 | ✅ | 27 bis — Édition rangée par domaine | — | Clôturé (demande du 17 octobre). |
 | ✅ | 28 — Compte en libre-service, sans e-mail | 27 | Clôturé. |
+| ✅ | 29 — Préférences du lecteur et veille personnelle | 27, 28 | Clôturé. |
 | 1 | 28 à 46 — Plan de lancement | 27 | Voir [Plan.md](../Plan.md). |
 | En parallèle | 12 — Annoter au moins 30 news | — | Action humaine ; donne les chiffres de filtrage du lot 19. |
 
@@ -782,6 +784,20 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 
 ---
 
+## Lot 29 — Préférences du lecteur et veille personnelle
+
+✅ Clôturé le 17 octobre 2026. Dernier lot de la phase A. Sans envoi d'e-mail.
+
+- **Préférences liées au compte** : domaines suivis, importance minimale, news non confirmées affichées ou non, cartes complètes ou brèves. Seuls des réglages réellement appliqués par l'interface (pas de fréquence ni de sources : elles serviront à la newsletter, lot 33). Routes `GET|PUT /api/auth/account/preferences` ; session exigée, même origine pour l'écriture ; validation champ par champ (domaine inconnu, champ en trop refusés) ; incluses dans l'export, supprimées avec le compte.
+- **Carte « Ma veille »** dans Mon compte : pastilles des 12 domaines avec leurs icônes, seuil d'importance, interrupteur des news non confirmées, cartes complètes ou brèves, « Tout suivre » pour revenir à tout.
+- **« Ma sélection » dans l'Édition** : un bandeau résume ce que garde la sélection et bascule vers toute l'édition (`?view=all`, partageable). Une news va dans le premier de ses domaines que le lecteur suit. Une news non analysée n'est gardée que si aucun seuil d'importance ni de confiance n'est fixé et que sa source couvre un domaine suivi. Sélection vide : message et accès à toute l'édition. Sans réglage : invitation « Choisir mes domaines ».
+- **Cartes brèves** : elles ne se déplient plus ; la fiche complète reste à un clic.
+- **Isolation** : aucune route ne désigne un autre compte ; la session décide (test).
+- **Vérifié** sur une copie des données avec un compte de test : invitation, réglage IA + Cybersécurité + importance élevée, édition réduite de 12 à 9 news en 2 domaines, bandeau sur téléphone (375 px) sans débordement.
+- **Tests** : 887 Python (7 nouveaux), 172 interface (9 nouveaux : logique de sélection, Édition, carte Ma veille).
+
+---
+
 ## Lots 27 à 46 — Plan de lancement
 
 📋 Planifiés le 13 octobre 2026 après l'étude de marché et l'audit
@@ -790,13 +806,13 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 
 | Phase | Lots | Objet |
 |---|---|---|
-| A — Finalisation fonctionnelle | 27 Rôles et isolation ✅ · 27 bis Édition par domaine ✅ · 28 Compte en libre-service ✅ · 29 Préférences et veille personnelle | Rendre l'application vendable à plusieurs clients |
+| A — Finalisation fonctionnelle | 27 Rôles et isolation ✅ · 27 bis Édition par domaine ✅ · 28 Compte en libre-service ✅ · 29 Préférences et veille personnelle ✅ | Rendre l'application vendable à plusieurs clients |
 | B — Tests et sécurité | 30 Sécurité applicative · 31 Bout en bout et CI · 12 bis Preuve de qualité | Livrer sans régression, prouver la fiabilité |
 | C — Préparation de la production | 32 Exécution serveur · 33 E-mail en production · 34 Données · 35 Observabilité et coûts · 36 Conformité | Tourner seul, sans perte, légalement |
 | D — Hébergement et déploiement | 37 Hébergement · 38 Bêta privée | Mettre en ligne, mesurer |
 | E — Après le lancement | 39 Fil d'un événement · 40 Tendances · 41 Alertes · 42 Offres et paiement · 43 Équipes · 44 Sources personnelles · 45 Arabe · 46 PostgreSQL | Différencier et monétiser |
 
-**Lots 27, 27 bis et 28 clôturés le 17 octobre 2026. Prochain lot : 29 — Préférences du lecteur et veille personnelle.**
+**Lots 27 à 29 clôturés le 17 octobre 2026 : la phase A est terminée. Prochain lot : 30 — Sécurité applicative.**
 Décisions du 17 octobre : produit A (veille partagée, newsletter personnalisée) confirmé ;
 hébergement reporté, on finit d'abord l'application ; annotation de 100 news confirmée ;
 **ni vérification d'e-mail ni envoi d'e-mails pour le moment**.

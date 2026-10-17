@@ -157,3 +157,58 @@ def test_account_writes_from_another_site_are_refused(account) -> None:
     status, body, _ = client.request("PUT", "/api/auth/account", {"name": "Mallory"}, headers={"Origin": "https://evil.example"})
     assert (status, body["code"]) == (403, "forbidden")
     assert client.request("POST", "/api/auth/account/delete", {"current": PASSWORD}, headers={"Origin": "https://evil.example"})[0] == 403
+
+
+# Reader preferences (lot 29) ----------------------------------------------------------------
+
+
+def test_preferences_start_empty_and_are_saved_with_the_account(account) -> None:
+    _, _, client = account
+    status, body, _ = client.request("GET", "/api/auth/account/preferences")
+    assert status == 200 and body["updated_at"] is None and body["filters"] is False
+    assert body["preferences"] == {"domains": [], "min_importance": None, "include_unconfirmed": True, "detail_level": "complete"}
+
+    wanted = {"domains": ["ai", "cybersecurity"], "min_importance": "high", "include_unconfirmed": False, "detail_level": "brief"}
+    status, body, _ = client.request("PUT", "/api/auth/account/preferences", wanted)
+    assert status == 200 and body["preferences"] == wanted and body["filters"] is True and body["updated_at"]
+    assert client.request("GET", "/api/auth/account/preferences")[1]["preferences"] == wanted
+
+
+@pytest.mark.parametrize(
+    "body,field",
+    [({"domains": ["not-a-domain"]}, "domains"), ({"min_importance": "huge"}, "min_importance"), ({"frequency": "daily"}, "frequency")],
+)
+def test_invalid_preferences_are_refused_field_by_field(account, body, field) -> None:
+    _, _, client = account
+    status, answer, _ = client.request("PUT", "/api/auth/account/preferences", body)
+    assert (status, answer["code"]) == (422, "invalid_preferences") and field in answer["fields"]
+    assert client.request("GET", "/api/auth/account/preferences")[1]["updated_at"] is None
+
+
+def test_a_reader_never_sees_or_changes_another_readers_preferences(account) -> None:
+    _, server, client = account
+    owner = browser(server, email="owner@example.com")
+    assert owner.request("PUT", "/api/auth/account/preferences", {"domains": ["cloud"]})[0] == 200
+    assert client.request("PUT", "/api/auth/account/preferences", {"domains": ["ai"]})[0] == 200
+
+    assert owner.request("GET", "/api/auth/account/preferences")[1]["preferences"]["domains"] == ["cloud"]
+    assert client.request("GET", "/api/auth/account/preferences")[1]["preferences"]["domains"] == ["ai"]
+    # There is no route that names another account: the session decides whose preferences these are.
+    assert client.request("GET", "/api/auth/account/preferences?user=owner")[1]["preferences"]["domains"] == ["ai"]
+
+
+def test_preferences_need_a_session_and_the_same_origin(account) -> None:
+    _, server, client = account
+    assert Client(server).request("GET", "/api/auth/account/preferences")[1]["code"] == "unauthenticated"
+    status, body, _ = client.request("PUT", "/api/auth/account/preferences", {"domains": ["ai"]}, headers={"Origin": "https://evil.example"})
+    assert (status, body["code"]) == (403, "forbidden")
+
+
+def test_preferences_are_exported_and_deleted_with_the_account(account) -> None:
+    ctx, _, client = account
+    client.request("PUT", "/api/auth/account/preferences", {"domains": ["data"]})
+    assert client.request("GET", "/api/auth/account/export")[1]["preferences"]["preferences"]["domains"] == ["data"]
+
+    user_id = ctx.auth.db.by_email("reader@example.com")[0].id
+    assert client.request("POST", "/api/auth/account/delete", {"current": PASSWORD})[0] == 200
+    assert ctx.auth.db.preferences(user_id) is None

@@ -913,6 +913,34 @@ export function closeOtherSessions(): Promise<Account> {
   return request(`${ACCOUNT}/sessions/close-others`, accountSchema, { method: 'POST', body: JSON.stringify({}) })
 }
 
+export const readerPreferencesSchema = z.object({
+  /** Domains followed; empty: every domain. */
+  domains: z.array(z.string()),
+  /** Hide news below this importance; null: every importance. */
+  min_importance: z.enum(importanceLevels).nullable(),
+  /** False: only Confirmed and Reliable news, nothing unanalyzed. */
+  include_unconfirmed: z.boolean(),
+  /** brief: cards do not unfold (the full page stays a click away). */
+  detail_level: z.enum(['brief', 'complete']),
+})
+export type ReaderPreferences = z.infer<typeof readerPreferencesSchema>
+
+const preferencesStateSchema = z.object({
+  preferences: readerPreferencesSchema,
+  /** True when "My selection" differs from the whole edition. */
+  filters: z.boolean(),
+  updated_at: z.string().nullable(),
+})
+export type PreferencesState = z.infer<typeof preferencesStateSchema>
+
+export function fetchReaderPreferences(signal?: AbortSignal): Promise<PreferencesState> {
+  return getJson(`${ACCOUNT}/preferences`, preferencesStateSchema, signal)
+}
+
+export function saveReaderPreferences(preferences: ReaderPreferences): Promise<PreferencesState> {
+  return request(`${ACCOUNT}/preferences`, preferencesStateSchema, { method: 'PUT', body: JSON.stringify(preferences) })
+}
+
 /** Everything kept about the person, as a JSON document to save. */
 export function exportAccount(): Promise<unknown> {
   return request(`${ACCOUNT}/export`, z.unknown())

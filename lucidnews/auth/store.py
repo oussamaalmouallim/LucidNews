@@ -40,6 +40,11 @@ CREATE TABLE IF NOT EXISTS sessions (
     device TEXT
 );
 CREATE INDEX IF NOT EXISTS sessions_by_user ON sessions (user_id);
+CREATE TABLE IF NOT EXISTS reader_preferences (
+    user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    data TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
 """
 # A session in use is extended at most this often (a write per request would be wasteful).
 REFRESH_AFTER = timedelta(hours=12)
@@ -288,6 +293,24 @@ class AuthDB:
         with closing(self._connect()) as conn:
             row = conn.execute("SELECT created_at, last_login_at FROM users WHERE id = ?", (user_id,)).fetchone()
         return dict(row) if row else None
+
+    # Reader preferences (lot 29) --------------------------------------------------------------
+
+    def preferences(self, user_id: str) -> Optional[tuple[str, str]]:
+        """The stored JSON and when it was saved; None before the first save."""
+        with closing(self._connect()) as conn:
+            row = conn.execute("SELECT data, updated_at FROM reader_preferences WHERE user_id = ?", (user_id,)).fetchone()
+        return (row["data"], row["updated_at"]) if row else None
+
+    def save_preferences(self, user_id: str, data: str) -> str:
+        now = _iso(_now())
+        with self._lock, closing(self._connect()) as conn, conn:
+            conn.execute(
+                "INSERT INTO reader_preferences (user_id, data, updated_at) VALUES (?, ?, ?)"
+                " ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at",
+                (user_id, data, now),
+            )
+        return now
 
     @staticmethod
     def session_id(token: str) -> str:

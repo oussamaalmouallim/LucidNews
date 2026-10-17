@@ -33,7 +33,7 @@ ce qui reste à faire, dans l'ordre, avec des critères mesurables.
 | Données | 🟡 SQLite × 3 | Ni WAL, ni sauvegarde automatique |
 | Observabilité | ❌ | Ni suivi d'erreurs ni disponibilité |
 | Conformité | ❌ | Ni confidentialité, ni CGU, ni CNDP |
-| Tests | ✅ 880 Python, 163 interface | Ni bout en bout ni intégration continue |
+| Tests | ✅ 887 Python, 172 interface | Ni bout en bout ni intégration continue |
 
 ## Phase A — Finalisation fonctionnelle
 
@@ -75,7 +75,7 @@ Revu le 17 octobre 2026 : **ni vérification d'e-mail ni envoi d'e-mails pour le
 - **Dépend de** : lot 27 ✅.
 - **Reporté au lot 33** : vérification de l'adresse et mot de passe oublié par e-mail.
 
-### Lot 29 — Préférences du lecteur et veille personnelle · **prochain lot**
+### Lot 29 — Préférences du lecteur et veille personnelle · ✅ clôturé le 17 octobre 2026
 
 Revu le 17 octobre 2026 (pas d'envoi d'e-mails pour le moment) :
 
@@ -91,7 +91,7 @@ Revu le 17 octobre 2026 (pas d'envoi d'e-mails pour le moment) :
 
 ## Phase B — Tests et sécurité
 
-### Lot 30 — Sécurité applicative
+### Lot 30 — Sécurité applicative · **prochain lot**
 
 - Liste OWASP ASVS niveau 1, en-têtes de sécurité et CSP sur l'interface servie, limitation de
   débit sur l'API, audit des dépendances (`pip-audit`, `npm audit`), modèle de menaces écrit.

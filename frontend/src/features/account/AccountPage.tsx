@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, Download, KeyRound, LoaderCircle, LogOut, Monitor, ShieldAlert, Smartphone, Trash2, UserRound, type LucideIcon } from 'lucide-react'
+import { Check, Download, KeyRound, LoaderCircle, LogOut, Monitor, ShieldAlert, Smartphone, Trash2, UserRound } from 'lucide-react'
 import { AlertDialog } from 'radix-ui'
-import { useState, type FormEvent, type ReactNode } from 'react'
-import { Navigate } from 'react-router'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { Navigate, useLocation } from 'react-router'
 import { Avatar } from '../../app/UserMenu'
 import { Field, ghostButton, inputClass, primaryButton } from '../../design/Field'
 import { ApiErrorCard, PageHeader, PageSkeleton } from '../../design/PageState'
@@ -22,6 +22,8 @@ import { useAuth } from '../../lib/auth'
 import { formatItemTime, formatShortDate } from '../../lib/format'
 import { useLanguage, type MessageKey } from '../../lib/i18n'
 import { MAX_PASSWORD, MIN_PASSWORD, StrengthMeter } from '../auth/strength'
+import { Card } from './Card'
+import { WatchCard } from './WatchCard'
 
 const ACCOUNT_KEY = ['account']
 
@@ -39,6 +41,12 @@ export function AccountPage() {
   const { t } = useLanguage()
   const auth = useAuth()
   const account = useQuery({ queryKey: ACCOUNT_KEY, queryFn: ({ signal }) => fetchAccount(signal), enabled: Boolean(auth.session?.user) })
+  const { hash } = useLocation()
+  const loaded = Boolean(account.data)
+  // Arriving from the Edition's "Adjust" link: bring the card it names into view once drawn.
+  useEffect(() => {
+    if (loaded && hash) document.getElementById(hash.slice(1))?.scrollIntoView({ block: 'start' })
+  }, [loaded, hash])
 
   if (!auth.session?.enabled) return <Navigate to="/" replace />
   if (account.isError) return <ApiErrorCard error={account.error} onRetry={() => account.refetch()} />
@@ -48,44 +56,11 @@ export function AccountPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader title={t('account.title')} subtitle={t('account.subtitle')} />
       <ProfileCard account={account.data} />
+      <WatchCard />
       <PasswordCard account={account.data} />
       <SessionsCard account={account.data} />
       <DataCard account={account.data} />
     </div>
-  )
-}
-
-function Card({
-  icon: Icon,
-  title,
-  aside,
-  tone = 'accent',
-  children,
-}: {
-  icon: LucideIcon
-  title: string
-  aside?: ReactNode
-  tone?: 'accent' | 'danger'
-  children: ReactNode
-}) {
-  const headingId = `account-${title.toLowerCase().replace(/\W+/g, '-')}`
-  return (
-    <section aria-labelledby={headingId} className="rounded-card bg-surface p-6 shadow-card ring-1 ring-ink/[0.03] sm:p-8">
-      <header className="mb-5 flex flex-wrap items-center gap-3">
-        <span
-          className={`grid h-10 w-10 shrink-0 place-items-center rounded-[13px] ring-1 ring-inset ${
-            tone === 'danger' ? 'bg-rumor/10 text-rumor ring-rumor/15' : 'bg-accent-soft text-accent ring-accent/10'
-          }`}
-        >
-          <Icon size={19} aria-hidden />
-        </span>
-        <h2 id={headingId} className="flex-1 text-[18px] font-bold tracking-[-0.01em]">
-          {title}
-        </h2>
-        {aside}
-      </header>
-      {children}
-    </section>
   )
 }
 
