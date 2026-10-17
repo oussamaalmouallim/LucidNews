@@ -32,6 +32,8 @@ const itemSchema = z.object({
   translated: z.boolean(),
   /** Not analyzed: the AI quota ran out. Original headline, no AI content. */
   ai_skipped: z.boolean().default(false),
+  /** Unanalyzed items only: the usual domain of their source (not an analysis of the news). */
+  source_domain: z.string().nullable().optional(),
 })
 
 /** The 12 domains (taxonomy categories), in the order the digest uses. */

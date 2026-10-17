@@ -396,6 +396,25 @@ def test_edition_keeps_unanalyzed_items_out_of_the_sections(tmp_path) -> None:
     assert (payload["ai_limit"], payload["tokens_used"], payload["ai_skipped_count"]) == ("token_budget", 50, 2)
 
 
+def test_unanalyzed_items_carry_the_usual_domain_of_their_source(tmp_path) -> None:
+    """The edition groups news by domain: an unanalyzed one goes under its source's domain, if known."""
+    from lucidnews.source_catalog import CatalogEntry
+
+    archive = ItemArchive(tmp_path / "archive.sqlite3")
+    run_id = archive.start_run(NOW - timedelta(hours=24))
+    known, unknown = skipped(make_item("known")), skipped(make_item("unknown", hours_ago=2))
+    known.metadata["source_key"], unknown.metadata["source_key"] = "rss:ai-blog", "rss:elsewhere"
+    archive.record_items(run_id, [known, unknown], selected=True)
+    archive.finish_run(run_id, "success", ai_limit="disabled")
+    catalog = [CatalogEntry("rss:ai-blog", "rss", "AI blog", "ai", {}, None, "example")]
+    ctx = ApiContext(archive=archive, catalog=catalog)
+
+    payload = edition_payload(ctx, archive.get_run(run_id), "en")
+
+    assert {item["id"]: item["source_domain"] for item in payload["unanalyzed"]} == {"known": "ai", "unknown": None}
+    assert edition_payload(ctx, archive.get_run(run_id), "en")["unanalyzed"] == payload["unanalyzed"]  # cached
+
+
 def test_an_unanalyzed_item_has_its_own_page(tmp_path) -> None:
     archive = ItemArchive(tmp_path / "archive.sqlite3")
     run_id = archive.start_run(NOW - timedelta(hours=24))

@@ -6,7 +6,8 @@ Endpoints (JSON, GET only):
 - ``/api/editions/period?since=&until=&lang=``: the news of every edition started in a period
   (ISO instants), deduplicated, best 100 listed.
 - ``/api/editions/latest?lang=fr``: the latest edition in one language.
-- ``/api/editions/<run_id>?lang=fr``: one edition.
+- ``/api/editions/<run_id>?lang=fr``: one edition. Each unanalyzed item carries
+  ``source_domain``: the usual domain of its source, so the web app can file it by domain.
 - ``/api/items/<item_id>?lang=fr``: one item with its reliability details and editions.
 - ``/api/sources?days=14``: source health (configured sources) and per-run volumes.
 - ``/api/coverage?days=14``: coverage of the 12 categories by the sources (archive).
@@ -136,6 +137,8 @@ class ApiContext:
     # Source quality as the pipeline computes it (current registry, same window).
     reliability_policy: Optional[ReliabilityPolicy] = None
     source_quality_days: int = DEFAULT_DAYS
+    # Domain of each source for unanalyzed items, computed once per new run: (run id, domains).
+    source_domain_cache: tuple = (None, {})
     # Settings, API keys and sources (local only, like subscribers).
     settings: Optional[SettingsService] = None
     sources: Optional[SourcesService] = None
@@ -237,6 +240,29 @@ def list_editions(ctx: ApiContext, limit: int = 30) -> Dict[str, Any]:
     return {"editions": [run_payload(run) for run in runs[:limit]]}
 
 
+SOURCE_DOMAIN_DAYS = 90
+
+
+def _source_domain_of(ctx: ApiContext, items: List[ContentItem]) -> Dict[str, Optional[str]]:
+    """The usual domain of each item's source (AI history of the source, else the catalog).
+
+    Used to place news the AI did not analyze in a domain section. It describes the source, not
+    the news: the interface says so."""
+    if not items:
+        return {}
+    latest = ctx.archive.list_runs(limit=1)
+    marker = latest[0].id if latest else None
+    cached_marker, domains = ctx.source_domain_cache
+    keys = {item_source_key(item) for item in items}
+    if cached_marker != marker or not keys <= domains.keys():
+        if cached_marker != marker:
+            domains = {}
+        history = ctx.archive.items_between(datetime.now(timezone.utc) - timedelta(days=SOURCE_DOMAIN_DAYS))
+        domains = {**domains, **{key: value["category"] for key, value in source_domains(history, ctx.catalog, keys).items()}}
+        ctx.source_domain_cache = (marker, domains)
+    return {item.id: domains.get(item_source_key(item)) for item in items}
+
+
 def _sections_payload(ctx: ApiContext, selected: List[ContentItem], language: str) -> Dict[str, Any]:
     """Sections and unanalyzed items of an edition, or of a period."""
     items = [item for item in selected if not (item.processing and item.processing.ai_skipped)]
@@ -270,6 +296,7 @@ def _sections_payload(ctx: ApiContext, selected: List[ContentItem], language: st
     languages = sorted(
         {lang for item in items if item.processing for lang in item.processing.artifacts}
     )
+    domain_of = _source_domain_of(ctx, unanalyzed)
     return {
         "analyzed_total": analyzed_total,
         "language": language,
@@ -282,7 +309,7 @@ def _sections_payload(ctx: ApiContext, selected: List[ContentItem], language: st
             }
             for profile_id, group_items in ordered
         ],
-        "unanalyzed": [item_payload(item, language) for item in unanalyzed],
+        "unanalyzed": [{**item_payload(item, language), "source_domain": domain_of[item.id]} for item in unanalyzed],
     }
 
 

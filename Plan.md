@@ -33,7 +33,7 @@ ce qui reste à faire, dans l'ordre, avec des critères mesurables.
 | Données | 🟡 SQLite × 3 | Ni WAL, ni sauvegarde automatique |
 | Observabilité | ❌ | Ni suivi d'erreurs ni disponibilité |
 | Conformité | ❌ | Ni confidentialité, ni CGU, ni CNDP |
-| Tests | ✅ 867 Python, 155 interface | Ni bout en bout ni intégration continue |
+| Tests | ✅ 868 Python, 156 interface | Ni bout en bout ni intégration continue |
 
 ## Phase A — Finalisation fonctionnelle
 
@@ -54,28 +54,39 @@ des routes lu dans le code de l'API, isolation des préférences testée, suites
   aucune régression (suites Python et interface au vert).
 - **Dépend de** : lot 26 (comptes).
 
-### Lot 28 — Cycle de vie du compte · **prochain lot**
+### Lot 27 bis — Édition rangée par domaine · ✅ clôturé le 17 octobre 2026
 
-- Vérification de l'adresse e-mail à l'inscription (lien signé, 24 h), réutilisant
-  `newsletter/tokens.py` et le service public.
-- Mot de passe oublié (lien à usage unique, 1 h), changement du mot de passe (ferme les
-  autres sessions).
+Demande du 17 octobre : une section par domaine de l'IT (IA, Développement, Cloud…), interface
+soignée. Détail : [docs/lots.md](docs/lots.md#lot-27-bis--édition-rangée-par-domaine).
+
+### Lot 28 — Compte en libre-service, sans e-mail · **prochain lot**
+
+Revu le 17 octobre 2026 : **ni vérification d'e-mail ni envoi d'e-mails pour le moment**.
+
+- Page « Mon compte » : nom, changement du mot de passe (demande l'ancien, ferme les autres
+  sessions), liste et fermeture des sessions ouvertes.
 - Suppression du compte et export des données (JSON) depuis l'application : droits des
   personnes (loi 09-08, RGPD).
-- Revoir la règle « Google remplace le mot de passe » du lot 26 : une adresse vérifiée n'a plus
-  besoin d'être reprise.
-- **Critères** : chaque parcours a un test de bout en bout ; un compte non vérifié ne reçoit
-  aucune newsletter ; un lien utilisé ou expiré est refusé (test).
-- **Dépend de** : lot 27 ✅. L'envoi réel attend le lot 33 : d'ici là, les liens passent par
-  l'envoi déjà intégré (Resend) ou, sans clé, s'affichent en local pour les tests.
+- Mot de passe oublié : sans e-mail, réinitialisation par un administrateur
+  (`lucidnews-users passwd`, déjà disponible) ; le lien par e-mail attend le lot 33.
+- **Critères** : chaque parcours a un test ; un mot de passe changé ferme les autres sessions
+  (test) ; un compte supprimé ne peut plus se connecter et ses sessions disparaissent (test) ;
+  l'export ne contient jamais de hachage de mot de passe ni de jeton (test).
+- **Dépend de** : lot 27 ✅.
+- **Reporté au lot 33** : vérification de l'adresse et mot de passe oublié par e-mail.
 
-### Lot 29 — Newsletter en libre-service
+### Lot 29 — Préférences du lecteur et veille personnelle
 
-- Le lecteur s'abonne depuis son compte et règle domaines, fréquence, niveau de détail et
-  langue. Un abonné = un compte vérifié (l'écran Abonnés devient un outil d'administration).
-- Historique des newsletters reçues (le contenu envoyé est conservé).
-- **Critères** : parcours complet testé (inscription → vérification → préférences → aperçu →
-  envoi de test) ; le désabonnement en un clic reste fonctionnel.
+Revu le 17 octobre 2026 (pas d'envoi d'e-mails pour le moment) :
+
+- Le lecteur règle, depuis son compte, ses domaines, son niveau de détail, sa langue et s'il
+  veut voir les news non confirmées. Les préférences sont liées au compte (l'écran Abonnés reste
+  l'outil de l'administrateur).
+- L'Édition propose « Ma sélection » : l'édition du jour filtrée par ses préférences, rangée par
+  domaine comme le reste.
+- L'envoi par e-mail de cette sélection (newsletter) attend le lot 33.
+- **Critères** : parcours testé (connexion → préférences → Ma sélection) ; un lecteur ne lit ni ne
+  modifie les préférences d'un autre (test) ; sans préférence, l'édition complète s'affiche.
 - **Dépend de** : lots 27 et 28.
 
 ## Phase B — Tests et sécurité
@@ -110,7 +121,9 @@ des routes lu dans le code de l'API, isolation des préférences testée, suites
 - **Critères** : un serveur vierge démarre tout avec une commande ; un run planifié se
   déclenche à l'heure et apparaît dans l'historique ; redémarrage sans perte.
 
-### Lot 33 — E-mail en production
+### Lot 33 — E-mail en production · **reporté (décision du 17 octobre 2026)**
+
+Reprend aussi la vérification de l'adresse et le mot de passe oublié par e-mail (retirés du lot 28).
 
 - Domaine d'envoi authentifié (SPF, DKIM, DMARC), adresse postale de l'expéditeur dans le
   pied de page, webhooks Resend : rebonds et plaintes désinscrivent automatiquement.
@@ -181,8 +194,8 @@ Dans l'ordre proposé. Chacun reste à confirmer par les résultats de la bêta.
 
 ```
 27 Rôles ──► 28 Compte ──► 29 Newsletter libre-service
-   │            │
-   │            └──► 33 E-mail prod (envoi réel des liens)
+   │
+   │            33 E-mail prod (reporté : vérification, mot de passe oublié, envoi réel)
    └──► 30 Sécurité ──► 31 E2E + CI
 32 Exécution serveur ──► 34 Données ──► 37 Hébergement ──► 38 Bêta ──► Phase E
 35 Observabilité, 36 Conformité ──► 38 Bêta
@@ -198,6 +211,6 @@ Dans l'ordre proposé. Chacun reste à confirmer par les résultats de la bêta.
 | Hébergement | **Reporté le 17/10** : finir l'application d'abord. Piste retenue pour plus tard : VPS + Docker Compose + Caddy | Coût fixe et plafonné ; un PaaS coûte environ 2 fois plus avec une facture à l'usage |
 | Preuve de qualité | ✅ **Décidé le 17/10** : annoter 100 news (action humaine, écran Qualité) | La fiabilité est l'argument de vente ; elle doit être mesurée avant d'être vendue |
 | E-mail | Resend (déjà intégré) | Gratuit jusqu'à 3 000 e-mails par mois, 20 $ pour 50 000 |
-| Vérification de l'e-mail | La réintroduire (lot 28) | Un SaaS ne peut pas envoyer à des adresses non prouvées ; débloque le mot de passe oublié |
+| Vérification de l'e-mail | **Reportée le 17/10** : ni vérification ni envoi d'e-mails pour le moment ; à reprendre au lot 33 | Un SaaS ne peut pas envoyer à des adresses non prouvées : à trancher avant tout envoi réel de newsletter |
 | Paiement | Reporté (lot 42) | Stripe indisponible pour une société marocaine, CMI sans paiement récurrent (sources secondaires) ; pilotes B2B par virement d'abord |
 | Langues | FR + EN au lancement, arabe à tester | Aucune preuve de demande d'arabe pour un public tech |

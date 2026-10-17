@@ -6,12 +6,13 @@ import { ApiErrorCard } from '../../design/PageState'
 import { domainCategories, fetchAllEditions, fetchEdition, fetchPeriod, type Edition, type Period } from '../../lib/api'
 import { capitalize, formatPeriod, periodBounds, type PeriodKind } from '../../lib/format'
 import { translatePlural, useLanguage } from '../../lib/i18n'
-import { listStagger, riseIn, useMotionPreference } from '../../lib/motion'
+import { listStagger, useMotionPreference } from '../../lib/motion'
 import { EditionHero } from './EditionHero'
 import { EditionSidebar } from './EditionSidebar'
-import { ItemCard } from './ItemCard'
 import { PeriodFilter, type DomainOption, type PeriodChoice } from './PeriodFilter'
-import { UnanalyzedSection } from './UnanalyzedSection'
+import { DomainJumpBar, DomainSection } from './DomainSection'
+import { groupByDomain } from './domains'
+import { UnanalyzedNote } from './Unanalyzed'
 
 const PERIOD_PARAMS: PeriodKind[] = ['day', 'month', 'year']
 
@@ -33,16 +34,17 @@ function domainFromParams(params: URLSearchParams): string | null {
 const itemsOf = (edition: Edition) => edition.sections.flatMap((section) => section.items)
 
 /**
- * Only the news the AI placed in ``domain``. News without AI analysis have no domain, so they
- * are left out while a domain is selected. Sections left empty disappear.
+ * Only the news of ``domain``: the analyzed ones the AI placed in it (main domain or not), and
+ * the unanalyzed ones whose source usually covers it. Sections left empty disappear.
  */
 function applyDomain<T extends Edition>(edition: T, domain: string | null): T {
   if (!domain) return edition
   const sections = edition.sections
     .map((section) => ({ ...section, items: section.items.filter((item) => item.categories.includes(domain)) }))
     .filter((section) => section.items.length > 0)
-  const count = sections.reduce((total, section) => total + section.items.length, 0)
-  return { ...edition, sections, unanalyzed: [], selected_count: count }
+  const unanalyzed = edition.unanalyzed.filter((item) => item.source_domain === domain)
+  const count = sections.reduce((total, section) => total + section.items.length, 0) + unanalyzed.length
+  return { ...edition, sections, unanalyzed, selected_count: count }
 }
 
 export function EditionPage() {
@@ -92,7 +94,11 @@ export function EditionPage() {
   // Domains with their number of news in what is on screen (before the domain filter).
   const domainOptions: DomainOption[] = useMemo(() => {
     const items = data ? itemsOf(data) : []
-    return domainCategories.map((category) => ({ category, count: items.filter((item) => item.categories.includes(category)).length }))
+    const unanalyzed = data?.unanalyzed ?? []
+    return domainCategories.map((category) => ({
+      category,
+      count: items.filter((item) => item.categories.includes(category)).length + unanalyzed.filter((item) => item.source_domain === category).length,
+    }))
   }, [data])
 
   const filter =
@@ -109,7 +115,7 @@ export function EditionPage() {
   else
     content = (
       <DomainNote edition={data} domain={domain}>
-        <EditionView key={data.id} edition={applyDomain(data, domain)} archived={editionId !== 'latest'} />
+        <EditionView key={data.id} edition={applyDomain(data, domain)} archived={editionId !== 'latest'} domain={domain} />
       </DomainNote>
     )
 
@@ -125,7 +131,7 @@ export function EditionPage() {
 function DomainNote({ edition, domain, children }: { edition: Edition; domain: string | null; children: ReactNode }) {
   const { t } = useLanguage()
   if (!domain) return <>{children}</>
-  const empty = itemsOf(edition).every((item) => !item.categories.includes(domain))
+  const empty = itemsOf(edition).every((item) => !item.categories.includes(domain)) && edition.unanalyzed.every((item) => item.source_domain !== domain)
   return (
     <>
       {edition.unanalyzed.length > 0 && <p className="px-1 text-[13.5px] text-muted">{t('filter.domainNote')}</p>}
@@ -143,6 +149,7 @@ function PeriodView({ period, kind, value, domain }: { period: Period; kind: Per
       <EditionView
         edition={shown}
         archived={false}
+        domain={domain}
         period={{
           title: capitalize(formatPeriod(kind, value, language)),
           kicker: t('filter.kicker'),
@@ -158,8 +165,10 @@ function PeriodView({ period, kind, value, domain }: { period: Period; kind: Per
 
 type PeriodInfo = { title: string; kicker: string; summary: string }
 
-function EditionView({ edition, archived, period }: { edition: Edition; archived: boolean; period?: PeriodInfo }) {
+function EditionView({ edition, archived, period, domain }: { edition: Edition; archived: boolean; period?: PeriodInfo; domain: string | null }) {
   const { enabled } = useMotionPreference()
+  const groups = useMemo(() => groupByDomain(edition, domain), [edition, domain])
+  const editionId = period ? undefined : edition.id
   return (
     <m.div
       variants={listStagger}
@@ -169,33 +178,15 @@ function EditionView({ edition, archived, period }: { edition: Edition; archived
       className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-8"
     >
       <div className="min-w-0 space-y-6">
-        <EditionHero edition={edition} archived={archived} title={period?.title} kicker={period?.kicker} />
+        <EditionHero edition={edition} archived={archived} title={period?.title} kicker={period?.kicker} domains={groups.length} />
         {period && <p className="px-1 text-[14px] text-muted">{period.summary}</p>}
-        {edition.sections.map((section) => (
-          <m.section
-            key={section.profile}
-            variants={listStagger}
-            id={`section-${section.profile}`}
-            aria-labelledby={`heading-${section.profile}`}
-            className="scroll-mt-28 space-y-4"
-          >
-            <m.h2
-              variants={riseIn}
-              id={`heading-${section.profile}`}
-              className="flex items-center gap-3 px-1 pt-4 text-[13px] font-bold uppercase tracking-[0.1em] text-muted"
-            >
-              {section.name}
-              <span className="h-px flex-1 bg-ink/10" />
-              <span className="tabular-nums text-faint">{section.items.length}</span>
-            </m.h2>
-            {section.items.map((item) => (
-              <ItemCard key={item.id} item={item} editionId={period ? undefined : edition.id} />
-            ))}
-          </m.section>
+        <DomainJumpBar groups={groups} />
+        {edition.unanalyzed.length > 0 && <UnanalyzedNote />}
+        {groups.map((group) => (
+          <DomainSection key={group.key} group={group} editionId={editionId} />
         ))}
-        {edition.unanalyzed.length > 0 && <UnanalyzedSection items={edition.unanalyzed} editionId={period ? undefined : edition.id} />}
       </div>
-      <EditionSidebar edition={edition} />
+      <EditionSidebar edition={edition} groups={groups} />
     </m.div>
   )
 }

@@ -3,7 +3,7 @@
 Ce document regroupe tous les lots : ceux qui sont **clôturés** et ceux qui
 **restent à faire**. Il complète la [roadmap](roadmap.md), qui donne les priorités.
 
-État au 17 octobre 2026. Dernier lot clôturé : lot 27 (rôles et isolation des comptes).
+État au 17 octobre 2026. Dernier lot clôturé : lot 27 bis (Édition rangée par domaine).
 
 **Suite du plan** : depuis l'étude de marché du 13 octobre 2026, les lots 27 à 46 sont décrits dans [Plan.md](../Plan.md), avec leurs critères mesurables. Ce fichier garde l'historique et les lots en cours.
 
@@ -50,6 +50,7 @@ Légende : ✅ clôturé · 🟡 outil livré, action humaine attendue · ⏳ pr
 - [Lot 25 bis — IA facultative et clés hors de l'interface](#lot-25-bis--ia-facultative-et-clés-hors-de-linterface) ✅
 - [Lot 26 — Comptes et SaaS (phase 4)](#lot-26--comptes-et-saas-phase-4) 🟡
 - [Lot 27 — Rôles et isolation des comptes](#lot-27--rôles-et-isolation-des-comptes) ✅
+- [Lot 27 bis — Édition rangée par domaine](#lot-27-bis--édition-rangée-par-domaine) ✅
 - [Lots 27 à 46 — Plan de lancement](#lots-27-à-46--plan-de-lancement) 📋
 - [Paramètres : où ils vivent](#paramètres--où-ils-vivent-et-comment-ils-sappliquent)
 - [Blocages et décisions en attente](#blocages-et-décisions-en-attente)
@@ -636,6 +637,7 @@ Plan revu le 9 octobre 2026 pour intégrer le besoin « interface complète et g
 | ✅ | 25 bis — IA facultative | — | Clôturé. |
 | 🟡 | 26 — Comptes et SaaS | 22, 25 | Authentification faite ; rôles → lot 27, offres et paiement → lot 42. |
 | ✅ | 27 — Rôles et isolation | 26 | Clôturé. |
+| ✅ | 27 bis — Édition rangée par domaine | — | Clôturé (demande du 17 octobre). |
 | 1 | 28 à 46 — Plan de lancement | 27 | Voir [Plan.md](../Plan.md). |
 | En parallèle | 12 — Annoter au moins 30 news | — | Action humaine ; donne les chiffres de filtrage du lot 19. |
 
@@ -747,6 +749,21 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 
 ---
 
+## Lot 27 bis — Édition rangée par domaine
+
+✅ Clôturé le 17 octobre 2026 (demande explicite : séparer l'Édition par sous-domaine de l'IT, avec une interface soignée).
+
+- **Une section par domaine** (les 12 domaines de la taxonomie : IA, Développement logiciel, Cloud, DevOps, Data, Cybersécurité, Web, Open source, Outils développeurs, Bases de données, Infrastructure, Technologies émergentes), dans cet ordre fixe ; les domaines vides n'apparaissent pas. Remplace le rangement par profil de collecte (Actualités tech, Blogs, Radar créateurs IA), qui décrivait la source et non le sujet.
+- **Chaque news une seule fois**, dans son domaine principal : le premier que l'IA lui donne (la consigne d'analyse les classe du plus pertinent au moins pertinent). Ses autres domaines restent visibles en étiquettes sur la carte. Dans une section, meilleur score d'abord.
+- **News sans analyse IA** (IA désactivée ou quota épuisé) : rangées d'après le domaine habituel de leur source (historique des analyses de la source, sinon le catalogue), en liste sobre sous « Sans analyse IA · classées d'après leur source ». Une source sans domaine connu va dans « Autres sujets ». L'explication « ni résumé, ni score, ni vérification » est donnée une fois par édition.
+- **Filtre par domaine** : il garde aussi les news sans analyse dont la source couvre ce domaine (avant, elles étaient masquées) ; tout ce qui reste s'affiche dans la section du domaine choisi.
+- **Interface** : en-tête de section avec icône du domaine, nombre de news et nombre de confirmées ; sommaire latéral par domaine avec icônes (grand écran) ; barre de raccourcis « Aller à un domaine » sous l'en-tête de l'édition (téléphone et tablette) ; le compteur « rubriques » de l'en-tête devient « domaines ».
+- **API** : chaque news non analysée d'une édition porte `source_domain` (calcul mis en cache jusqu'au run suivant).
+- **Vérifié** sur une copie des données réelles (édition du 17 octobre, 12 news : IA 8, Développement logiciel 1, Cybersécurité 1, Infrastructure 2), en clair et en sombre, à 1440 px et 375 px, sans débordement horizontal. **Pas vérifié sur données réelles** : le classement des news sans analyse (aucune édition de l'archive n'en contient aujourd'hui ; les news du run sans IA ont été analysées au run suivant). Il est couvert par les tests.
+- **Tests** : 868 Python (1 nouveau), 156 interface (tests de l'Édition réécrits, 1 nouveau).
+
+---
+
 ## Lots 27 à 46 — Plan de lancement
 
 📋 Planifiés le 13 octobre 2026 après l'étude de marché et l'audit
@@ -755,15 +772,16 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 
 | Phase | Lots | Objet |
 |---|---|---|
-| A — Finalisation fonctionnelle | 27 Rôles et isolation · 28 Cycle de vie du compte · 29 Newsletter en libre-service | Rendre l'application vendable à plusieurs clients |
+| A — Finalisation fonctionnelle | 27 Rôles et isolation ✅ · 27 bis Édition par domaine ✅ · 28 Compte en libre-service · 29 Préférences et veille personnelle | Rendre l'application vendable à plusieurs clients |
 | B — Tests et sécurité | 30 Sécurité applicative · 31 Bout en bout et CI · 12 bis Preuve de qualité | Livrer sans régression, prouver la fiabilité |
 | C — Préparation de la production | 32 Exécution serveur · 33 E-mail en production · 34 Données · 35 Observabilité et coûts · 36 Conformité | Tourner seul, sans perte, légalement |
 | D — Hébergement et déploiement | 37 Hébergement · 38 Bêta privée | Mettre en ligne, mesurer |
 | E — Après le lancement | 39 Fil d'un événement · 40 Tendances · 41 Alertes · 42 Offres et paiement · 43 Équipes · 44 Sources personnelles · 45 Arabe · 46 PostgreSQL | Différencier et monétiser |
 
-**Lot 27 clôturé le 17 octobre 2026. Prochain lot : 28 — Cycle de vie du compte.**
+**Lots 27 et 27 bis clôturés le 17 octobre 2026. Prochain lot : 28 — Compte en libre-service (sans e-mail).**
 Décisions du 17 octobre : produit A (veille partagée, newsletter personnalisée) confirmé ;
-hébergement reporté, on finit d'abord l'application ; annotation de 100 news confirmée.
+hébergement reporté, on finit d'abord l'application ; annotation de 100 news confirmée ;
+**ni vérification d'e-mail ni envoi d'e-mails pour le moment**.
 
 ## Paramètres : où ils vivent et comment ils s'appliquent
 

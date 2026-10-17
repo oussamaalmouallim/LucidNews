@@ -2,11 +2,12 @@ import { m } from 'motion/react'
 import { reliabilityStyles } from '../../design/ReliabilityBadge'
 import { reliabilityLabels, type Edition } from '../../lib/api'
 import { labelHintKey, labelKey, useLanguage } from '../../lib/i18n'
+import { domainIcons, domainTitle, type DomainGroup } from './domains'
 import { riseIn, useMotionPreference } from '../../lib/motion'
 
-/** Floating side column: section index and the edition's reliability breakdown. */
-export function EditionSidebar({ edition }: { edition: Edition }) {
-  const { t } = useLanguage()
+/** Floating side column: index of the domains and the edition's reliability breakdown. */
+export function EditionSidebar({ edition, groups }: { edition: Edition; groups: DomainGroup[] }) {
+  const { language, t } = useLanguage()
   const { enabled } = useMotionPreference()
   const items = edition.sections.flatMap((section) => section.items)
   const counts = Object.fromEntries(reliabilityLabels.map((label) => [label, items.filter((item) => item.reliability?.label === label).length]))
@@ -18,32 +19,23 @@ export function EditionSidebar({ edition }: { edition: Edition }) {
           {t('edition.inThisEdition')}
         </h2>
         <ul className="mt-4 space-y-1">
-          {edition.sections.map((section) => (
-            <li key={section.profile}>
-              <a
-                href={`#section-${section.profile}`}
-                className="group flex items-center justify-between rounded-control px-3 py-2.5 text-[14px] font-medium text-ink/80 transition-colors duration-150 hover:bg-surface hover:text-ink"
-              >
-                {section.name}
-                <span className="grid h-6 min-w-6 place-items-center rounded-full bg-accent-soft px-1.5 text-[12px] font-bold text-accent tabular-nums transition-colors duration-150 group-hover:bg-accent group-hover:text-on-fill">
-                  {section.items.length}
-                </span>
-              </a>
-            </li>
-          ))}
-          {edition.unanalyzed.length > 0 && (
-            <li>
-              <a
-                href="#section-unanalyzed"
-                className="group flex items-center justify-between rounded-control px-3 py-2.5 text-[14px] font-medium text-muted transition-colors duration-150 hover:bg-surface hover:text-ink"
-              >
-                {t('unanalyzed.title')}
-                <span className="grid h-6 min-w-6 place-items-center rounded-full bg-ink/5 px-1.5 text-[12px] font-bold text-ink/60 tabular-nums">
-                  {edition.unanalyzed.length}
-                </span>
-              </a>
-            </li>
-          )}
+          {groups.map((group) => {
+            const Icon = domainIcons[group.key]
+            return (
+              <li key={group.key}>
+                <a
+                  href={`#domain-${group.key}`}
+                  className="group flex items-center gap-3 rounded-control px-3 py-2.5 text-[14px] font-medium text-ink/80 transition-colors duration-150 hover:bg-surface hover:text-ink"
+                >
+                  <Icon size={16} aria-hidden className="shrink-0 text-accent/80 transition-colors duration-150 group-hover:text-accent" />
+                  <span className="min-w-0 flex-1 truncate">{domainTitle(language, group.key)}</span>
+                  <span className="grid h-6 min-w-6 place-items-center rounded-full bg-accent-soft px-1.5 text-[12px] font-bold text-accent tabular-nums transition-colors duration-150 group-hover:bg-accent group-hover:text-on-fill">
+                    {group.items.length + group.unanalyzed.length}
+                  </span>
+                </a>
+              </li>
+            )
+          })}
         </ul>
       </nav>
 

@@ -12,6 +12,7 @@ export function EditionHero({
   archived = false,
   kicker,
   title,
+  domains,
 }: {
   edition: Edition
   archived?: boolean
@@ -19,6 +20,8 @@ export function EditionHero({
   kicker?: string
   /** Replaces the date of the edition (a period shows its range). */
   title?: string
+  /** Number of domain sections on screen. */
+  domains: number
 }) {
   const { language, t } = useLanguage()
   const unanalyzed = edition.unanalyzed.length
@@ -27,7 +30,7 @@ export function EditionHero({
     // period: the same item is collected by several editions, so the sum would overcount.
     ...(title === undefined ? [{ value: edition.fetched_count, label: t(edition.ai_limit ? 'edition.collected' : 'edition.analyzed') }] : []),
     { value: edition.selected_count - unanalyzed, label: t('edition.selected') },
-    { value: edition.sections.length, label: t('edition.sections') },
+    { value: domains, label: t('edition.domains') },
     ...(unanalyzed > 0 ? [{ value: unanalyzed, label: t('edition.unanalyzed') }] : []),
   ]
 
