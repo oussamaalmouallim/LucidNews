@@ -1,6 +1,7 @@
-import { LoaderCircle, LogOut } from 'lucide-react'
+import { LoaderCircle, LogOut, UserRound } from 'lucide-react'
 import { Popover } from 'radix-ui'
 import { useState } from 'react'
+import { Link } from 'react-router'
 import type { AuthUser } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { useLanguage } from '../lib/i18n'
@@ -23,7 +24,7 @@ export function Avatar({ user, size = 'h-9 w-9 text-[13px]' }: { user: AuthUser;
 
 /** The signed-in reader and the way out. Rendered only when accounts are on. */
 export function UserMenu() {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const auth = useAuth()
   const [open, setOpen] = useState(false)
   const [leaving, setLeaving] = useState(false)
@@ -69,11 +70,19 @@ export function UserMenu() {
               </p>
             </div>
           </div>
+          <Link
+            to={{ pathname: '/account', search: `?lang=${language}` }}
+            onClick={() => setOpen(false)}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-control bg-accent-soft px-4 py-2.5 text-[14px] font-semibold text-accent transition-all duration-150 ease-soft hover:bg-accent hover:text-on-fill"
+          >
+            <UserRound size={16} aria-hidden />
+            {t('auth.myAccount')}
+          </Link>
           <button
             type="button"
             onClick={leave}
             disabled={leaving}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-control bg-canvas px-4 py-2.5 text-[14px] font-semibold ring-1 ring-ink/10 transition-all duration-150 ease-soft hover:text-rumor hover:ring-rumor/30 disabled:opacity-60"
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-control bg-canvas px-4 py-2.5 text-[14px] font-semibold ring-1 ring-ink/10 transition-all duration-150 ease-soft hover:text-rumor hover:ring-rumor/30 disabled:opacity-60"
           >
             {leaving ? <LoaderCircle size={16} aria-hidden className="animate-spin" /> : <LogOut size={16} aria-hidden />}
             {t('auth.signOut')}

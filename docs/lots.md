@@ -3,7 +3,7 @@
 Ce document regroupe tous les lots : ceux qui sont **clôturés** et ceux qui
 **restent à faire**. Il complète la [roadmap](roadmap.md), qui donne les priorités.
 
-État au 17 octobre 2026. Dernier lot clôturé : lot 27 bis (Édition rangée par domaine).
+État au 17 octobre 2026. Dernier lot clôturé : lot 28 (compte en libre-service, sans e-mail).
 
 **Suite du plan** : depuis l'étude de marché du 13 octobre 2026, les lots 27 à 46 sont décrits dans [Plan.md](../Plan.md), avec leurs critères mesurables. Ce fichier garde l'historique et les lots en cours.
 
@@ -51,6 +51,7 @@ Légende : ✅ clôturé · 🟡 outil livré, action humaine attendue · ⏳ pr
 - [Lot 26 — Comptes et SaaS (phase 4)](#lot-26--comptes-et-saas-phase-4) 🟡
 - [Lot 27 — Rôles et isolation des comptes](#lot-27--rôles-et-isolation-des-comptes) ✅
 - [Lot 27 bis — Édition rangée par domaine](#lot-27-bis--édition-rangée-par-domaine) ✅
+- [Lot 28 — Compte en libre-service, sans e-mail](#lot-28--compte-en-libre-service-sans-e-mail) ✅
 - [Lots 27 à 46 — Plan de lancement](#lots-27-à-46--plan-de-lancement) 📋
 - [Paramètres : où ils vivent](#paramètres--où-ils-vivent-et-comment-ils-sappliquent)
 - [Blocages et décisions en attente](#blocages-et-décisions-en-attente)
@@ -638,6 +639,7 @@ Plan revu le 9 octobre 2026 pour intégrer le besoin « interface complète et g
 | 🟡 | 26 — Comptes et SaaS | 22, 25 | Authentification faite ; rôles → lot 27, offres et paiement → lot 42. |
 | ✅ | 27 — Rôles et isolation | 26 | Clôturé. |
 | ✅ | 27 bis — Édition rangée par domaine | — | Clôturé (demande du 17 octobre). |
+| ✅ | 28 — Compte en libre-service, sans e-mail | 27 | Clôturé. |
 | 1 | 28 à 46 — Plan de lancement | 27 | Voir [Plan.md](../Plan.md). |
 | En parallèle | 12 — Annoter au moins 30 news | — | Action humaine ; donne les chiffres de filtrage du lot 19. |
 
@@ -764,6 +766,22 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 
 ---
 
+## Lot 28 — Compte en libre-service, sans e-mail
+
+✅ Clôturé le 17 octobre 2026. Revu le même jour : ni vérification d'e-mail ni envoi d'e-mails.
+
+- **Page « Mon compte »** (`/account`), ouverte depuis le menu du compte, pour tous les rôles. Quatre cartes : Profil, Mot de passe, Appareils connectés, Vos données. Absente quand les comptes sont désactivés.
+- **Profil** : nom modifiable ; rôle et moyens de connexion affichés.
+- **Mot de passe** : changement avec l'ancien mot de passe (vérification limitée à 8 essais par 15 min et par compte) ; les autres sessions sont fermées, celle en cours reste. Un compte Google sans mot de passe peut en ajouter un. Mot de passe oublié : un administrateur le réinitialise (`lucidnews-users passwd`).
+- **Appareils connectés** : chaque session retient un libellé court (« Firefox · macOS »), jamais l'en-tête User-Agent brut ; on ferme une session, ou toutes sauf celle en cours. Une session est désignée par un préfixe de son empreinte, inutilisable comme cookie ; un compte ne peut pas fermer celle d'un autre.
+- **Vos données** : export JSON (profil, dates, sessions ; jamais de hachage, de jeton ni d'identifiant Google). Suppression du compte confirmée par le mot de passe, ou par la saisie de l'adresse pour un compte Google ; toutes les sessions tombent. Le dernier administrateur ne peut pas supprimer son compte.
+- **Sécurité** : toutes ces routes exigent une session ; les écritures exigent la même origine que le site.
+- **Vérifié** sur une copie des données avec deux comptes de test : page complète, deux appareils reconnus (Chrome · macOS, Chrome · Android), fermeture réelle de la session Android, affichage à 375 px sans débordement.
+- **Tests** : 880 Python (12 nouveaux dans `tests/test_account.py`), 163 interface (7 nouveaux dans `AccountPage.test.tsx`).
+- **Reporté au lot 33** : vérification de l'adresse et mot de passe oublié par e-mail.
+
+---
+
 ## Lots 27 à 46 — Plan de lancement
 
 📋 Planifiés le 13 octobre 2026 après l'étude de marché et l'audit
@@ -772,13 +790,13 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 
 | Phase | Lots | Objet |
 |---|---|---|
-| A — Finalisation fonctionnelle | 27 Rôles et isolation ✅ · 27 bis Édition par domaine ✅ · 28 Compte en libre-service · 29 Préférences et veille personnelle | Rendre l'application vendable à plusieurs clients |
+| A — Finalisation fonctionnelle | 27 Rôles et isolation ✅ · 27 bis Édition par domaine ✅ · 28 Compte en libre-service ✅ · 29 Préférences et veille personnelle | Rendre l'application vendable à plusieurs clients |
 | B — Tests et sécurité | 30 Sécurité applicative · 31 Bout en bout et CI · 12 bis Preuve de qualité | Livrer sans régression, prouver la fiabilité |
 | C — Préparation de la production | 32 Exécution serveur · 33 E-mail en production · 34 Données · 35 Observabilité et coûts · 36 Conformité | Tourner seul, sans perte, légalement |
 | D — Hébergement et déploiement | 37 Hébergement · 38 Bêta privée | Mettre en ligne, mesurer |
 | E — Après le lancement | 39 Fil d'un événement · 40 Tendances · 41 Alertes · 42 Offres et paiement · 43 Équipes · 44 Sources personnelles · 45 Arabe · 46 PostgreSQL | Différencier et monétiser |
 
-**Lots 27 et 27 bis clôturés le 17 octobre 2026. Prochain lot : 28 — Compte en libre-service (sans e-mail).**
+**Lots 27, 27 bis et 28 clôturés le 17 octobre 2026. Prochain lot : 29 — Préférences du lecteur et veille personnelle.**
 Décisions du 17 octobre : produit A (veille partagée, newsletter personnalisée) confirmé ;
 hébergement reporté, on finit d'abord l'application ; annotation de 100 news confirmée ;
 **ni vérification d'e-mail ni envoi d'e-mails pour le moment**.

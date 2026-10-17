@@ -9,25 +9,12 @@ import { safeNext, useAuth } from '../../lib/auth'
 import { languages, useLanguage, type MessageKey } from '../../lib/i18n'
 import { easeSoft, useMotionPreference } from '../../lib/motion'
 import { useTheme } from '../../lib/theme'
+import { MAX_PASSWORD, MIN_PASSWORD, StrengthMeter } from './strength'
 
 const EMAIL = /^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$/
-const MIN_PASSWORD = 8
-const MAX_PASSWORD = 128
 const SUCCESS_PAUSE_MS = 700
 
 type Mode = 'in' | 'up'
-
-/** 0 (too short) to 3 (strong): a hint for the reader, never a rule the server relies on. */
-function strengthOf(password: string): number {
-  if (password.length < MIN_PASSWORD) return 0
-  let score = 1
-  if (password.length >= 12) score += 1
-  if (/[a-z]/.test(password) && /[A-Z0-9]/.test(password) && /[^A-Za-z0-9]|\d/.test(password)) score += 1
-  return Math.min(3, score)
-}
-
-const STRENGTH_LABELS: MessageKey[] = ['auth.strength.short', 'auth.strength.weak', 'auth.strength.good', 'auth.strength.strong']
-const STRENGTH_TONES = ['bg-rumor', 'bg-unverified', 'bg-reliable', 'bg-confirmed']
 
 export function AuthPage({ mode }: { mode: Mode }) {
   const { t, language } = useLanguage()
@@ -95,7 +82,6 @@ export function AuthPage({ mode }: { mode: Mode }) {
   const switchTo = signUpMode ? '/sign-in' : '/sign-up'
   const switchSearch = `?${new URLSearchParams({ lang: language, ...(next !== '/' ? { next } : {}) }).toString()}`
   const busy = submit.isPending || done
-  const strength = strengthOf(password)
   const errorKey = serverError ? (`auth.error.${serverError}` as MessageKey) : null
   const errorText = errorKey ? (t(errorKey) === errorKey ? t('auth.error.generic') : t(errorKey)) : null
   const closed = signUpMode && !signupOpen
@@ -247,17 +233,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
                     transition={{ duration: 0.22, ease: easeSoft }}
                     className="overflow-hidden"
                   >
-                    <div role="status" aria-label={t('auth.strength')} className="flex items-center gap-3 pt-0.5">
-                      <div className="flex flex-1 gap-1.5" aria-hidden>
-                        {[0, 1, 2].map((bar) => (
-                          <span
-                            key={bar}
-                            className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${bar < strength ? STRENGTH_TONES[strength] : 'bg-ink/10'}`}
-                          />
-                        ))}
-                      </div>
-                      <span className="w-16 text-right text-[12.5px] font-semibold text-muted">{t(STRENGTH_LABELS[strength])}</span>
-                    </div>
+                    <StrengthMeter password={password} />
                   </m.div>
                 )}
               </AnimatePresence>

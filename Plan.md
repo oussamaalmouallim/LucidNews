@@ -28,12 +28,12 @@ ce qui reste à faire, dans l'ordre, avec des critères mesurables.
 | IA (facultative, budget, quota) | ✅ opérationnel | Suivi mensuel des coûts |
 | Newsletter (quotidienne, hebdo, aperçu, opt-in, désabonnement) | ✅ code prêt | Aucun envoi réel vérifié, rebonds non gérés |
 | Application web (édition, archive, recherche, sources, qualité, réglages) | ✅ opérationnel | — |
-| Comptes (e-mail, Google OAuth, sessions, inscriptions fermables, rôles) | 🟡 authentification et rôles | Pas de vérification d'e-mail, pas de mot de passe oublié |
+| Comptes (e-mail, Google OAuth, sessions, rôles, page Mon compte) | ✅ sans e-mail | Vérification d'adresse et mot de passe oublié par e-mail reportés (lot 33) |
 | Exécution serveur | ❌ | Planification macOS uniquement (launchd), interface non servie en production |
 | Données | 🟡 SQLite × 3 | Ni WAL, ni sauvegarde automatique |
 | Observabilité | ❌ | Ni suivi d'erreurs ni disponibilité |
 | Conformité | ❌ | Ni confidentialité, ni CGU, ni CNDP |
-| Tests | ✅ 868 Python, 156 interface | Ni bout en bout ni intégration continue |
+| Tests | ✅ 880 Python, 163 interface | Ni bout en bout ni intégration continue |
 
 ## Phase A — Finalisation fonctionnelle
 
@@ -59,7 +59,7 @@ des routes lu dans le code de l'API, isolation des préférences testée, suites
 Demande du 17 octobre : une section par domaine de l'IT (IA, Développement, Cloud…), interface
 soignée. Détail : [docs/lots.md](docs/lots.md#lot-27-bis--édition-rangée-par-domaine).
 
-### Lot 28 — Compte en libre-service, sans e-mail · **prochain lot**
+### Lot 28 — Compte en libre-service, sans e-mail · ✅ clôturé le 17 octobre 2026
 
 Revu le 17 octobre 2026 : **ni vérification d'e-mail ni envoi d'e-mails pour le moment**.
 
@@ -75,7 +75,7 @@ Revu le 17 octobre 2026 : **ni vérification d'e-mail ni envoi d'e-mails pour le
 - **Dépend de** : lot 27 ✅.
 - **Reporté au lot 33** : vérification de l'adresse et mot de passe oublié par e-mail.
 
-### Lot 29 — Préférences du lecteur et veille personnelle
+### Lot 29 — Préférences du lecteur et veille personnelle · **prochain lot**
 
 Revu le 17 octobre 2026 (pas d'envoi d'e-mails pour le moment) :
 

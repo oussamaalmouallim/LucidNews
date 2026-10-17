@@ -865,3 +865,60 @@ export function signUp(email: string, password: string, name: string): Promise<S
 export function signOut(): Promise<Session> {
   return request('/api/auth/sign-out', sessionSchema, { method: 'POST', body: JSON.stringify({}) })
 }
+
+// --- The signed-in person's own account (no e-mail involved) -------------------------------
+
+const accountSessionSchema = z.object({
+  /** A prefix of the session's hash: names it, cannot be used as a cookie. */
+  id: z.string(),
+  created_at: z.string(),
+  last_seen_at: z.string(),
+  expires_at: z.string(),
+  /** "Firefox · macOS"; null when the browser was not recognized. */
+  device: z.string().nullable(),
+  current: z.boolean(),
+})
+
+export const accountSchema = z.object({
+  user: authUserSchema,
+  sessions: z.array(accountSessionSchema),
+  /** False for the last administrator: the newsroom must keep someone to run it. */
+  can_delete: z.boolean(),
+  /** How long an unused session lives. */
+  session_days: z.number(),
+})
+export type Account = z.infer<typeof accountSchema>
+export type AccountSession = z.infer<typeof accountSessionSchema>
+
+const ACCOUNT = '/api/auth/account'
+
+export function fetchAccount(signal?: AbortSignal): Promise<Account> {
+  return getJson(ACCOUNT, accountSchema, signal)
+}
+
+export function renameAccount(name: string): Promise<Account> {
+  return request(ACCOUNT, accountSchema, { method: 'PUT', body: JSON.stringify({ name }) })
+}
+
+/** ``current`` is required when the account has a password; the other sessions end. */
+export function changePassword(current: string, password: string): Promise<Account> {
+  return request(`${ACCOUNT}/password`, accountSchema, { method: 'POST', body: JSON.stringify({ current, password }) })
+}
+
+export function closeSession(id: string): Promise<Account> {
+  return request(`${ACCOUNT}/sessions/${encodeURIComponent(id)}`, accountSchema, { method: 'DELETE', body: JSON.stringify({}) })
+}
+
+export function closeOtherSessions(): Promise<Account> {
+  return request(`${ACCOUNT}/sessions/close-others`, accountSchema, { method: 'POST', body: JSON.stringify({}) })
+}
+
+/** Everything kept about the person, as a JSON document to save. */
+export function exportAccount(): Promise<unknown> {
+  return request(`${ACCOUNT}/export`, z.unknown())
+}
+
+/** Confirmed by the password, or by typing the address for an account without one (Google). */
+export function deleteAccount(confirmation: { current?: string; email?: string }): Promise<Session> {
+  return request(`${ACCOUNT}/delete`, sessionSchema, { method: 'POST', body: JSON.stringify(confirmation) })
+}

@@ -36,13 +36,15 @@ CREATE TABLE IF NOT EXISTS sessions (
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TEXT NOT NULL,
     expires_at TEXT NOT NULL,
-    last_seen_at TEXT NOT NULL
+    last_seen_at TEXT NOT NULL,
+    device TEXT
 );
 CREATE INDEX IF NOT EXISTS sessions_by_user ON sessions (user_id);
 """
 # A session in use is extended at most this often (a write per request would be wasteful).
 REFRESH_AFTER = timedelta(hours=12)
 ADMIN, READER = "admin", "reader"
+SESSION_ID_LENGTH = 16
 ROLES = (ADMIN, READER)
 
 
@@ -114,7 +116,10 @@ class AuthDB:
 
     @staticmethod
     def _migrate(conn: sqlite3.Connection) -> None:
-        """Accounts made before roles existed: the oldest one, made by the operator, becomes admin."""
+        """Columns added after the first release. Accounts made before roles existed: the oldest
+        one, made by the operator, becomes admin."""
+        if "device" not in {row["name"] for row in conn.execute("PRAGMA table_info(sessions)")}:
+            conn.execute("ALTER TABLE sessions ADD COLUMN device TEXT")
         columns = {row["name"] for row in conn.execute("PRAGMA table_info(users)")}
         if "role" in columns:
             return
@@ -212,16 +217,81 @@ class AuthDB:
 
     # Sessions -------------------------------------------------------------------------------
 
-    def create_session(self, user_id: str, days: int) -> str:
+    def create_session(self, user_id: str, days: int, device: Optional[str] = None) -> str:
+        """``device``: a short label such as "Firefox · macOS", shown in the account's session list."""
         token = secrets.token_urlsafe(32)
         now = _now()
         with self._lock, closing(self._connect()) as conn, conn:
             conn.execute("DELETE FROM sessions WHERE expires_at < ?", (_iso(now),))  # housekeeping
             conn.execute(
-                "INSERT INTO sessions (token_hash, user_id, created_at, expires_at, last_seen_at) VALUES (?, ?, ?, ?, ?)",
-                (_hash(token), user_id, _iso(now), _iso(now + timedelta(days=days)), _iso(now)),
+                "INSERT INTO sessions (token_hash, user_id, created_at, expires_at, last_seen_at, device) VALUES (?, ?, ?, ?, ?, ?)",
+                (_hash(token), user_id, _iso(now), _iso(now + timedelta(days=days)), _iso(now), device),
             )
         return token
+
+    def list_sessions(self, user_id: str) -> list[dict]:
+        """Live sessions of an account, most recent first. ``id`` is a prefix of the token's hash:
+        enough to name a session, useless as a cookie."""
+        with closing(self._connect()) as conn:
+            rows = conn.execute(
+                "SELECT token_hash, created_at, last_seen_at, expires_at, device FROM sessions"
+                " WHERE user_id = ? AND expires_at > ? ORDER BY last_seen_at DESC",
+                (user_id, _iso(_now())),
+            ).fetchall()
+        return [
+            {
+                "id": row["token_hash"][:SESSION_ID_LENGTH],
+                "created_at": row["created_at"],
+                "last_seen_at": row["last_seen_at"],
+                "expires_at": row["expires_at"],
+                "device": row["device"],
+            }
+            for row in rows
+        ]
+
+    def delete_session_by_id(self, user_id: str, session_id: str) -> bool:
+        """End one session of this account, named by ``list_sessions``' id."""
+        if len(session_id) != SESSION_ID_LENGTH or not all(c in "0123456789abcdef" for c in session_id):
+            return False
+        with self._lock, closing(self._connect()) as conn, conn:
+            return (
+                conn.execute(
+                    "DELETE FROM sessions WHERE user_id = ? AND substr(token_hash, 1, ?) = ?",
+                    (user_id, SESSION_ID_LENGTH, session_id),
+                ).rowcount
+                > 0
+            )
+
+    def delete_other_sessions(self, user_id: str, keep_token: str) -> int:
+        with self._lock, closing(self._connect()) as conn, conn:
+            return conn.execute(
+                "DELETE FROM sessions WHERE user_id = ? AND token_hash != ?", (user_id, _hash(keep_token))
+            ).rowcount
+
+    def password_hash(self, user_id: str) -> Optional[str]:
+        with closing(self._connect()) as conn:
+            row = conn.execute("SELECT password_hash FROM users WHERE id = ?", (user_id,)).fetchone()
+        return row["password_hash"] if row else None
+
+    def rename(self, user_id: str, name: str) -> None:
+        with self._lock, closing(self._connect()) as conn, conn:
+            conn.execute("UPDATE users SET name = ? WHERE id = ?", (name, user_id))
+
+    def change_password(self, user_id: str, password_hash: str, keep_token: str) -> None:
+        """New password from the app: every other session of the account ends, this one stays."""
+        with self._lock, closing(self._connect()) as conn, conn:
+            conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (password_hash, user_id))
+            conn.execute("DELETE FROM sessions WHERE user_id = ? AND token_hash != ?", (user_id, _hash(keep_token)))
+
+    def account_row(self, user_id: str) -> Optional[dict]:
+        """Dates the export carries beside the public fields."""
+        with closing(self._connect()) as conn:
+            row = conn.execute("SELECT created_at, last_login_at FROM users WHERE id = ?", (user_id,)).fetchone()
+        return dict(row) if row else None
+
+    @staticmethod
+    def session_id(token: str) -> str:
+        return _hash(token)[:SESSION_ID_LENGTH]
 
     def session_user(self, token: str, days: int) -> Optional[User]:
         """The user of a live session; a session in use slides forward, an expired one is gone."""

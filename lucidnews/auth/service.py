@@ -10,6 +10,9 @@ No e-mail verification (a requirement), which has two consequences handled here:
 
 Accounts made here are readers; administrators are made with ``lucidnews-users``.
 
+``/api/auth/account*`` is the signed-in person's own account (lot 28): name, password, open
+sessions, export of their data and deletion. Nothing there involves e-mail.
+
 Sessions are server-side, in an HttpOnly, SameSite=Lax cookie (``Secure`` on https).
 """
 
@@ -29,6 +32,7 @@ from ..newsletter.provider import secret
 from .google import GoogleError, GoogleOAuth
 from .passwords import DUMMY_HASH, hash_password, password_problem, verify_password
 from .store import AuthDB, User
+
 
 BASE = "/api/auth"
 SESSION_COOKIE = "lucidnews_session"
@@ -95,6 +99,21 @@ def safe_next(value: Optional[str]) -> str:
     return value if not value.startswith(BASE) and not value.startswith("/sign-") else "/"
 
 
+ACCOUNT = f"{BASE}/account"
+
+BROWSERS = (("Edg/", "Edge"), ("OPR/", "Opera"), ("Firefox/", "Firefox"), ("Chrome/", "Chrome"), ("Safari/", "Safari"))
+SYSTEMS = (("iPhone", "iOS"), ("iPad", "iPadOS"), ("Android", "Android"), ("Mac OS X", "macOS"), ("Windows", "Windows"), ("Linux", "Linux"))
+
+
+def device_label(user_agent: Optional[str]) -> Optional[str]:
+    """"Firefox · macOS" from a User-Agent; None when nothing is recognized (never the raw string)."""
+    if not user_agent:
+        return None
+    browser = next((name for marker, name in BROWSERS if marker in user_agent), None)
+    system = next((name for marker, name in SYSTEMS if marker in user_agent), None)
+    return " · ".join(part for part in (browser, system) if part) or None
+
+
 class AuthService:
     def __init__(self, config: AuthConfig, db: AuthDB, *, google: Optional[GoogleOAuth] = None):
         self.config = config
@@ -103,6 +122,7 @@ class AuthService:
         self.signin_by_ip = RateLimiter(20, 900)
         self.signin_by_email = RateLimiter(8, 900)
         self.signup_by_ip = RateLimiter(10, 3600)
+        self.password_checks = RateLimiter(8, 900)  # per account: current-password checks
         self._secure = bool(config.public_url and config.public_url.startswith("https://"))
 
     # Session ----------------------------------------------------------------------------------
@@ -130,8 +150,8 @@ class AuthService:
             parts.append("Secure")
         return "; ".join(parts)
 
-    def _session_cookie(self, user: User) -> str:
-        token = self.db.create_session(user.id, self.config.session_days)
+    def _session_cookie(self, user: User, headers: Optional[Mapping[str, str]] = None) -> str:
+        token = self.db.create_session(user.id, self.config.session_days, device_label((headers or {}).get("User-Agent")))
         return self._set_cookie(SESSION_COOKIE, token, self.config.session_days * 86400)
 
     def _state(self, user: Optional[User]) -> Dict[str, Any]:
@@ -153,6 +173,8 @@ class AuthService:
             return self._google_start(request)
         if route == ("GET", f"{BASE}/google/callback"):
             return self._google_callback(request)
+        if request.path.rstrip("/").startswith(ACCOUNT):
+            return self._account(request)
         if request.method == "POST" and request.path.rstrip("/") in (f"{BASE}/sign-up", f"{BASE}/sign-in", f"{BASE}/sign-out"):
             if not self.same_origin(request.headers):
                 return _error(HTTPStatus.FORBIDDEN, "forbidden", "cross-site request refused")
@@ -185,7 +207,7 @@ class AuthService:
         user = self.db.create_user(email, name, password_hash=hash_password(request.body["password"]))
         if user is None:
             return _error(HTTPStatus.CONFLICT, "email_taken", "an account already uses this e-mail address")
-        return AuthResult(HTTPStatus.CREATED, self._state(user), [self._session_cookie(user)])
+        return AuthResult(HTTPStatus.CREATED, self._state(user), [self._session_cookie(user, request.headers)])
 
     def _sign_in(self, request: AuthRequest) -> AuthResult:
         email = self._email(request.body.get("email"))
@@ -203,12 +225,115 @@ class AuthService:
         user = found[0]
         self.signin_by_email.reset(email)
         self.db.touch_login(user.id)
-        return AuthResult(HTTPStatus.OK, self._state(user), [self._session_cookie(user)])
+        return AuthResult(HTTPStatus.OK, self._state(user), [self._session_cookie(user, request.headers)])
 
     def _sign_out(self, request: AuthRequest) -> AuthResult:
         token = self._cookie(request.headers, SESSION_COOKIE)
         if token:
             self.db.delete_session(token)
+        return AuthResult(HTTPStatus.OK, self._state(None), [self._set_cookie(SESSION_COOKIE, "", 0)])
+
+    # Account (the signed-in person's own) ---------------------------------------------------
+
+    def _account(self, request: AuthRequest) -> AuthResult:
+        token = self._cookie(request.headers, SESSION_COOKIE)
+        user = self.db.session_user(token, self.config.session_days) if token else None
+        if user is None or token is None:
+            return _error(HTTPStatus.UNAUTHORIZED, "unauthenticated", "authentication required")
+        if request.method != "GET" and not self.same_origin(request.headers):
+            return _error(HTTPStatus.FORBIDDEN, "forbidden", "cross-site request refused")
+        route = (request.method, request.path.rstrip("/").removeprefix(ACCOUNT))
+        if route == ("GET", ""):
+            return AuthResult(HTTPStatus.OK, self._account_state(user, token))
+        if route == ("PUT", ""):
+            name = self._name(request.body.get("name"))
+            if not name:
+                return _error(HTTPStatus.UNPROCESSABLE_ENTITY, "invalid_name", "enter a name")
+            self.db.rename(user.id, name)
+            return AuthResult(HTTPStatus.OK, self._account_state(self.db.get(user.id) or user, token))
+        if route == ("POST", "/password"):
+            return self._change_password(request, user, token)
+        if route == ("POST", "/sessions/close-others"):
+            closed = self.db.delete_other_sessions(user.id, token)
+            return AuthResult(HTTPStatus.OK, {**self._account_state(user, token), "closed": closed})
+        if request.method == "DELETE" and route[1].startswith("/sessions/"):
+            session_id = route[1].removeprefix("/sessions/")
+            if session_id == self.db.session_id(token):
+                return _error(HTTPStatus.CONFLICT, "current_session", "sign out to end this session")
+            if not self.db.delete_session_by_id(user.id, session_id):
+                return _error(HTTPStatus.NOT_FOUND, "not_found", "no such session")
+            return AuthResult(HTTPStatus.OK, self._account_state(user, token))
+        if route == ("GET", "/export"):
+            return AuthResult(HTTPStatus.OK, self._export(user, token))
+        if route == ("POST", "/delete"):
+            return self._delete(request, user)
+        return _error(HTTPStatus.NOT_FOUND, "not_found", "not found")
+
+    def _account_state(self, user: User, token: str) -> Dict[str, Any]:
+        current = self.db.session_id(token)
+        return {
+            "user": user.public(),
+            "sessions": [{**session, "current": session["id"] == current} for session in self.db.list_sessions(user.id)],
+            # The last administrator cannot leave: the newsroom would have nobody to run it.
+            "can_delete": not (user.is_admin and self.db.count_admins() <= 1),
+            "session_days": self.config.session_days,
+        }
+
+    def _check_current_password(self, user: User, given: object) -> Optional[AuthResult]:
+        """None when the account has no password (Google) or the one given is right."""
+        stored = self.db.password_hash(user.id)
+        if stored is None:
+            return None
+        if not self.password_checks.hit(user.id):
+            return _error(HTTPStatus.TOO_MANY_REQUESTS, "rate_limited", "too many attempts, try again later")
+        if not verify_password(given if isinstance(given, str) else "", stored):
+            return _error(HTTPStatus.UNAUTHORIZED, "wrong_password", "the current password is incorrect")
+        self.password_checks.reset(user.id)
+        return None
+
+    def _change_password(self, request: AuthRequest, user: User, token: str) -> AuthResult:
+        refused = self._check_current_password(user, request.body.get("current"))
+        if refused:
+            return refused
+        problem = password_problem(request.body.get("password"))
+        if problem:
+            return _error(HTTPStatus.UNPROCESSABLE_ENTITY, "weak_password", "password does not meet the rules", reason=problem)
+        self.db.change_password(user.id, hash_password(request.body["password"]), token)
+        return AuthResult(HTTPStatus.OK, self._account_state(self.db.get(user.id) or user, token))
+
+    def _export(self, user: User, token: str) -> Dict[str, Any]:
+        """Everything kept about the person (loi 09-08, RGPD): never a hash, a token or the Google id."""
+        dates = self.db.account_row(user.id) or {}
+        public = user.public()
+        return {
+            "format": "lucidnews-account-export/1",
+            "account": {
+                "email": public["email"],
+                "name": public["name"],
+                "role": public["role"],
+                "picture": public["picture"],
+                "sign_in_methods": [m for m, on in (("password", user.has_password), ("google", user.google_sub is not None)) if on],
+                "created_at": dates.get("created_at"),
+                "last_login_at": dates.get("last_login_at"),
+            },
+            "sessions": [
+                {key: session[key] for key in ("created_at", "last_seen_at", "expires_at", "device")}
+                for session in self.db.list_sessions(user.id)
+            ],
+        }
+
+    def _delete(self, request: AuthRequest, user: User) -> AuthResult:
+        if user.is_admin and self.db.count_admins() <= 1:
+            return _error(HTTPStatus.CONFLICT, "last_admin", "the last administrator cannot delete their account")
+        if self.db.password_hash(user.id) is None:
+            # No password to ask for (Google): typing the address confirms it.
+            if self._email(request.body.get("email")) != user.email.lower():
+                return _error(HTTPStatus.UNPROCESSABLE_ENTITY, "confirm_email", "type your e-mail address to confirm")
+        else:
+            refused = self._check_current_password(user, request.body.get("current"))
+            if refused:
+                return refused
+        self.db.delete_user(user.id)
         return AuthResult(HTTPStatus.OK, self._state(None), [self._set_cookie(SESSION_COOKIE, "", 0)])
 
     # Google -----------------------------------------------------------------------------------
@@ -264,7 +389,7 @@ class AuthService:
                 if user is None:
                     return self._to_sign_in("account_conflict", [clear])
         self.db.touch_login(user.id)
-        return AuthResult(HTTPStatus.FOUND, cookies=[clear, self._session_cookie(user)], location=next_path)
+        return AuthResult(HTTPStatus.FOUND, cookies=[clear, self._session_cookie(user, request.headers)], location=next_path)
 
     @staticmethod
     def _to_sign_in(code: str, cookies: Optional[List[str]] = None) -> AuthResult:

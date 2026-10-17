@@ -136,6 +136,8 @@ uv run lucidnews-users remove vous@example.com
 
 **Deux rôles.** Un **administrateur** a accès à tout : Sources, Préférences (abonnés), Qualité, Réglages et runs. Un **lecteur** ne voit que l'Édition et les Archives ; l'API lui refuse toute autre route (`403`), y compris une route ajoutée plus tard. Toute inscription par l'application ou par Google crée un lecteur ; un administrateur ne se crée qu'en terminal, et le dernier ne peut être ni rétrogradé ni supprimé. En passant à cette version, le compte le plus ancien d'une base existante devient administrateur.
 
+**Mon compte** (menu du compte, en haut à droite) : chacun change son nom et son mot de passe, voit les appareils connectés et les déconnecte, télécharge ses données (JSON) et supprime son compte. Rien ne passe par e-mail : un mot de passe oublié est réinitialisé par un administrateur avec `lucidnews-users passwd`.
+
 Avec les comptes, les écrans d'administration ne dépendent plus de l'adresse d'écoute : ils marchent derrière un reverse proxy (renseignez `public_url`), et c'est le rôle qui les protège. Sans comptes, ils restent réservés aux requêtes locales, comme avant.
 
 Redémarrez `uv run lucidnews-api`. Toute l'API (sauf `/api/auth/*`) exige alors une session, et l'interface renvoie vers la page de connexion. **Aucune vérification d'e-mail** n'est demandée : le compte est utilisable tout de suite après l'inscription.

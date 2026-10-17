@@ -16,6 +16,8 @@ type AuthState = {
   isAdmin: boolean
   accept: (session: Session) => void
   logOut: () => Promise<void>
+  /** The account is gone (deleted): drop everything loaded for it and keep the signed-out session. */
+  forget: (session: Session) => void
   retry: () => void
 }
 
@@ -33,12 +35,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [queryClient])
 
   const accept = useCallback((session: Session) => queryClient.setQueryData(SESSION_KEY, session), [queryClient])
-  const logOut = useCallback(async () => {
-    const session = await signOut()
-    // Whatever was loaded for the previous reader must not outlive the session.
-    queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== SESSION_KEY[0] })
-    queryClient.setQueryData(SESSION_KEY, session)
-  }, [queryClient])
+  const forget = useCallback(
+    (session: Session) => {
+      // Whatever was loaded for the previous reader must not outlive the session.
+      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== SESSION_KEY[0] })
+      queryClient.setQueryData(SESSION_KEY, session)
+    },
+    [queryClient],
+  )
+  const logOut = useCallback(async () => forget(await signOut()), [forget])
 
   const value = useMemo<AuthState>(
     () => ({
@@ -49,9 +54,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin: !query.data?.enabled || query.data.user?.role === 'admin',
       accept,
       logOut,
+      forget,
       retry: () => void query.refetch(),
     }),
-    [query, accept, logOut],
+    [query, accept, logOut, forget],
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

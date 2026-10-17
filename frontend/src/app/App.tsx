@@ -11,6 +11,7 @@ import { AdminOnly } from './AdminOnly'
 import { TopBar } from './TopBar'
 
 // One chunk per screen: charts and the calendar load only where they are used.
+const AccountPage = lazy(() => import('../features/account/AccountPage').then((m) => ({ default: m.AccountPage })))
 const AuthPage = lazy(() => import('../features/auth/AuthPage').then((m) => ({ default: m.AuthPage })))
 const EditionPage = lazy(() => import('../features/edition/EditionPage').then((m) => ({ default: m.EditionPage })))
 const ArchivePage = lazy(() => import('../features/archive/ArchivePage').then((m) => ({ default: m.ArchivePage })))
@@ -81,6 +82,7 @@ export function Shell() {
             <Route path="/editions/:editionId" element={<EditionPage />} />
             <Route path="/items/:itemId" element={<ItemPage />} />
             <Route path="/archive" element={<ArchivePage />} />
+            <Route path="/account" element={<AccountPage />} />
             <Route element={<AdminOnly />}>
               <Route path="/sources" element={<SourcesPage />} />
               <Route path="/preferences" element={<PreferencesPage />} />
