@@ -8,19 +8,22 @@ import { useAuth } from '../lib/auth'
 import { UserMenu } from './UserMenu'
 
 // shortKey: label of the phone and tablet bar, where six entries share the width.
-const navItems: { key: MessageKey; shortKey?: MessageKey; icon: LucideIcon; to: string; matches: (path: string) => boolean }[] = [
+// adminOnly: hidden from readers (the API refuses them those routes anyway).
+type NavItem = { key: MessageKey; shortKey?: MessageKey; icon: LucideIcon; to: string; matches: (path: string) => boolean; adminOnly?: boolean }
+const allNavItems: NavItem[] = [
   { key: 'nav.edition', icon: Newspaper, to: '/', matches: (path) => path === '/' || path.startsWith('/editions/') || path.startsWith('/items/') },
   { key: 'nav.archive', icon: Archive, to: '/archive', matches: (path) => path.startsWith('/archive') },
-  { key: 'nav.sources', icon: Activity, to: '/sources', matches: (path) => path.startsWith('/sources') },
+  { key: 'nav.sources', icon: Activity, to: '/sources', matches: (path) => path.startsWith('/sources'), adminOnly: true },
   {
     key: 'nav.preferences',
     shortKey: 'nav.short.preferences',
     icon: SlidersHorizontal,
     to: '/preferences',
     matches: (path) => path.startsWith('/preferences'),
+    adminOnly: true,
   },
-  { key: 'nav.quality', icon: Gauge, to: '/quality', matches: (path) => path.startsWith('/quality') },
-  { key: 'nav.settings', icon: Settings2, to: '/settings', matches: (path) => path.startsWith('/settings') },
+  { key: 'nav.quality', icon: Gauge, to: '/quality', matches: (path) => path.startsWith('/quality'), adminOnly: true },
+  { key: 'nav.settings', icon: Settings2, to: '/settings', matches: (path) => path.startsWith('/settings'), adminOnly: true },
 ]
 
 export function TopBar() {
@@ -28,7 +31,9 @@ export function TopBar() {
   const motionPref = useMotionPreference()
   const theme = useTheme()
   // With accounts on, the account button needs room: on a phone the wordmark gives way to the logo.
-  const hasAccount = Boolean(useAuth().session?.user)
+  const auth = useAuth()
+  const hasAccount = Boolean(auth.session?.user)
+  const navItems = allNavItems.filter((item) => auth.isAdmin || !item.adminOnly)
   const { pathname } = useLocation()
   const search = `?lang=${language}`
 

@@ -3,7 +3,7 @@
 Ce document regroupe tous les lots : ceux qui sont **clôturés** et ceux qui
 **restent à faire**. Il complète la [roadmap](roadmap.md), qui donne les priorités.
 
-État au 13 octobre 2026. Dernier lot clôturé : lot 25 bis ; lot 26 commencé (authentification).
+État au 17 octobre 2026. Dernier lot clôturé : lot 27 (rôles et isolation des comptes).
 
 **Suite du plan** : depuis l'étude de marché du 13 octobre 2026, les lots 27 à 46 sont décrits dans [Plan.md](../Plan.md), avec leurs critères mesurables. Ce fichier garde l'historique et les lots en cours.
 
@@ -49,6 +49,7 @@ Légende : ✅ clôturé · 🟡 outil livré, action humaine attendue · ⏳ pr
 - [Lot 25 — Dette technique](#lot-25--dette-technique) ✅
 - [Lot 25 bis — IA facultative et clés hors de l'interface](#lot-25-bis--ia-facultative-et-clés-hors-de-linterface) ✅
 - [Lot 26 — Comptes et SaaS (phase 4)](#lot-26--comptes-et-saas-phase-4) 🟡
+- [Lot 27 — Rôles et isolation des comptes](#lot-27--rôles-et-isolation-des-comptes) ✅
 - [Lots 27 à 46 — Plan de lancement](#lots-27-à-46--plan-de-lancement) 📋
 - [Paramètres : où ils vivent](#paramètres--où-ils-vivent-et-comment-ils-sappliquent)
 - [Blocages et décisions en attente](#blocages-et-décisions-en-attente)
@@ -634,7 +635,8 @@ Plan revu le 9 octobre 2026 pour intégrer le besoin « interface complète et g
 | ✅ | 25 — Dette technique | — | Clôturé. |
 | ✅ | 25 bis — IA facultative | — | Clôturé. |
 | 🟡 | 26 — Comptes et SaaS | 22, 25 | Authentification faite ; rôles → lot 27, offres et paiement → lot 42. |
-| 1 | 27 à 46 — Plan de lancement | 26 | Voir [Plan.md](../Plan.md). |
+| ✅ | 27 — Rôles et isolation | 26 | Clôturé. |
+| 1 | 28 à 46 — Plan de lancement | 27 | Voir [Plan.md](../Plan.md). |
 | En parallèle | 12 — Annoter au moins 30 news | — | Action humaine ; donne les chiffres de filtrage du lot 19. |
 
 **Correspondance avec l'ancien plan** : ancien 15 (finitions) → 24 · ancien 16 (newsletter) → 21 et 22 · ancien 17 (comptes et SaaS) → 26 · ancien 18 (dette technique) → 25.
@@ -723,7 +725,25 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 - **Pas vérifié** : un vrai aller-retour avec Google (aucun identifiant client dans cet environnement). Le flux est testé contre un faux point d'accès « token » local qui répond comme Google ; le code appelé est le vrai.
 - **Inscriptions fermées** (`auth.allow_signup: false`) : la page d'inscription le dit et son bouton est désactivé ; le serveur refuse aussi l'inscription par e-mail et par Google pour une nouvelle adresse. Les comptes se gèrent alors en terminal avec `lucidnews-users` (`add`, `list`, `passwd`, `remove` ; mot de passe lu sans écho, jamais en argument).
 - **Tests** : 37 Python (`tests/test_auth.py`), 10 interface (`AuthPage.test.tsx`).
-- **Reste du lot** : rôles (administrateur, abonné), limites des offres Gratuit et Premium, paiement (seulement après validation du produit).
+- **Reste du lot** : rôles faits au lot 27 ; limites des offres Gratuit et Premium et paiement → lot 42 (seulement après validation du produit).
+
+---
+
+## Lot 27 — Rôles et isolation des comptes
+
+✅ Clôturé le 17 octobre 2026. Phase A du [plan de lancement](../Plan.md).
+
+**Problème** : avec les comptes activés, n'importe quel compte connecté voyait tout. Les écrans d'administration n'étaient protégés que par l'écoute en local (`is_loopback` et en-tête `Host`) : derrière un reverse proxy, soit ils ne marchaient plus, soit ils s'ouvraient à tous.
+
+- **Deux rôles** : `admin` (gère la veille) et `reader` (lit). Toute inscription par l'application ou par Google crée un lecteur. Un administrateur ne se crée qu'en terminal : `lucidnews-users add EMAIL --admin` ou `lucidnews-users role EMAIL admin|reader`. Le dernier administrateur ne peut être ni rétrogradé ni supprimé.
+- **Refus par défaut** : un lecteur n'atteint que six routes en lecture (santé, liste des éditions, une édition, une période, une news, recherche). Toute autre route, y compris une route ajoutée plus tard, répond `403 admin_only`.
+- **Plus de dépendance à l'adresse d'écoute avec les comptes** : les écrans d'administration sont toujours construits, le rôle décide. Les écritures exigent une origine identique au site (ou à `public_url`). Sans comptes, rien ne change : les protections locales d'avant s'appliquent.
+- **Migration** : une base de comptes antérieure reçoit la colonne `role` ; le compte le plus ancien devient administrateur, les autres lecteurs. Au démarrage, l'API signale l'absence d'administrateur.
+- **Interface** : un lecteur ne voit que Édition et Archives (barre du haut et barre du bas). S'il ouvre une adresse d'administration, une carte « Réservé à l'administration » s'affiche et aucune donnée d'administration n'est demandée. Le menu du compte affiche le rôle.
+- **Isolation des données** : un lecteur n'a pas encore de données propres (la newsletter en libre-service arrive au lot 29). Les abonnés, leurs préférences, aperçus et envois sont réservés à l'administrateur (test dédié).
+- **Vérifié** sur une copie des données (ports 8766 et 5174) : lecteur limité à Édition et Archives, carte de refus sur `/settings`, ordinateur et téléphone (375 px) ; administrateur : réglages, abonnés, qualité, annotations, runs → 200 ; écriture depuis un autre site → 403.
+- **Critères du plan atteints** : un test lit toutes les routes dans le code de l'API et échoue si l'une n'a pas d'audience déclarée ; 403 pour un lecteur sur 100 % des 36 requêtes d'administration ; un lecteur ne peut pas lire les préférences d'un autre ; suites au vert.
+- **Tests** : 867 Python (11 nouveaux dans `tests/test_roles.py`), 155 interface (3 nouveaux dans `Roles.test.tsx`).
 
 ---
 
@@ -741,9 +761,9 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 | D — Hébergement et déploiement | 37 Hébergement · 38 Bêta privée | Mettre en ligne, mesurer |
 | E — Après le lancement | 39 Fil d'un événement · 40 Tendances · 41 Alertes · 42 Offres et paiement · 43 Équipes · 44 Sources personnelles · 45 Arabe · 46 PostgreSQL | Différencier et monétiser |
 
-**Prochain lot : 27 — Rôles et isolation des comptes.** Constat de l'audit : un compte
-connecté a aujourd'hui accès à tout, et les routes d'administration dépendent de l'écoute en
-local, ce qui ne tient pas derrière un reverse proxy.
+**Lot 27 clôturé le 17 octobre 2026. Prochain lot : 28 — Cycle de vie du compte.**
+Décisions du 17 octobre : produit A (veille partagée, newsletter personnalisée) confirmé ;
+hébergement reporté, on finit d'abord l'application ; annotation de 100 news confirmée.
 
 ## Paramètres : où ils vivent et comment ils s'appliquent
 

@@ -477,7 +477,7 @@ def test_accounts_can_be_managed_from_the_terminal_while_sign_up_is_closed(tmp_p
     code, _, err = run("add", "other@example.com", "--password-stdin", stdin="short\n")
     assert code == 2 and "8 characters" in err
     assert run("add", "not an address", "--password-stdin", stdin=PASSWORD)[0] == 2
-    assert run("list")[1].startswith("owner@example.com\tOwner\tpassword")
+    assert run("list")[1].startswith("owner@example.com\tOwner\treader\tpassword")
 
     # The account made here signs in through the web app even though sign-up is closed.
     ctx, server = start_api(tmp_path, monkeypatch, allow_signup=False)

@@ -38,10 +38,17 @@ Settings and sources (local only, see ``settings_api`` and ``sources_api``):
 - ``GET|POST /api/runs`` (history, start a run), ``GET /api/runs/current``,
   ``GET|PUT /api/schedule`` (see ``runs_api``)
 
-The server binds to localhost by default and never writes to the archive. The
-subscriber routes exist only on a loopback bind, accept only localhost Host headers
-(DNS rebinding) and, for writes, a JSON body from a localhost Origin (cross-site
-requests).
+The server binds to localhost by default and never writes to the archive.
+
+Who may use the routes above depends on ``auth.enabled``:
+
+- accounts off (single operator): the subscriber, quality, settings, sources and run routes
+  exist only on a loopback bind, accept only localhost Host headers (DNS rebinding) and, for
+  writes, a JSON body from a localhost Origin (cross-site requests);
+- accounts on: every route needs a session. A reader reaches only ``READER_ROUTES`` (the
+  published news); everything else, including any route added later, is for administrators.
+  Those routes no longer depend on the bind address, so they work behind a reverse proxy;
+  writes need a JSON body from this site's Origin.
 """
 
 import argparse
@@ -104,6 +111,14 @@ LOCAL_PREFIXES = (
     "/api/schedule",
 )
 SOURCE_KEY = re.compile(r"^[^\x00-\x1f\x7f]{1,200}$")
+# What a reader (an account without the admin role) may call: the published news, read-only.
+# Deny by default: a route missing from this list is for administrators.
+READER_ROUTES = re.compile(r"^/api/(health|search|editions(/.+)?|items/.+)$")
+ADMIN_ONLY = {"error": "administrators only", "code": "admin_only"}
+
+
+def reader_may(method: str, path: str) -> bool:
+    return method == "GET" and READER_ROUTES.match(path.rstrip("/")) is not None
 
 
 @dataclass
@@ -769,12 +784,26 @@ def make_handler(ctx: ApiContext) -> type[BaseHTTPRequestHandler]:
             self.end_headers()
             self.wfile.write(data)
 
-        def _authenticated(self) -> bool:
-            """With accounts on, every other API route needs a live session."""
-            if ctx.auth is None or ctx.auth.current_user(self.headers) is not None:
+        def _allowed(self, method: str, path: str) -> bool:
+            """Accounts on: a session, and the admin role outside ``READER_ROUTES``.
+            Accounts off: the localhost checks (there is nobody to identify)."""
+            if ctx.auth is None:
+                local = is_local_request(self.headers.get("Host"), self.headers.get("Origin"))
+                if not local and (method != "GET" or path.startswith(LOCAL_PREFIXES)):
+                    self._send(HTTPStatus.FORBIDDEN, {"error": "local requests only"})
+                    return False
                 return True
-            self._send(HTTPStatus.UNAUTHORIZED, {"error": "authentication required", "code": "unauthenticated"})
-            return False
+            user = ctx.auth.current_user(self.headers)
+            if user is None:
+                self._send(HTTPStatus.UNAUTHORIZED, {"error": "authentication required", "code": "unauthenticated"})
+                return False
+            if not user.is_admin and not reader_may(method, path):
+                self._send(HTTPStatus.FORBIDDEN, ADMIN_ONLY)
+                return False
+            if method != "GET" and not ctx.auth.same_origin(self.headers):
+                self._send(HTTPStatus.FORBIDDEN, {"error": "cross-site request refused", "code": "forbidden"})
+                return False
+            return True
 
         def _guarded(self, handler) -> None:
             try:
@@ -789,22 +818,14 @@ def make_handler(ctx: ApiContext) -> type[BaseHTTPRequestHandler]:
             if parts.path.rstrip("/").startswith("/api/auth"):
                 self._auth_route("GET", parts, {})
                 return
-            if not self._authenticated():
-                return
-            if parts.path.startswith(LOCAL_PREFIXES) and not is_local_request(
-                self.headers.get("Host"), self.headers.get("Origin")
-            ):
-                self._send(HTTPStatus.FORBIDDEN, {"error": "local requests only"})
+            if not self._allowed("GET", parts.path):
                 return
             self._guarded(lambda: resolve(ctx, parts.path, parse_qs(parts.query)))
 
         def _write(self, method: str) -> None:
             parts = urlsplit(self.path)
             is_auth = parts.path.rstrip("/").startswith("/api/auth")
-            if not is_auth and not self._authenticated():
-                return
-            if not is_auth and not is_local_request(self.headers.get("Host"), self.headers.get("Origin")):
-                self._send(HTTPStatus.FORBIDDEN, {"error": "local requests only"})
+            if not is_auth and not self._allowed(method, parts.path):
                 return
             length = int(self.headers.get("Content-Length") or 0)
             if length > MAX_BODY_BYTES:
@@ -842,10 +863,12 @@ def make_handler(ctx: ApiContext) -> type[BaseHTTPRequestHandler]:
 
 
 def build_context(data_dir: str, config_path: Optional[str], *, local_features: bool = False) -> ApiContext:
-    """``local_features``: subscriber preferences and annotations (personal or
-    editable data), enabled only on a loopback bind."""
+    """``local_features``: subscriber preferences, annotations, settings and runs (personal or
+    editable data), enabled on a loopback bind. With accounts on they are always enabled:
+    the admin role guards them instead of the bind address."""
     storage = StorageManager(data_dir=data_dir, config_path=config_path)
     config = storage.load_config()
+    local_features = local_features or config.auth.enabled
     archive_path = Path(config.archive.path)
     if not archive_path.is_absolute():
         archive_path = Path(data_dir) / archive_path
@@ -934,6 +957,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     print(f"LucidNews API on http://{args.host}:{args.port}/api/editions/latest", file=sys.stderr)
     if ctx.subscribers is None:
         print("Preferences and evaluation disabled (not bound to localhost).", file=sys.stderr)
+    if ctx.auth is not None and ctx.auth.db.count_admins() == 0:
+        print("No administrator account yet: run `uv run lucidnews-users add EMAIL --admin`.", file=sys.stderr)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

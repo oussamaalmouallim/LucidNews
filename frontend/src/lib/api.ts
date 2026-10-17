@@ -825,6 +825,8 @@ export const authUserSchema = z.object({
   picture: z.string().nullable(),
   has_password: z.boolean(),
   has_google: z.boolean(),
+  /** admin: runs the newsroom (sources, quality, subscribers, settings); reader: reads the news. */
+  role: z.enum(['admin', 'reader']),
 })
 
 export const sessionSchema = z.object({

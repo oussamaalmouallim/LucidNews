@@ -64,6 +64,9 @@ export function UserMenu() {
               <p className="text-[11.5px] font-semibold tracking-wide text-faint uppercase">{t('auth.signedInAs')}</p>
               <p className="truncate text-[14.5px] font-bold">{user.name}</p>
               <p className="truncate text-[13px] text-muted">{user.email}</p>
+              <p className="mt-1 inline-flex rounded-full bg-accent-soft px-2 py-0.5 text-[11.5px] font-semibold text-accent">
+                {t(user.role === 'admin' ? 'auth.role.admin' : 'auth.role.reader')}
+              </p>
             </div>
           </div>
           <button

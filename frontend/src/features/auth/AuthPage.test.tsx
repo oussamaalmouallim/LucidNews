@@ -5,7 +5,7 @@ import { fixtures, renderAt } from '../../test/render'
 type Session = { enabled: boolean; authenticated: boolean; user: unknown; signup_enabled: boolean; providers: { google: boolean } }
 type Call = { method: string; path: string; body: unknown }
 
-const user = { id: 'u1', email: 'ada@example.com', name: 'Ada Reader', picture: null, has_password: true, has_google: false }
+const user = { id: 'u1', email: 'ada@example.com', name: 'Ada Reader', picture: null, has_password: true, has_google: false, role: 'reader' }
 const signedOut = (overrides: Partial<Session> = {}): Session => ({
   enabled: true,
   authenticated: false,

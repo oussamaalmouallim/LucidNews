@@ -3,6 +3,9 @@
 With ``auth.allow_signup`` off nobody can register from the web app, so the accounts are made here,
 by whoever can run commands on the server. The password is read without echo (or from stdin with
 ``--password-stdin``) and is never taken as an argument, which would leave it in the shell history.
+
+Administrators are made only here (``add --admin`` or ``role EMAIL admin``): the web app never
+grants the role. The last administrator cannot be demoted or removed, so the app keeps an owner.
 """
 
 import argparse
@@ -14,7 +17,7 @@ from typing import List, Optional
 from .._cli import add_data_dir_arguments
 from .passwords import hash_password, password_problem
 from .service import AuthService
-from .store import AuthDB
+from .store import ADMIN, READER, AuthDB
 
 PROBLEMS = {
     "too_short": "the password must have at least 8 characters",
@@ -38,19 +41,23 @@ def main(argv: Optional[List[str]] = None) -> int:
     add.add_argument("email")
     add.add_argument("--name", default="")
     add.add_argument("--password-stdin", action="store_true", help="read the password from stdin (scripts)")
+    add.add_argument("--admin", action="store_true", help="administrator (settings, sources, quality, subscribers)")
     commands.add_parser("list", help="list the accounts")
     remove = commands.add_parser("remove", help="delete an account and its sessions")
     remove.add_argument("email")
     passwd = commands.add_parser("passwd", help="set a new password (ends the account's sessions)")
     passwd.add_argument("email")
     passwd.add_argument("--password-stdin", action="store_true")
+    role = commands.add_parser("role", help="make an account an administrator or a reader")
+    role.add_argument("email")
+    role.add_argument("role", choices=[ADMIN, READER])
     args = parser.parse_args(argv)
 
     db = AuthDB(Path(args.data_dir) / "auth.sqlite3")
     if args.command == "list":
         for user in db.list_users():
             how = " + ".join(filter(None, ["password" if user.has_password else "", "google" if user.google_sub else ""]))
-            print(f"{user.email}\t{user.name}\t{how}\t{user.created_at[:10]}")
+            print(f"{user.email}\t{user.name}\t{user.role}\t{how}\t{user.created_at[:10]}")
         return 0
 
     email = AuthService._email(args.email)
@@ -58,6 +65,18 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("error: not a valid e-mail address", file=sys.stderr)
         return 2
     found = db.by_email(email)
+    if args.command in ("remove", "role") and found is not None:
+        losing_admin = found[0].is_admin and (args.command == "remove" or args.role == READER)
+        if losing_admin and db.count_admins() == 1:
+            print("error: this is the last administrator; make another one first", file=sys.stderr)
+            return 1
+    if args.command == "role":
+        if found is None:
+            print("error: no such account", file=sys.stderr)
+            return 1
+        db.set_role(found[0].id, args.role)
+        print(f"{email} is now {args.role}")
+        return 0
     if args.command == "remove":
         if found is None or not db.delete_user(found[0].id):
             print("error: no such account", file=sys.stderr)
@@ -80,11 +99,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         db.set_password(found[0].id, hash_password(password))
         print(f"password changed for {email}; its sessions ended")
         return 0
-    user = db.create_user(email, AuthService._name(args.name) or email.split("@")[0], password_hash=hash_password(password))
+    role = ADMIN if args.admin else READER
+    user = db.create_user(email, AuthService._name(args.name) or email.split("@")[0], password_hash=hash_password(password), role=role)
     if user is None:
         print("error: an account already uses this address", file=sys.stderr)
         return 1
-    print(f"created {email}")
+    print(f"created {email} ({role})")
     return 0
 
 

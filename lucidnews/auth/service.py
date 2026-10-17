@@ -8,6 +8,8 @@ No e-mail verification (a requirement), which has two consequences handled here:
   first, with a password, would keep access to the real owner's account;
 - sign-up reveals whether an address is already used (the form must say so).
 
+Accounts made here are readers; administrators are made with ``lucidnews-users``.
+
 Sessions are server-side, in an HttpOnly, SameSite=Lax cookie (``Secure`` on https).
 """
 
@@ -152,13 +154,13 @@ class AuthService:
         if route == ("GET", f"{BASE}/google/callback"):
             return self._google_callback(request)
         if request.method == "POST" and request.path.rstrip("/") in (f"{BASE}/sign-up", f"{BASE}/sign-in", f"{BASE}/sign-out"):
-            if not self._same_origin(request.headers):
+            if not self.same_origin(request.headers):
                 return _error(HTTPStatus.FORBIDDEN, "forbidden", "cross-site request refused")
             action = request.path.rstrip("/").rsplit("/", 1)[1]
             return {"sign-up": self._sign_up, "sign-in": self._sign_in, "sign-out": self._sign_out}[action](request)
         return _error(HTTPStatus.NOT_FOUND, "not_found", "not found")
 
-    def _same_origin(self, headers: Mapping[str, str]) -> bool:
+    def same_origin(self, headers: Mapping[str, str]) -> bool:
         """A browser always sends Origin on a POST: it must be this site (or the configured public URL)."""
         origin = headers.get("Origin")
         if origin is None:

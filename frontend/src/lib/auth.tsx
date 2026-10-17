@@ -12,6 +12,8 @@ type AuthState = {
   session: Session | undefined
   /** Accounts are on and nobody is signed in: private routes must not render. */
   locked: boolean
+  /** May open the administration screens. Accounts off: the API alone decides (localhost). */
+  isAdmin: boolean
   accept: (session: Session) => void
   logOut: () => Promise<void>
   retry: () => void
@@ -44,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       failed: query.isError,
       session: query.data,
       locked: Boolean(query.data?.enabled && !query.data.authenticated),
+      isAdmin: !query.data?.enabled || query.data.user?.role === 'admin',
       accept,
       logOut,
       retry: () => void query.refetch(),

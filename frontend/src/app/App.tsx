@@ -7,6 +7,7 @@ import { AuthProvider, safeNext, useAuth } from '../lib/auth'
 import { useLanguage } from '../lib/i18n'
 import { MotionProvider } from '../lib/motion'
 import { ThemeProvider } from '../lib/theme'
+import { AdminOnly } from './AdminOnly'
 import { TopBar } from './TopBar'
 
 // One chunk per screen: charts and the calendar load only where they are used.
@@ -80,13 +81,15 @@ export function Shell() {
             <Route path="/editions/:editionId" element={<EditionPage />} />
             <Route path="/items/:itemId" element={<ItemPage />} />
             <Route path="/archive" element={<ArchivePage />} />
-            <Route path="/sources" element={<SourcesPage />} />
-            <Route path="/preferences" element={<PreferencesPage />} />
-            <Route path="/quality" element={<QualityPage />} />
-            <Route path="/quality/results" element={<QualityPage />} />
-            <Route path="/quality/annotate" element={<QualityPage />} />
-            <Route path="/preferences/:subscriberId" element={<PreferencesPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route element={<AdminOnly />}>
+              <Route path="/sources" element={<SourcesPage />} />
+              <Route path="/preferences" element={<PreferencesPage />} />
+              <Route path="/preferences/:subscriberId" element={<PreferencesPage />} />
+              <Route path="/quality" element={<QualityPage />} />
+              <Route path="/quality/results" element={<QualityPage />} />
+              <Route path="/quality/annotate" element={<QualityPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

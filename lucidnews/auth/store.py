@@ -2,6 +2,10 @@
 
 A session token is random and only its SHA-256 is stored, so a copy of the database cannot be
 replayed as a cookie.
+
+Every account has a role: ``admin`` runs the newsroom (settings, sources, quality, subscribers,
+runs), ``reader`` only reads. Accounts made from the web app are readers; administrators are made
+with ``lucidnews-users``.
 """
 
 import hashlib
@@ -23,6 +27,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT,
     google_sub TEXT UNIQUE,
     picture TEXT,
+    role TEXT NOT NULL DEFAULT 'reader' CHECK (role IN ('admin', 'reader')),
     created_at TEXT NOT NULL,
     last_login_at TEXT
 );
@@ -37,6 +42,8 @@ CREATE INDEX IF NOT EXISTS sessions_by_user ON sessions (user_id);
 """
 # A session in use is extended at most this often (a write per request would be wasteful).
 REFRESH_AFTER = timedelta(hours=12)
+ADMIN, READER = "admin", "reader"
+ROLES = (ADMIN, READER)
 
 
 def _now() -> datetime:
@@ -60,6 +67,11 @@ class User:
     google_sub: Optional[str]
     picture: Optional[str]
     created_at: str
+    role: str = READER
+
+    @property
+    def is_admin(self) -> bool:
+        return self.role == ADMIN
 
     def public(self) -> dict:
         """What the web app may know: never the hash or the Google subject."""
@@ -70,6 +82,7 @@ class User:
             "picture": self.picture,
             "has_password": self.has_password,
             "has_google": self.google_sub is not None,
+            "role": self.role,
         }
 
 
@@ -82,6 +95,7 @@ def _user(row: sqlite3.Row) -> User:
         google_sub=row["google_sub"],
         picture=row["picture"],
         created_at=row["created_at"],
+        role=row["role"],
     )
 
 
@@ -92,10 +106,22 @@ class AuthDB:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with closing(self._connect()) as conn, conn:
             conn.executescript(SCHEMA)
+            self._migrate(conn)
         try:
             self.path.chmod(0o600)  # accounts are personal data
         except OSError:
             pass
+
+    @staticmethod
+    def _migrate(conn: sqlite3.Connection) -> None:
+        """Accounts made before roles existed: the oldest one, made by the operator, becomes admin."""
+        columns = {row["name"] for row in conn.execute("PRAGMA table_info(users)")}
+        if "role" in columns:
+            return
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'reader' CHECK (role IN ('admin', 'reader'))"
+        )
+        conn.execute("UPDATE users SET role = 'admin' WHERE id = (SELECT id FROM users ORDER BY created_at LIMIT 1)")
 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.path, timeout=10)
@@ -106,16 +132,25 @@ class AuthDB:
     # Users ----------------------------------------------------------------------------------
 
     def create_user(
-        self, email: str, name: str, *, password_hash: Optional[str] = None, google_sub: Optional[str] = None, picture: Optional[str] = None
+        self,
+        email: str,
+        name: str,
+        *,
+        password_hash: Optional[str] = None,
+        google_sub: Optional[str] = None,
+        picture: Optional[str] = None,
+        role: str = READER,
     ) -> Optional[User]:
         """None when the address is already taken."""
+        if role not in ROLES:
+            raise ValueError(f"unknown role: {role}")
         user_id = uuid.uuid4().hex
         with self._lock, closing(self._connect()) as conn, conn:
             try:
                 conn.execute(
-                    "INSERT INTO users (id, email, name, password_hash, google_sub, picture, created_at, last_login_at)"
-                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                    (user_id, email, name, password_hash, google_sub, picture, _iso(_now()), _iso(_now())),
+                    "INSERT INTO users (id, email, name, password_hash, google_sub, picture, role, created_at, last_login_at)"
+                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (user_id, email, name, password_hash, google_sub, picture, role, _iso(_now()), _iso(_now())),
                 )
             except sqlite3.IntegrityError:
                 return None
@@ -154,6 +189,16 @@ class AuthDB:
         """Remove the account; its sessions go with it (foreign key cascade)."""
         with self._lock, closing(self._connect()) as conn, conn:
             return conn.execute("DELETE FROM users WHERE id = ?", (user_id,)).rowcount == 1
+
+    def set_role(self, user_id: str, role: str) -> None:
+        if role not in ROLES:
+            raise ValueError(f"unknown role: {role}")
+        with self._lock, closing(self._connect()) as conn, conn:
+            conn.execute("UPDATE users SET role = ? WHERE id = ?", (role, user_id))
+
+    def count_admins(self) -> int:
+        with closing(self._connect()) as conn:
+            return conn.execute("SELECT COUNT(*) FROM users WHERE role = 'admin'").fetchone()[0]
 
     def set_password(self, user_id: str, password_hash: str) -> None:
         """New password; every session of the account ends."""

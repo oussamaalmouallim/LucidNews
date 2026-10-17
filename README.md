@@ -124,13 +124,19 @@ Par défaut l'application web est ouverte, comme avant. Pour la protéger par de
 Pour **fermer les inscriptions** (recommandé dès que l'application est accessible à d'autres personnes), ajoutez `"allow_signup": false`. Les comptes se créent alors en terminal, par quelqu'un qui a accès au serveur :
 
 ```bash
-uv run lucidnews-users add vous@example.com --name "Votre nom"   # demande le mot de passe, sans l'afficher
+uv run lucidnews-users add vous@example.com --name "Votre nom" --admin   # demande le mot de passe, sans l'afficher
+uv run lucidnews-users add lecteur@example.com                         # un lecteur
 uv run lucidnews-users list
-uv run lucidnews-users passwd vous@example.com                   # ferme aussi les sessions ouvertes
+uv run lucidnews-users role lecteur@example.com admin                  # ou reader
+uv run lucidnews-users passwd vous@example.com                         # ferme aussi les sessions ouvertes
 uv run lucidnews-users remove vous@example.com
 ```
 
-**Créez votre compte avant d'activer `auth.enabled` avec les inscriptions fermées** : sinon plus personne ne peut se connecter.
+**Créez votre compte administrateur avant d'activer `auth.enabled`** : sinon personne ne peut gérer la veille.
+
+**Deux rôles.** Un **administrateur** a accès à tout : Sources, Préférences (abonnés), Qualité, Réglages et runs. Un **lecteur** ne voit que l'Édition et les Archives ; l'API lui refuse toute autre route (`403`), y compris une route ajoutée plus tard. Toute inscription par l'application ou par Google crée un lecteur ; un administrateur ne se crée qu'en terminal, et le dernier ne peut être ni rétrogradé ni supprimé. En passant à cette version, le compte le plus ancien d'une base existante devient administrateur.
+
+Avec les comptes, les écrans d'administration ne dépendent plus de l'adresse d'écoute : ils marchent derrière un reverse proxy (renseignez `public_url`), et c'est le rôle qui les protège. Sans comptes, ils restent réservés aux requêtes locales, comme avant.
 
 Redémarrez `uv run lucidnews-api`. Toute l'API (sauf `/api/auth/*`) exige alors une session, et l'interface renvoie vers la page de connexion. **Aucune vérification d'e-mail** n'est demandée : le compte est utilisable tout de suite après l'inscription.
 

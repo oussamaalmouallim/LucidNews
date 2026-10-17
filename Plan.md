@@ -1,6 +1,6 @@
 # Plan — LucidNews jusqu'au lancement commercial
 
-Mis à jour le 13 octobre 2026, après l'étude de marché et l'audit du code
+Mis à jour le 17 octobre 2026 (lot 27 clôturé, décisions du 17 octobre). Plan établi le 13 octobre 2026, après l'étude de marché et l'audit du code
 (rapport : [docs/etude-marche/rapport-lucidnews-2026-10.html](docs/etude-marche/rapport-lucidnews-2026-10.html)).
 
 L'historique complet des lots 0 à 26 reste dans [docs/lots.md](docs/lots.md). Ce fichier fixe
@@ -19,7 +19,7 @@ ce qui reste à faire, dans l'ordre, avec des critères mesurables.
 - **Hors V1** : sources personnelles par utilisateur, veille concurrentielle d'entreprise,
   équipes, application mobile, paiement en ligne (voir « Décisions »).
 
-## État au 13 octobre 2026
+## État au 17 octobre 2026
 
 | Domaine | État | Écart avant la vente |
 |---|---|---|
@@ -28,16 +28,20 @@ ce qui reste à faire, dans l'ordre, avec des critères mesurables.
 | IA (facultative, budget, quota) | ✅ opérationnel | Suivi mensuel des coûts |
 | Newsletter (quotidienne, hebdo, aperçu, opt-in, désabonnement) | ✅ code prêt | Aucun envoi réel vérifié, rebonds non gérés |
 | Application web (édition, archive, recherche, sources, qualité, réglages) | ✅ opérationnel | — |
-| Comptes (e-mail, Google OAuth, sessions, inscriptions fermables) | 🟡 authentification seule | Pas de rôles, pas d'isolation, pas de vérification d'e-mail, pas de mot de passe oublié |
+| Comptes (e-mail, Google OAuth, sessions, inscriptions fermables, rôles) | 🟡 authentification et rôles | Pas de vérification d'e-mail, pas de mot de passe oublié |
 | Exécution serveur | ❌ | Planification macOS uniquement (launchd), interface non servie en production |
 | Données | 🟡 SQLite × 3 | Ni WAL, ni sauvegarde automatique |
 | Observabilité | ❌ | Ni suivi d'erreurs ni disponibilité |
 | Conformité | ❌ | Ni confidentialité, ni CGU, ni CNDP |
-| Tests | ✅ 856 Python, 152 interface | Ni bout en bout ni intégration continue |
+| Tests | ✅ 867 Python, 155 interface | Ni bout en bout ni intégration continue |
 
 ## Phase A — Finalisation fonctionnelle
 
-### Lot 27 — Rôles et isolation des comptes · **prochain lot**
+### Lot 27 — Rôles et isolation des comptes · ✅ clôturé le 17 octobre 2026
+
+Détail de la réalisation : [docs/lots.md](docs/lots.md#lot-27--rôles-et-isolation-des-comptes).
+Critères atteints : 403 pour un lecteur sur 100 % des 36 requêtes d'administration, inventaire
+des routes lu dans le code de l'API, isolation des préférences testée, suites au vert.
 
 - Rôles `admin` (opérateur) et `reader` (lecteur). Le premier compte créé en terminal
   (`lucidnews-users add --admin`) est administrateur.
@@ -50,7 +54,7 @@ ce qui reste à faire, dans l'ordre, avec des critères mesurables.
   aucune régression (suites Python et interface au vert).
 - **Dépend de** : lot 26 (comptes).
 
-### Lot 28 — Cycle de vie du compte
+### Lot 28 — Cycle de vie du compte · **prochain lot**
 
 - Vérification de l'adresse e-mail à l'inscription (lien signé, 24 h), réutilisant
   `newsletter/tokens.py` et le service public.
@@ -62,7 +66,8 @@ ce qui reste à faire, dans l'ordre, avec des critères mesurables.
   besoin d'être reprise.
 - **Critères** : chaque parcours a un test de bout en bout ; un compte non vérifié ne reçoit
   aucune newsletter ; un lien utilisé ou expiré est refusé (test).
-- **Dépend de** : lot 27, lot 33 pour l'envoi réel.
+- **Dépend de** : lot 27 ✅. L'envoi réel attend le lot 33 : d'ici là, les liens passent par
+  l'envoi déjà intégré (Resend) ou, sans clé, s'affichent en local pour les tests.
 
 ### Lot 29 — Newsletter en libre-service
 
@@ -136,7 +141,12 @@ ce qui reste à faire, dans l'ordre, avec des critères mesurables.
 - **Critères** : pages publiées et liées depuis chaque page et chaque e-mail ; dossier CNDP
   déposé ; avis d'un juriste sur les résumés (droit voisin de la presse dans l'UE).
 
-## Phase D — Hébergement et déploiement
+## Phase D — Hébergement et déploiement · **reportée (décision du 17 octobre 2026)**
+
+On finit d'abord l'application (phases A, B et C). Le choix de l'hébergeur et la mise en ligne
+seront décidés après. Les lots de la phase C se préparent et se vérifient en local (Docker
+Compose sur la machine de développement) ; seuls les points qui exigent un domaine réel (envoi
+authentifié du lot 33) attendent l'hébergement.
 
 ### Lot 37 — Hébergement
 
@@ -183,9 +193,10 @@ Dans l'ordre proposé. Chacun reste à confirmer par les résultats de la bêta.
 
 | Sujet | Décision proposée | Raison |
 |---|---|---|
-| Modèle produit | Veille éditée partagée + newsletter personnalisée | Architecture actuelle, coût IA mutualisé |
+| Modèle produit | ✅ **Décidé le 17/10** : veille éditée partagée + newsletter personnalisée | Architecture actuelle, coût IA mutualisé |
 | PostgreSQL | Pas pour la V1 : SQLite (WAL) + sauvegardes, sur un seul serveur | Une seule instance, peu d'écritures concurrentes ; PostgreSQL si PaaS sans disque ou plusieurs instances |
-| Hébergement | VPS + Docker Compose + Caddy | Coût fixe et plafonné ; un PaaS coûte environ 2 fois plus avec une facture à l'usage |
+| Hébergement | **Reporté le 17/10** : finir l'application d'abord. Piste retenue pour plus tard : VPS + Docker Compose + Caddy | Coût fixe et plafonné ; un PaaS coûte environ 2 fois plus avec une facture à l'usage |
+| Preuve de qualité | ✅ **Décidé le 17/10** : annoter 100 news (action humaine, écran Qualité) | La fiabilité est l'argument de vente ; elle doit être mesurée avant d'être vendue |
 | E-mail | Resend (déjà intégré) | Gratuit jusqu'à 3 000 e-mails par mois, 20 $ pour 50 000 |
 | Vérification de l'e-mail | La réintroduire (lot 28) | Un SaaS ne peut pas envoyer à des adresses non prouvées ; débloque le mot de passe oublié |
 | Paiement | Reporté (lot 42) | Stripe indisponible pour une société marocaine, CMI sans paiement récurrent (sources secondaires) ; pilotes B2B par virement d'abord |
