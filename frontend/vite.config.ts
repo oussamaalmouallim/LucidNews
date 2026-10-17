@@ -1,10 +1,39 @@
 /// <reference types="vitest/config" />
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { createHash } from 'node:crypto'
+import { defineConfig, type Plugin } from 'vite'
+
+/**
+ * The built page's Content-Security-Policy, as a meta tag (the server adds frame-ancestors and the
+ * other headers, which a meta cannot carry). Scripts and styles come from this site only; the one
+ * inline script (theme before first paint) is allowed by its hash. Images may come from https
+ * (Google avatars). Development keeps Vite's own inline scripts, so the policy is for builds only.
+ */
+function contentSecurityPolicy(): Plugin {
+  return {
+    name: 'lucidnews-csp',
+    apply: 'build',
+    transformIndexHtml(html) {
+      const hashes = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(([, body]) => `'sha256-${createHash('sha256').update(body!).digest('base64')}'`)
+      const policy = [
+        "default-src 'self'",
+        `script-src 'self' ${hashes.join(' ')}`,
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: https:",
+        "font-src 'self' data:", // Vite inlines the smallest font subsets
+        "connect-src 'self'",
+        "object-src 'none'",
+        "base-uri 'none'",
+        "form-action 'self'",
+      ].join('; ')
+      return html.replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${policy}" />`)
+    },
+  }
+}
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), contentSecurityPolicy()],
   server: {
     port: 5173,
     // Read-only Python API: `uv run lucidnews-api` (override with LUCIDNEWS_API)

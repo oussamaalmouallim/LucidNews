@@ -181,6 +181,21 @@ Pièges fréquents : `localhost` et `127.0.0.1` sont deux adresses différentes 
 
 Sécurité, en bref : flux « code d'autorisation » avec PKCE, `state` à usage unique lié au navigateur, `nonce` vérifié dans le jeton, adresse e-mail Google obligatoirement vérifiée ; mots de passe hachés (scrypt, sel aléatoire) ; limitation des tentatives ; requêtes d'écriture refusées si leur origine n'est pas le site. Comme l'inscription par e-mail n'est pas vérifiée, un compte à mot de passe dont l'adresse se connecte ensuite avec Google **devient un compte Google** (son mot de passe est supprimé et ses autres sessions sont fermées) : sinon la personne qui s'est inscrite en premier avec l'adresse d'un autre garderait l'accès. Ne protège pas les routes de `lucidnews-public` (liens de confirmation et de désabonnement des newsletters), qui restent publiques par conception.
 
+### Serveur et sécurité
+
+Réglages du processus `lucidnews-api`, dans `data/config.json` (facultatifs) :
+
+```json
+"server": { "trusted_proxies": ["127.0.0.1", "::1"], "requests_per_minute": 240 }
+```
+
+| Réglage (`server.*`) | Défaut | Rôle |
+|---|---|---|
+| `trusted_proxies` | aucun | Adresses IP des reverse proxys autorisés à donner l'adresse du visiteur (`X-Forwarded-For`). **À renseigner derrière un proxy**, sinon tous les visiteurs partagent l'adresse du proxy et les limites de connexion les bloquent ensemble. |
+| `requests_per_minute` | `240` | Requêtes par minute et par client sur l'API ; la recherche et la période ont droit au cinquième. Au-delà : `429` et `Retry-After: 60`. |
+
+Chaque réponse de l'API porte des en-têtes de sécurité, et l'interface compilée une politique de sécurité du contenu (CSP). HTTPS, HSTS et `frame-ancestors` sont posés par le reverse proxy. Audit, modèle de menaces et liste ASVS : [docs/securite/](docs/securite/).
+
 ### Variables d'environnement
 
 | Variable | Utilisation |

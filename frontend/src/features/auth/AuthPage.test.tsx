@@ -119,6 +119,18 @@ test('an address already used is reported on sign-up', async () => {
   expect(await screen.findByRole('alert')).toHaveTextContent('Un compte utilise déjà cette adresse.')
 })
 
+test('a password too easy to guess is explained on sign-up', async () => {
+  mockAuthApi(signedOut(), { 'sign-up': [422, { error: 'common', code: 'common_password', reason: 'too_common' }] })
+  renderAt('/sign-up?lang=fr', null)
+  await screen.findByRole('heading', { level: 1, name: 'Créez votre compte' }, { timeout: 5000 })
+
+  fill('Adresse e-mail', 'ada@example.com')
+  fill('Mot de passe', 'password123')
+  fireEvent.click(screen.getByRole('button', { name: 'Créer mon compte' }))
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Ce mot de passe est trop facile à deviner')
+})
+
 test('the Google button exists only when the server has Google configured, and starts the real redirect', async () => {
   mockAuthApi(signedOut())
   renderAt('/sign-in?lang=fr&next=%2Fsources', null)

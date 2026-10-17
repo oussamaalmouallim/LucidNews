@@ -752,6 +752,31 @@ class AuthConfig(BaseModel):
         return f"{parts.scheme}://{parts.netloc}"
 
 
+class ServerConfig(BaseModel):
+    """The web API process (``lucidnews-api``): who the client is, and how often it may call."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    # Reverse proxies (IP addresses) allowed to name the client in X-Forwarded-For. Empty: the
+    # connection's peer is the client. Behind Caddy on the same machine: ["127.0.0.1", "::1"].
+    trusted_proxies: List[str] = Field(default_factory=list)
+    # Requests per minute and client on /api; the costly routes (search, period) get a fifth of it.
+    requests_per_minute: int = Field(default=240, ge=10, le=10_000)
+
+    @field_validator("trusted_proxies")
+    @classmethod
+    def ip_addresses(cls, value: List[str]) -> List[str]:
+        import ipaddress
+
+        result = []
+        for entry in value:
+            try:
+                result.append(str(ipaddress.ip_address(entry.strip())))
+            except ValueError as exc:
+                raise ValueError(f"not an IP address: {entry}") from exc
+        return result
+
+
 class Config(BaseModel):
     """Main configuration model."""
 
@@ -769,3 +794,4 @@ class Config(BaseModel):
     email: Optional[EmailConfig] = None
     webhook: Optional[WebhookConfig] = None
     auth: AuthConfig = Field(default_factory=AuthConfig)
+    server: ServerConfig = Field(default_factory=ServerConfig)

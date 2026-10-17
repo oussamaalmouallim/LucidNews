@@ -23,6 +23,7 @@ PROBLEMS = {
     "too_short": "the password must have at least 8 characters",
     "too_long": "the password must have at most 128 characters",
     "required": "a password is required",
+    "too_common": "this password is too easy to guess (a common one, a keyboard run or the address itself)",
 }
 
 
@@ -88,7 +89,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     if password is None:
         print("error: the two passwords differ", file=sys.stderr)
         return 2
-    problem = password_problem(password)
+    problem = password_problem(password, email)
     if problem:
         print(f"error: {PROBLEMS[problem]}", file=sys.stderr)
         return 2

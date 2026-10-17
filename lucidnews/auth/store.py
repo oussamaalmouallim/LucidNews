@@ -48,6 +48,9 @@ CREATE TABLE IF NOT EXISTS reader_preferences (
 """
 # A session in use is extended at most this often (a write per request would be wasteful).
 REFRESH_AFTER = timedelta(hours=12)
+# However often it is used, a session ends this long after the sign-in (or after session_days
+# when that is longer): a stolen cookie does not live forever, and the person signs in again.
+MAX_SESSION_AGE = timedelta(days=90)
 ADMIN, READER = "admin", "reader"
 SESSION_ID_LENGTH = 16
 ROLES = (ADMIN, READER)
@@ -322,12 +325,14 @@ class AuthDB:
         now = _now()
         with self._lock, closing(self._connect()) as conn, conn:
             row = conn.execute(
-                "SELECT s.expires_at, s.last_seen_at, u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?",
+                "SELECT s.expires_at, s.last_seen_at, s.created_at AS session_created_at, u.* FROM sessions s"
+                " JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?",
                 (digest,),
             ).fetchone()
             if row is None:
                 return None
-            if datetime.fromisoformat(row["expires_at"]) <= now:
+            too_old = now - datetime.fromisoformat(row["session_created_at"]) > max(MAX_SESSION_AGE, timedelta(days=days))
+            if datetime.fromisoformat(row["expires_at"]) <= now or too_old:
                 conn.execute("DELETE FROM sessions WHERE token_hash = ?", (digest,))
                 return None
             if now - datetime.fromisoformat(row["last_seen_at"]) >= REFRESH_AFTER:

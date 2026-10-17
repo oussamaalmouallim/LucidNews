@@ -68,7 +68,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 from ._cli import add_data_dir_arguments
 from .auth import AuthService, build_auth_service
-from .auth.service import AuthRequest, AuthResult
+from .auth.service import AuthRequest, AuthResult, RateLimiter
 from .archive import ItemArchive, RunRecord
 from .archive.search import CANDIDATE_CAP, SearchQueryError, search_terms
 from .coverage import CoverageThresholds, compute_coverage
@@ -116,6 +116,32 @@ SOURCE_KEY = re.compile(r"^[^\x00-\x1f\x7f]{1,200}$")
 # Deny by default: a route missing from this list is for administrators.
 READER_ROUTES = re.compile(r"^/api/(health|search|editions(/.+)?|items/.+)$")
 ADMIN_ONLY = {"error": "administrators only", "code": "admin_only"}
+# Routes whose answer costs a scan of the archive: a fifth of the general rate.
+HEAVY_ROUTES = ("/api/search", "/api/editions/period")
+# Every answer is JSON: nothing in it may run, embed or be framed.
+SECURITY_HEADERS = (
+    ("X-Content-Type-Options", "nosniff"),
+    ("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'"),
+    ("X-Frame-Options", "DENY"),
+    ("Referrer-Policy", "no-referrer"),
+    ("Cross-Origin-Resource-Policy", "same-origin"),
+)
+
+
+def client_ip(peer: str, forwarded_for: Optional[str], trusted: frozenset) -> str:
+    """The client's address. X-Forwarded-For is read only from a trusted proxy, right to left,
+    skipping the trusted hops: the first other address is the one that reached the proxy."""
+    if peer not in trusted or not forwarded_for:
+        return peer
+    hops = [hop.strip() for hop in forwarded_for.split(",") if hop.strip()]
+    for hop in reversed(hops):
+        try:
+            address = str(ipaddress.ip_address(hop))
+        except ValueError:
+            return peer  # a malformed chain: fall back to the proxy itself
+        if address not in trusted:
+            return address
+    return peer
 
 
 def reader_may(method: str, path: str) -> bool:
@@ -139,6 +165,10 @@ class ApiContext:
     source_quality_days: int = DEFAULT_DAYS
     # Domain of each source for unanalyzed items, computed once per new run: (run id, domains).
     source_domain_cache: tuple = (None, {})
+    # Who the client is behind a reverse proxy, and how often it may call (``server`` in the config).
+    trusted_proxies: frozenset = frozenset()
+    limiter: Optional[RateLimiter] = None
+    heavy_limiter: Optional[RateLimiter] = None
     # Settings, API keys and sources (local only, like subscribers).
     settings: Optional[SettingsService] = None
     sources: Optional[SourcesService] = None
@@ -771,15 +801,42 @@ def is_loopback(host: str) -> bool:
 
 def make_handler(ctx: ApiContext) -> type[BaseHTTPRequestHandler]:
     class Handler(BaseHTTPRequestHandler):
-        server_version = "LucidNewsAPI/1.0"
+        server_version = "LucidNews"
 
-        def _send(self, status: int, body: Dict[str, Any]) -> None:
+        def version_string(self) -> str:
+            return self.server_version  # no Python version in the Server header
+
+        def log_message(self, format: str, *args: Any) -> None:  # noqa: A002
+            # The request line without its query: an OAuth code or a search must not reach the logs.
+            if args and isinstance(args[0], str) and "?" in args[0]:
+                args = (args[0].split("?", 1)[0] + " " + args[0].rsplit(" ", 1)[-1], *args[1:])
+            super().log_message(format, *args)
+
+        def _client(self) -> str:
+            return client_ip(self.client_address[0], self.headers.get("X-Forwarded-For"), ctx.trusted_proxies)
+
+        def _within_rate(self, path: str) -> bool:
+            """At most ``server.requests_per_minute`` calls a minute per client, a fifth on costly routes."""
+            client = self._client()
+            heavy = path.rstrip("/") in HEAVY_ROUTES
+            if (ctx.limiter is None or ctx.limiter.hit(client)) and (not heavy or ctx.heavy_limiter is None or ctx.heavy_limiter.hit(client)):
+                return True
+            self._send(HTTPStatus.TOO_MANY_REQUESTS, {"error": "too many requests, try again in a minute", "code": "rate_limited"}, retry_after=60)
+            return False
+
+        def _security_headers(self) -> None:
+            for name, value in SECURITY_HEADERS:
+                self.send_header(name, value)
+
+        def _send(self, status: int, body: Dict[str, Any], retry_after: Optional[int] = None) -> None:
             data = json.dumps(body, ensure_ascii=False).encode("utf-8")
             self.send_response(status)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(data)))
             self.send_header("Cache-Control", "no-store")
-            self.send_header("X-Content-Type-Options", "nosniff")
+            self._security_headers()
+            if retry_after:
+                self.send_header("Retry-After", str(retry_after))
             self.end_headers()
             self.wfile.write(data)
 
@@ -791,7 +848,7 @@ def make_handler(ctx: ApiContext) -> type[BaseHTTPRequestHandler]:
                 else:
                     self._send(HTTPStatus.NOT_FOUND, {"error": "not found", "code": "not_found"})
                 return
-            request = AuthRequest(method, parts.path, parse_qs(parts.query), body, self.headers, self.client_address[0])
+            request = AuthRequest(method, parts.path, parse_qs(parts.query), body, self.headers, self._client())
             try:
                 result = ctx.auth.handle(request)
             except Exception as exc:  # never leak a traceback to the client
@@ -802,8 +859,7 @@ def make_handler(ctx: ApiContext) -> type[BaseHTTPRequestHandler]:
             for cookie in result.cookies:
                 self.send_header("Set-Cookie", cookie)
             self.send_header("Cache-Control", "no-store")
-            self.send_header("X-Content-Type-Options", "nosniff")
-            self.send_header("Referrer-Policy", "no-referrer")
+            self._security_headers()
             if result.location:
                 self.send_header("Location", result.location)
             self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -842,6 +898,8 @@ def make_handler(ctx: ApiContext) -> type[BaseHTTPRequestHandler]:
 
         def do_GET(self) -> None:  # noqa: N802 (stdlib name)
             parts = urlsplit(self.path)
+            if not self._within_rate(parts.path):
+                return
             if parts.path.rstrip("/").startswith("/api/auth"):
                 self._auth_route("GET", parts, {})
                 return
@@ -851,6 +909,8 @@ def make_handler(ctx: ApiContext) -> type[BaseHTTPRequestHandler]:
 
         def _write(self, method: str) -> None:
             parts = urlsplit(self.path)
+            if not self._within_rate(parts.path):
+                return
             is_auth = parts.path.rstrip("/").startswith("/api/auth")
             if not is_auth and not self._allowed(method, parts.path):
                 return
@@ -953,6 +1013,9 @@ def build_context(data_dir: str, config_path: Optional[str], *, local_features: 
         ctx.runs = RunService(Path(data_dir), config_path, secret_values=lambda: settings.secret_values())
         ctx.schedule = ScheduleService(Path(data_dir), config_path)
     ctx.auth = build_auth_service(config.auth, Path(data_dir))
+    ctx.trusted_proxies = frozenset(config.server.trusted_proxies)
+    ctx.limiter = RateLimiter(config.server.requests_per_minute, 60)
+    ctx.heavy_limiter = RateLimiter(max(2, config.server.requests_per_minute // 5), 60)
     return ctx
 
 
@@ -961,7 +1024,7 @@ def _reload(ctx: ApiContext, data_dir: str, config_path: Optional[str]) -> None:
     fresh = build_context(data_dir, config_path, local_features=True)
     settings = ctx.settings
     # The settings and sources services stay: they hold the lock and the callback.
-    kept = ("settings", "sources", "runs", "schedule", "auth")  # they hold locks, a process, callbacks or sign-in state
+    kept = ("settings", "sources", "runs", "schedule", "auth", "limiter", "heavy_limiter")  # they hold locks, a process, callbacks or sign-in state
     ctx.__dict__.update({key: value for key, value in fresh.__dict__.items() if key not in kept})
     if settings is not None and fresh.settings is not None:
         settings.profiles = fresh.settings.profiles

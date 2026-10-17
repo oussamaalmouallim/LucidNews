@@ -33,7 +33,7 @@ ce qui reste à faire, dans l'ordre, avec des critères mesurables.
 | Données | 🟡 SQLite × 3 | Ni WAL, ni sauvegarde automatique |
 | Observabilité | ❌ | Ni suivi d'erreurs ni disponibilité |
 | Conformité | ❌ | Ni confidentialité, ni CGU, ni CNDP |
-| Tests | ✅ 887 Python, 172 interface | Ni bout en bout ni intégration continue |
+| Tests | ✅ 905 Python, 173 interface | Ni bout en bout ni intégration continue |
 
 ## Phase A — Finalisation fonctionnelle
 
@@ -91,13 +91,15 @@ Revu le 17 octobre 2026 (pas d'envoi d'e-mails pour le moment) :
 
 ## Phase B — Tests et sécurité
 
-### Lot 30 — Sécurité applicative · **prochain lot**
+### Lot 30 — Sécurité applicative · ✅ clôturé le 17 octobre 2026
+
+Rapport : [docs/securite/audit-securite-2026-10.html](docs/securite/audit-securite-2026-10.html). Critères atteints : ASVS niveau 1 documenté ([liste](docs/securite/asvs-niveau-1.md)), 0 vulnérabilité connue (pip-audit, npm audit), modèle de menaces écrit ([document](docs/securite/modele-de-menaces.md)).
 
 - Liste OWASP ASVS niveau 1, en-têtes de sécurité et CSP sur l'interface servie, limitation de
   débit sur l'API, audit des dépendances (`pip-audit`, `npm audit`), modèle de menaces écrit.
 - **Critères** : ASVS niveau 1 couvert et documenté ; 0 vulnérabilité haute ou critique ouverte.
 
-### Lot 31 — Tests de bout en bout et intégration continue
+### Lot 31 — Tests de bout en bout et intégration continue · **prochain lot**
 
 - Parcours Playwright sur un serveur de test : inscription, vérification, connexion,
   préférences, aperçu, déconnexion, accès refusé à l'administration.

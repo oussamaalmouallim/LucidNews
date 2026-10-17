@@ -3,7 +3,7 @@
 Ce document regroupe tous les lots : ceux qui sont **clôturés** et ceux qui
 **restent à faire**. Il complète la [roadmap](roadmap.md), qui donne les priorités.
 
-État au 17 octobre 2026. Dernier lot clôturé : lot 29 (préférences du lecteur et veille personnelle).
+État au 17 octobre 2026. Dernier lot clôturé : lot 30 (sécurité applicative).
 
 **Suite du plan** : depuis l'étude de marché du 13 octobre 2026, les lots 27 à 46 sont décrits dans [Plan.md](../Plan.md), avec leurs critères mesurables. Ce fichier garde l'historique et les lots en cours.
 
@@ -53,6 +53,7 @@ Légende : ✅ clôturé · 🟡 outil livré, action humaine attendue · ⏳ pr
 - [Lot 27 bis — Édition rangée par domaine](#lot-27-bis--édition-rangée-par-domaine) ✅
 - [Lot 28 — Compte en libre-service, sans e-mail](#lot-28--compte-en-libre-service-sans-e-mail) ✅
 - [Lot 29 — Préférences du lecteur et veille personnelle](#lot-29--préférences-du-lecteur-et-veille-personnelle) ✅
+- [Lot 30 — Sécurité applicative](#lot-30--sécurité-applicative) ✅
 - [Lots 27 à 46 — Plan de lancement](#lots-27-à-46--plan-de-lancement) 📋
 - [Paramètres : où ils vivent](#paramètres--où-ils-vivent-et-comment-ils-sappliquent)
 - [Blocages et décisions en attente](#blocages-et-décisions-en-attente)
@@ -642,6 +643,7 @@ Plan revu le 9 octobre 2026 pour intégrer le besoin « interface complète et g
 | ✅ | 27 bis — Édition rangée par domaine | — | Clôturé (demande du 17 octobre). |
 | ✅ | 28 — Compte en libre-service, sans e-mail | 27 | Clôturé. |
 | ✅ | 29 — Préférences du lecteur et veille personnelle | 27, 28 | Clôturé. |
+| ✅ | 30 — Sécurité applicative | 27 | Clôturé. |
 | 1 | 28 à 46 — Plan de lancement | 27 | Voir [Plan.md](../Plan.md). |
 | En parallèle | 12 — Annoter au moins 30 news | — | Action humaine ; donne les chiffres de filtrage du lot 19. |
 
@@ -798,6 +800,23 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 
 ---
 
+## Lot 30 — Sécurité applicative
+
+✅ Clôturé le 17 octobre 2026. Audit complet : [rapport](securite/audit-securite-2026-10.html), [modèle de menaces](securite/modele-de-menaces.md), [ASVS niveau 1](securite/asvs-niveau-1.md).
+
+- **Audit** : architecture relue, portes d'entrée listées, secrets cherchés dans 388 fichiers et tout l'historique Git (aucun : les alertes sont des noms de variables ou des exemples ; `.env` jamais commité). 9 constats : 3 moyens, 4 faibles, 2 pour information ; aucun critique ni élevé. Tous corrigés ou décidés.
+- **Client réel derrière un reverse proxy** : `server.trusted_proxies` ; `X-Forwarded-For` n'est lu que depuis un proxy déclaré. Avant, derrière un proxy, 20 essais ratés par n'importe qui bloquaient toutes les connexions.
+- **Limite de requêtes sur toute l'API** : `server.requests_per_minute` (240 par défaut) par client, un cinquième pour la recherche et la période ; 429 avec `Retry-After`.
+- **Dépendances** : 134 failles connues dans 17 paquets Python indirects corrigées par mise à jour ciblée du verrou ; MCP gardé en 1.x (`mcp>=1.26,<2`, la 2.x retire FastMCP). pip-audit et npm audit à zéro.
+- **Mots de passe** : refus des mots de passe courants (liste anglais et français), d'un caractère répété, d'une rangée de clavier, de l'adresse elle-même ; code `common_password` expliqué dans l'interface.
+- **Sessions** : fin absolue 90 jours après la connexion, même utilisées.
+- **En-têtes** : chaque réponse de l'API porte CSP `default-src 'none'`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Cross-Origin-Resource-Policy` ; l'interface compilée porte une CSP (scripts du site, script de thème autorisé par empreinte). Vérifiée en vrai sur l'application compilée : aucune erreur dans la console (Édition, Mon compte, Préférences, aperçu de newsletter) après avoir autorisé les polices intégrées par Vite.
+- **Journaux** : plus de paramètres d'adresse (code OAuth, recherches) ; l'en-tête `Server` ne donne plus la version de Python.
+- **Reste pour la production (lot 32)** : HTTPS, HSTS et `frame-ancestors` posés par le reverse proxy, `trusted_proxies` renseigné. Audit des dépendances automatisé au lot 31.
+- **Tests** : 905 Python (18 nouveaux dans `tests/test_security.py`), 173 interface.
+
+---
+
 ## Lots 27 à 46 — Plan de lancement
 
 📋 Planifiés le 13 octobre 2026 après l'étude de marché et l'audit
@@ -807,12 +826,12 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 | Phase | Lots | Objet |
 |---|---|---|
 | A — Finalisation fonctionnelle | 27 Rôles et isolation ✅ · 27 bis Édition par domaine ✅ · 28 Compte en libre-service ✅ · 29 Préférences et veille personnelle ✅ | Rendre l'application vendable à plusieurs clients |
-| B — Tests et sécurité | 30 Sécurité applicative · 31 Bout en bout et CI · 12 bis Preuve de qualité | Livrer sans régression, prouver la fiabilité |
+| B — Tests et sécurité | 30 Sécurité applicative ✅ · 31 Bout en bout et CI · 12 bis Preuve de qualité | Livrer sans régression, prouver la fiabilité |
 | C — Préparation de la production | 32 Exécution serveur · 33 E-mail en production · 34 Données · 35 Observabilité et coûts · 36 Conformité | Tourner seul, sans perte, légalement |
 | D — Hébergement et déploiement | 37 Hébergement · 38 Bêta privée | Mettre en ligne, mesurer |
 | E — Après le lancement | 39 Fil d'un événement · 40 Tendances · 41 Alertes · 42 Offres et paiement · 43 Équipes · 44 Sources personnelles · 45 Arabe · 46 PostgreSQL | Différencier et monétiser |
 
-**Lots 27 à 29 clôturés le 17 octobre 2026 : la phase A est terminée. Prochain lot : 30 — Sécurité applicative.**
+**Lots 27 à 30 clôturés le 17 octobre 2026. Prochain lot : 31 — Tests de bout en bout et intégration continue.**
 Décisions du 17 octobre : produit A (veille partagée, newsletter personnalisée) confirmé ;
 hébergement reporté, on finit d'abord l'application ; annotation de 100 news confirmée ;
 **ni vérification d'e-mail ni envoi d'e-mails pour le moment**.

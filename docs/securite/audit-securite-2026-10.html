@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Audit de sécurité applicative — LucidNews</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=Source+Serif+4:wght@600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --beige:#F2EDE1; --creme:#FAF7F0; --surface:#FFFFFF; --bordure:#E4DCCB; --sable:#EFE7D6;
+  --encre:#1E2C38; --gris:#5C6873; --eteint:#96A1AB;
+  --accent:#3E88B5; --accent-fonce:#215C80; --accent-pale:#E6F0F7; --accent-bord:#C3DCEB;
+  --ombre:0 2px 6px rgba(30,44,56,.06);
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--beige);color:var(--encre);
+  font-family:'IBM Plex Sans',Arial,sans-serif;font-size:15.5px;line-height:1.7;}
+h1,h2,h3{font-family:'Source Serif 4',Georgia,serif;font-weight:600;margin:0;}
+code{font-family:'JetBrains Mono',Consolas,monospace;font-size:13px;
+  background:var(--creme);border:1px solid var(--bordure);border-radius:5px;
+  padding:1px 5px;color:var(--accent-fonce);word-break:break-all;}
+.page{max-width:980px;margin:0 auto;padding:0 28px 80px;}
+
+.couverture{background:var(--creme);border-bottom:1px solid var(--bordure);
+  padding:72px 28px 56px;margin-bottom:44px;}
+.couverture-corps{max-width:980px;margin:0 auto;}
+.surtitre{font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent-fonce);}
+.couverture h1{font-size:46px;line-height:1.15;margin:14px 0 10px;}
+.sous{font-size:18px;color:var(--gris);max-width:640px;}
+.risque{display:inline-block;margin-top:26px;padding:8px 20px;border-radius:999px;
+  background:var(--accent-pale);border:1px solid var(--accent-bord);
+  color:var(--accent-fonce);font-weight:600;font-size:13.5px;
+  letter-spacing:.06em;text-transform:uppercase;}
+
+.fiches{display:flex;flex-wrap:wrap;gap:14px;margin-top:30px;}
+.fiche{flex:1 1 200px;background:var(--surface);border:1px solid var(--bordure);
+  border-radius:14px;box-shadow:var(--ombre);padding:14px 18px;}
+.fiche-label{font-size:11.5px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--accent-fonce);}
+.fiche-valeur{font-size:16px;font-weight:600;margin-top:4px;}
+.fiche-note{font-size:13.5px;color:var(--gris);margin-top:3px;}
+
+.comptes{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 40px;}
+.compte{flex:1 1 120px;background:var(--surface);border:1px solid var(--bordure);
+  border-top-width:4px;border-radius:14px;box-shadow:var(--ombre);
+  padding:16px 18px;text-align:center;}
+.compte-nombre{font-family:'Source Serif 4',Georgia,serif;font-size:36px;font-weight:600;
+  line-height:1;}
+.compte-nom{font-size:11.5px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--gris);margin-top:6px;}
+
+.bloc{margin:0 0 52px;}
+.bloc h2{font-size:30px;padding-bottom:12px;border-bottom:1px solid var(--bordure);
+  margin-bottom:20px;}
+.intro{color:var(--gris);margin:0 0 22px;max-width:720px;}
+.rangee{display:flex;flex-wrap:wrap;gap:16px;align-items:stretch;}
+.carte{flex:1 1 300px;background:var(--surface);border:1px solid var(--bordure);
+  border-radius:20px;box-shadow:var(--ombre);padding:22px 26px;}
+.carte h3{font-size:19px;margin-bottom:10px;}
+
+.constat{background:var(--surface);border:1px solid var(--bordure);border-left-width:5px;
+  border-radius:20px;box-shadow:var(--ombre);padding:24px 28px;margin:0 0 18px;}
+.constat-tete{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;}
+.badge{font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 12px;border-radius:999px;}
+.confiance{font-family:'JetBrains Mono',Consolas,monospace;font-size:12px;
+  color:var(--gris);border:1px solid var(--bordure);border-radius:999px;padding:3px 10px;}
+.norme{font-size:12px;color:var(--eteint);}
+.constat h3{font-size:19px;line-height:1.35;margin-bottom:14px;}
+.champ{margin-top:14px;}
+.champ-titre{font-size:11.5px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--accent-fonce);margin-bottom:3px;}
+.champ p{margin:0;}
+
+.escalier{background:var(--creme);border:1px solid var(--bordure);border-radius:14px;
+  padding:16px 20px;text-align:center;}
+.etape{display:block;font-size:14.5px;font-weight:600;}
+.fleche{display:block;color:var(--accent);font-size:16px;line-height:1.4;}
+
+ol.etapes{margin:6px 0 0;padding-left:0;list-style:none;counter-reset:pas;}
+ol.etapes li{position:relative;padding:5px 0 5px 34px;counter-increment:pas;}
+ol.etapes li::before{content:counter(pas);position:absolute;left:0;top:7px;
+  width:22px;height:22px;border-radius:50%;background:var(--accent-pale);
+  border:1px solid var(--accent-bord);color:var(--accent-fonce);
+  font-size:12px;font-weight:600;text-align:center;line-height:20px;}
+ul.cases,ul.puces{margin:0;padding-left:0;list-style:none;}
+ul.cases li{position:relative;padding:5px 0 5px 28px;}
+ul.cases li::before{content:"";position:absolute;left:0;top:11px;width:13px;height:13px;
+  border:1.5px solid var(--accent-bord);border-radius:4px;background:var(--creme);}
+ul.puces li{position:relative;padding:4px 0 4px 18px;}
+ul.puces li::before{content:"—";position:absolute;left:0;color:var(--eteint);}
+
+.plan-groupe{background:var(--surface);border:1px solid var(--bordure);border-radius:20px;
+  box-shadow:var(--ombre);padding:20px 26px;margin-bottom:14px;}
+.plan-quand{font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent-fonce);}
+
+.pied{background:var(--creme);border-top:1px solid var(--bordure);
+  padding:26px;text-align:center;color:var(--eteint);font-size:13px;}
+@media print{body{background:#fff;} .constat,.carte,.fiche{break-inside:avoid;}}
+</style></head><body>
+
+<header class="couverture"><div class="couverture-corps">
+  <div class="surtitre">Audit de sécurité · Lot 30</div>
+  <h1>Audit de sécurité applicative</h1>
+  <p class="sous">LucidNews · 17 octobre 2026</p>
+  <div class="risque">Risque global : Faible après corrections</div>
+  <div class="fiches"><div class="fiche"><div class="fiche-label">Analysé</div><div class="fiche-valeur">LucidNews (local) — backend Python et interface React dans le même dépôt</div></div></div>
+</div></header>
+
+<main class="page">
+  <section class="bloc"><h2>En résumé</h2><div class="carte"><p>Les fondations étaient saines : mots de passe hachés avec scrypt, sessions stockées sous forme d'empreinte, cookie HttpOnly, contrôle de l'origine sur chaque écriture, rôles avec refus par défaut, connexion Google avec PKCE, garde-fou contre les appels du serveur vers des adresses internes, requêtes SQL paramétrées, aucun HTML injecté dans l'interface. L'audit a trouvé deux problèmes moyens (blocage de toutes les connexions derrière un reverse proxy, absence de limite de requêtes hors connexion), un lot de dépendances vulnérables et quatre durcissements utiles. Tout a été corrigé dans ce lot et couvert par des tests. Ce qui ne peut être vérifié qu'en production (HTTPS, proxy, pare-feu) reste à faire au lot 32.</p></div></section>
+  <div class="comptes"><div class="compte" style="border-top-color:#A08200"><div class="compte-nombre" style="color:#7A6300">3</div><div class="compte-nom">MOYEN</div></div><div class="compte" style="border-top-color:#3E88B5"><div class="compte-nombre" style="color:#215C80">4</div><div class="compte-nom">FAIBLE</div></div><div class="compte" style="border-top-color:#5C6873"><div class="compte-nombre" style="color:#5C6873">2</div><div class="compte-nom">INFORMATION</div></div></div>
+  <section class="bloc"><h2>Ce que fait ce projet</h2><div class="fiches"><div class="fiche"><div class="fiche-label">Type d'application</div><div class="fiche-valeur">Veille tech éditée, application web avec comptes</div><div class="fiche-note">pas encore en production</div></div><div class="fiche"><div class="fiche-label">Frontend</div><div class="fiche-valeur">React 19, Vite 8, Tailwind 4</div><div class="fiche-note">appelle l'API sur la même origine (/api)</div></div><div class="fiche"><div class="fiche-label">Backend</div><div class="fiche-valeur">Python 3.12, serveur HTTP de la bibliothèque standard (lucidnews-api)</div><div class="fiche-note">routeur maison, JSON seulement</div></div><div class="fiche"><div class="fiche-label">Base de données</div><div class="fiche-valeur">SQLite × 3 (archive, newsletter, comptes)</div><div class="fiche-note">fichiers locaux, comptes en 0600</div></div><div class="fiche"><div class="fiche-label">Authentification</div><div class="fiche-valeur">e-mail + mot de passe (scrypt), Google OAuth (PKCE, state, nonce)</div><div class="fiche-note">sessions côté serveur, cookie HttpOnly SameSite=Lax, Secure en https</div></div><div class="fiche"><div class="fiche-label">Autorisations</div><div class="fiche-valeur">rôles admin / reader, refus par défaut</div><div class="fiche-note">un lecteur n'atteint que 6 routes en lecture</div></div><div class="fiche"><div class="fiche-label">Services externes</div><div class="fiche-valeur">fournisseurs IA (facultatif), Resend (e-mail, non utilisé), Google OAuth</div><div class="fiche-note">clés uniquement dans l'environnement</div></div><div class="fiche"><div class="fiche-label">Données personnelles</div><div class="fiche-valeur">comptes (e-mail, nom), abonnés (e-mail, préférences)</div><div class="fiche-note">export et suppression disponibles</div></div></div></section>
+  <section class="bloc"><h2>Accès et identité</h2><p class="intro">Qui peut entrer, combien de fois, et pour combien de temps.</p><article class="constat" style="border-left-color:#A08200">
+  <div class="constat-tete">
+    <span class="badge" style="background:#FBF8EA;color:#7A6300">MOYEN</span>
+    <span class="confiance">Confirmé</span>
+    <span class="norme">OWASP API4 — consommation de ressources non limitée</span>
+  </div>
+  <h3>Derrière un reverse proxy, une seule personne pouvait bloquer toutes les connexions</h3>
+  <div class="champ"><div class="champ-titre">Pourquoi c'est dangereux</div>
+    <p>La limite de tentatives de connexion (20 par quart d'heure et par adresse IP) lisait l'adresse de la connexion réseau. Derrière un reverse proxy (le serveur placé devant l'application pour le HTTPS), cette adresse est celle du proxy, la même pour tous les visiteurs.</p></div>
+  <div class="champ"><div class="champ-titre">Ce qui peut arriver</div>
+    <p>Vingt essais de connexion ratés en un quart d'heure, par n'importe qui, empêchaient tous les comptes de se connecter. La protection contre les essais de mots de passe ne visait plus personne en particulier.</p></div>
+  <div class="champ"><div class="champ-titre">Où</div>
+    <p><code>lucidnews/web_api.py (AuthRequest construit avec self.client_address[0])</code></p></div>
+  <div class="champ"><div class="champ-titre">Comment le constater</div>
+    <p>Avant correction : derrière un proxy local, 21 connexions ratées depuis un navigateur, puis une connexion correcte depuis un autre navigateur répond 429.</p></div>
+  <div class="champ"><div class="champ-titre">Comment savoir que c'est réparé</div>
+    <p>tests/test_security.py : test_behind_a_trusted_proxy_each_visitor_has_their_own_limit et test_a_forged_forwarded_header_does_not_escape_the_limit. Corrigé dans ce lot.</p></div>
+  <div class="champ"><div class="champ-titre">Le chemin</div>
+    <div class="escalier"><span class="etape">Visiteur non connecté</span>
+<span class="fleche">↓</span>
+<span class="etape">Envoie 20 mots de passe faux en un quart d'heure</span>
+<span class="fleche">↓</span>
+<span class="etape">Le compteur partagé du proxy est plein</span>
+<span class="fleche">↓</span>
+<span class="etape">Plus personne ne peut se connecter pendant 15 minutes</span></div></div>
+  <div class="champ"><div class="champ-titre">Comment le corriger</div>
+    <ol class="etapes"><li>Ajouter server.trusted_proxies : les adresses des proxys autorisés à nommer le client.</li><li>Lire X-Forwarded-For seulement quand la connexion vient d'un de ces proxys, de droite à gauche, en sautant les proxys connus.</li><li>Sans proxy déclaré, garder l'adresse de la connexion : un client ne peut pas se faire passer pour un autre avec un faux en-tête.</li></ol></div>
+</article><article class="constat" style="border-left-color:#A08200">
+  <div class="constat-tete">
+    <span class="badge" style="background:#FBF8EA;color:#7A6300">MOYEN</span>
+    <span class="confiance">Confirmé</span>
+    <span class="norme">OWASP API4 — consommation de ressources non limitée</span>
+  </div>
+  <h3>Aucune limite de requêtes en dehors de la connexion</h3>
+  <div class="champ"><div class="champ-titre">Pourquoi c'est dangereux</div>
+    <p>Seules la connexion et l'inscription comptaient les essais. La recherche plein texte et la vue « période » (jusqu'à 3 700 jours d'archive) parcourent beaucoup de données à chaque appel.</p></div>
+  <div class="champ"><div class="champ-titre">Ce qui peut arriver</div>
+    <p>Un compte lecteur ordinaire pouvait enchaîner des recherches et des périodes longues jusqu'à occuper le serveur et ralentir tout le monde.</p></div>
+  <div class="champ"><div class="champ-titre">Où</div>
+    <p><code>lucidnews/web_api.py (do_GET, _write)</code></p></div>
+  <div class="champ"><div class="champ-titre">Comment le constater</div>
+    <p>Avant correction : 1 000 appels à /api/search en une minute répondent tous 200.</p></div>
+  <div class="champ"><div class="champ-titre">Comment savoir que c'est réparé</div>
+    <p>tests/test_security.py : test_every_client_is_held_to_a_rate_and_costly_routes_to_a_fifth. Vérifié en vrai : 260 appels d'affilée donnent des 429 au-delà de la limite. Corrigé dans ce lot.</p></div>
+  <div class="champ"><div class="champ-titre">Le chemin</div>
+    <div class="escalier"><span class="etape">Utilisateur connecté, rôle lecteur</span>
+<span class="fleche">↓</span>
+<span class="etape">Boucle sur /api/search et /api/editions/period</span>
+<span class="fleche">↓</span>
+<span class="etape">Le serveur sature</span>
+<span class="fleche">↓</span>
+<span class="etape">Les autres lecteurs attendent ou échouent</span></div></div>
+  <div class="champ"><div class="champ-titre">Comment le corriger</div>
+    <ol class="etapes"><li>Compter les requêtes par client sur toute l'API : server.requests_per_minute (240 par défaut).</li><li>Compter à part les routes coûteuses (recherche, période) : un cinquième de la limite.</li><li>Répondre 429 avec Retry-After: 60.</li></ol></div>
+</article><article class="constat" style="border-left-color:#3E88B5">
+  <div class="constat-tete">
+    <span class="badge" style="background:#E6F0F7;color:#215C80">FAIBLE</span>
+    <span class="confiance">Confirmé</span>
+    <span class="norme">OWASP ASVS 2.1.7</span>
+  </div>
+  <h3>Les mots de passe les plus courants étaient acceptés</h3>
+  <div class="champ"><div class="champ-titre">Pourquoi c'est dangereux</div>
+    <p>Seule la longueur (8 à 128 caractères) était vérifiée. « password123 » ou « azertyuiop » passaient.</p></div>
+  <div class="champ"><div class="champ-titre">Ce qui peut arriver</div>
+    <p>Ces mots de passe sont les premiers essayés par un attaquant. La limite de tentatives ralentit l'essai, elle ne le rend pas inutile.</p></div>
+  <div class="champ"><div class="champ-titre">Où</div>
+    <p><code>lucidnews/auth/passwords.py (password_problem)</code></p></div>
+  <div class="champ"><div class="champ-titre">Comment le constater</div>
+    <p>Avant correction : s'inscrire avec « password123 » réussit.</p></div>
+  <div class="champ"><div class="champ-titre">Comment savoir que c'est réparé</div>
+    <p>tests/test_security.py : test_guessable_passwords_are_refused, test_sign_up_and_password_change_explain_a_guessable_password. La liste est un plancher, pas une base de fuites complète. Corrigé dans ce lot.</p></div>
+  <div class="champ"><div class="champ-titre">Le chemin</div>
+    <div class="escalier"><span class="etape">Visiteur non connecté</span>
+<span class="fleche">↓</span>
+<span class="etape">Essaie les 20 mots de passe les plus courants sur une adresse connue</span>
+<span class="fleche">↓</span>
+<span class="etape">Le compte s'ouvre si son mot de passe en faisait partie</span></div></div>
+  <div class="champ"><div class="champ-titre">Comment le corriger</div>
+    <ol class="etapes"><li>Refuser une liste de mots de passe courants (anglais et français), un caractère répété, une rangée de clavier et l'adresse e-mail elle-même.</li><li>Renvoyer un code dédié (common_password) pour que le formulaire explique pourquoi.</li><li>Appliquer la règle à l'inscription, au changement de mot de passe et au terminal.</li></ol></div>
+</article><article class="constat" style="border-left-color:#3E88B5">
+  <div class="constat-tete">
+    <span class="badge" style="background:#E6F0F7;color:#215C80">FAIBLE</span>
+    <span class="confiance">Confirmé</span>
+    <span class="norme">OWASP ASVS 3.3</span>
+  </div>
+  <h3>Une session utilisée régulièrement ne finissait jamais</h3>
+  <div class="champ"><div class="champ-titre">Pourquoi c'est dangereux</div>
+    <p>La session glisse de 30 jours à chaque usage, sans date de fin absolue.</p></div>
+  <div class="champ"><div class="champ-titre">Ce qui peut arriver</div>
+    <p>Un cookie de session volé (poste partagé, sauvegarde du navigateur) restait valable tant que quelqu'un s'en servait.</p></div>
+  <div class="champ"><div class="champ-titre">Où</div>
+    <p><code>lucidnews/auth/store.py (session_user)</code></p></div>
+  <div class="champ"><div class="champ-titre">Comment le constater</div>
+    <p>Avant correction : une session créée il y a 91 jours et utilisée hier est toujours acceptée.</p></div>
+  <div class="champ"><div class="champ-titre">Comment savoir que c'est réparé</div>
+    <p>tests/test_security.py : test_a_session_in_use_still_ends_ninety_days_after_the_sign_in. Corrigé dans ce lot.</p></div>
+  <div class="champ"><div class="champ-titre">Le chemin</div>
+    <div class="escalier"><span class="etape">Personne qui a récupéré un cookie de session</span>
+<span class="fleche">↓</span>
+<span class="etape">L'utilise une fois par mois</span>
+<span class="fleche">↓</span>
+<span class="etape">Garde l'accès indéfiniment</span></div></div>
+  <div class="champ"><div class="champ-titre">Comment le corriger</div>
+    <ol class="etapes"><li>Fermer toute session 90 jours après la connexion (ou après session_days si c'est plus long), quel que soit l'usage.</li></ol></div>
+</article><article class="constat" style="border-left-color:#5C6873">
+  <div class="constat-tete">
+    <span class="badge" style="background:#F4F1EA;color:#5C6873">INFORMATION</span>
+    <span class="confiance">Confirmé</span>
+    <span class="norme">OWASP ASVS 2.2 (énumération)</span>
+  </div>
+  <h3>L'inscription dit si une adresse a déjà un compte</h3>
+  <div class="champ"><div class="champ-titre">Pourquoi c'est dangereux</div>
+    <p>C'est un choix documenté depuis le lot 26 : sans e-mail de vérification, le formulaire doit dire que l'adresse est prise.</p></div>
+  <div class="champ"><div class="champ-titre">Ce qui peut arriver</div>
+    <p>Quelqu'un peut tester si une adresse est inscrite. Limité par 10 inscriptions par heure et par client, et nul quand les inscriptions sont fermées.</p></div>
+  <div class="champ"><div class="champ-titre">Où</div>
+    <p><code>lucidnews/auth/service.py (_sign_up)</code></p></div>
+  <div class="champ"><div class="champ-titre">Comment le constater</div>
+    <p>S'inscrire deux fois avec la même adresse : la seconde répond email_taken.</p></div>
+  <div class="champ"><div class="champ-titre">Comment savoir que c'est réparé</div>
+    <p>Décision à reprendre au lot 33.</p></div>
+  <div class="champ"><div class="champ-titre">Le chemin</div>
+    <div class="escalier"><span class="etape">Visiteur non connecté</span>
+<span class="fleche">↓</span>
+<span class="etape">Essaie des adresses à l'inscription</span>
+<span class="fleche">↓</span>
+<span class="etape">Apprend lesquelles ont un compte</span></div></div>
+  <div class="champ"><div class="champ-titre">Comment le corriger</div>
+    <ol class="etapes"><li>Garder tel quel tant que l'envoi d'e-mail est reporté.</li><li>Au lot 33, répondre toujours « vérifiez vos e-mails » et prévenir le titulaire par e-mail.</li></ol></div>
+</article></section><section class="bloc"><h2>Dépendances</h2><p class="intro">Le code des autres qui tourne dans l'application.</p><article class="constat" style="border-left-color:#A08200">
+  <div class="constat-tete">
+    <span class="badge" style="background:#FBF8EA;color:#7A6300">MOYEN</span>
+    <span class="confiance">À vérifier</span>
+    <span class="norme">OWASP A06 — composants vulnérables</span>
+  </div>
+  <h3>134 failles connues dans 17 bibliothèques Python indirectes</h3>
+  <div class="champ"><div class="champ-titre">Pourquoi c'est dangereux</div>
+    <p>pip-audit signalait Starlette, urllib3, aiohttp, cryptography, python-multipart, PyJWT et d'autres. Aucune n'est déclarée par LucidNews : elles arrivent avec les bibliothèques IA et MCP.</p></div>
+  <div class="champ"><div class="champ-titre">Ce qui peut arriver</div>
+    <p>Non mesuré : l'audit n'a pas vérifié que le code vulnérable de chaque bibliothèque est réellement appelé. Starlette et python-multipart ne servent qu'au serveur MCP, lancé à part.</p></div>
+  <div class="champ"><div class="champ-titre">Où</div>
+    <p><code>uv.lock</code></p></div>
+  <div class="champ"><div class="champ-titre">Comment le constater</div>
+    <p>uv export --no-dev --no-emit-project, puis pip-audit sur le résultat.</p></div>
+  <div class="champ"><div class="champ-titre">Comment savoir que c'est réparé</div>
+    <p>pip-audit : « No known vulnerabilities found ». npm audit : 0 vulnérabilité. 905 tests au vert. À automatiser dans l'intégration continue (lot 31).</p></div>
+  <div class="champ"><div class="champ-titre">Le chemin</div>
+    <div class="escalier"><span class="etape">Dépendance vulnérable</span>
+<span class="fleche">↓</span>
+<span class="etape">Code atteint par une requête ou un flux RSS piégé</span>
+<span class="fleche">↓</span>
+<span class="etape">Effet selon la faille (déni de service, lecture de fichier...)</span></div></div>
+  <div class="champ"><div class="champ-titre">Comment le corriger</div>
+    <ol class="etapes"><li>Monter seulement les 17 paquets concernés dans uv.lock.</li><li>Garder MCP en version 1 (mcp&gt;=1.26,&lt;2) : la version 2 retire FastMCP, utilisé par le serveur MCP.</li><li>Relancer pip-audit et npm audit.</li></ol></div>
+</article></section><section class="bloc"><h2>Navigateur et journaux</h2><p class="intro">Ce que l'application dit au navigateur, et ce qu'elle écrit dans ses journaux.</p><article class="constat" style="border-left-color:#3E88B5">
+  <div class="constat-tete">
+    <span class="badge" style="background:#E6F0F7;color:#215C80">FAIBLE</span>
+    <span class="confiance">Confirmé</span>
+    <span class="norme">OWASP ASVS 14.4</span>
+  </div>
+  <h3>L'interface n'avait pas de politique de sécurité du contenu</h3>
+  <div class="champ"><div class="champ-titre">Pourquoi c'est dangereux</div>
+    <p>Une CSP (Content-Security-Policy) dit au navigateur d'où les scripts peuvent venir. Sans elle, une faille d'injection future n'aurait aucun second rempart. Les réponses de l'API n'interdisaient pas non plus leur affichage dans un cadre.</p></div>
+  <div class="champ"><div class="champ-titre">Ce qui peut arriver</div>
+    <p>Aucune exploitation trouvée aujourd'hui : React échappe tout et aucun HTML brut n'est injecté. C'est une défense en profondeur.</p></div>
+  <div class="champ"><div class="champ-titre">Où</div>
+    <p><code>frontend/vite.config.ts, lucidnews/web_api.py</code></p></div>
+  <div class="champ"><div class="champ-titre">Comment le constater</div>
+    <p>Avant correction : la page compilée n'a pas de balise Content-Security-Policy.</p></div>
+  <div class="champ"><div class="champ-titre">Comment savoir que c'est réparé</div>
+    <p>Application compilée testée en vrai : Édition, Mon compte, Préférences et aperçu de newsletter sans aucune erreur CSP (une première version bloquait les polices intégrées, corrigée). tests/test_security.py : test_every_answer_carries_the_security_headers_and_no_python_version.</p></div>
+  <div class="champ"><div class="champ-titre">Le chemin</div>
+    <div class="escalier"><span class="etape">Faille d'injection future</span>
+<span class="fleche">↓</span>
+<span class="etape">Script étranger chargé</span>
+<span class="fleche">↓</span>
+<span class="etape">Vol de données affichées</span></div></div>
+  <div class="champ"><div class="champ-titre">Comment le corriger</div>
+    <ol class="etapes"><li>Injecter à la compilation une CSP : scripts du site seulement, le seul script en ligne (thème) autorisé par son empreinte, images https, polices du site (et intégrées), connexions vers le site.</li><li>Ajouter à chaque réponse de l'API : CSP default-src 'none', X-Frame-Options DENY, Referrer-Policy, Cross-Origin-Resource-Policy.</li><li>Au lot 32, faire porter par le reverse proxy frame-ancestors et HSTS, qu'une balise ne peut pas porter.</li></ol></div>
+</article><article class="constat" style="border-left-color:#3E88B5">
+  <div class="constat-tete">
+    <span class="badge" style="background:#E6F0F7;color:#215C80">FAIBLE</span>
+    <span class="confiance">Confirmé</span>
+    <span class="norme">OWASP ASVS 7.1</span>
+  </div>
+  <h3>Les journaux gardaient les paramètres d'adresse, et l'en-tête Server la version de Python</h3>
+  <div class="champ"><div class="champ-titre">Pourquoi c'est dangereux</div>
+    <p>Le serveur écrivait la ligne de requête entière : le code OAuth de Google, son « state » et les recherches des lecteurs. L'en-tête Server annonçait la version exacte de Python.</p></div>
+  <div class="champ"><div class="champ-titre">Ce qui peut arriver</div>
+    <p>Faible : le code OAuth est à usage unique et inutilisable sans le secret PKCE gardé en mémoire. Mais un journal partagé exposait les recherches, et la version facilitait le choix d'une attaque.</p></div>
+  <div class="champ"><div class="champ-titre">Où</div>
+    <p><code>lucidnews/web_api.py (Handler)</code></p></div>
+  <div class="champ"><div class="champ-titre">Comment le constater</div>
+    <p>Avant correction : un appel au retour Google écrit « code=… » dans la sortie d'erreur du serveur.</p></div>
+  <div class="champ"><div class="champ-titre">Comment savoir que c'est réparé</div>
+    <p>tests/test_security.py : test_the_logs_never_hold_a_query_string.</p></div>
+  <div class="champ"><div class="champ-titre">Le chemin</div>
+    <div class="escalier"><span class="etape">Personne qui lit les journaux</span>
+<span class="fleche">↓</span>
+<span class="etape">Retrouve les recherches de chaque lecteur</span></div></div>
+  <div class="champ"><div class="champ-titre">Comment le corriger</div>
+    <ol class="etapes"><li>Retirer la partie après « ? » de chaque ligne de journal.</li><li>Réduire l'en-tête Server à « LucidNews ».</li></ol></div>
+</article></section><section class="bloc"><h2>Secrets</h2><p class="intro">Clés et mots de passe, dans les fichiers et dans tout l'historique Git.</p><article class="constat" style="border-left-color:#5C6873">
+  <div class="constat-tete">
+    <span class="badge" style="background:#F4F1EA;color:#5C6873">INFORMATION</span>
+    <span class="confiance">Confirmé</span>
+    <span class="norme">OWASP A02</span>
+  </div>
+  <h3>Aucun secret dans le dépôt ni dans son historique</h3>
+  <div class="champ"><div class="champ-titre">Pourquoi c'est dangereux</div>
+    <p>La recherche a lu 388 fichiers et tout l'historique. Les 24 alertes du code sont des noms de variables ; les 2 valeurs en forme de clé Google de l'historique sont des exemples (GOCSPX-..., une valeur de test). La vraie clé IA est dans .env, ignoré par Git et jamais commité.</p></div>
+  <div class="champ"><div class="champ-titre">Ce qui peut arriver</div>
+    <p>Aucun.</p></div>
+  <div class="champ"><div class="champ-titre">Où</div>
+    <p><code>.env (poste de développement)</code></p></div>
+  <div class="champ"><div class="champ-titre">Comment le constater</div>
+    <p>git check-ignore -v .env ; git log --all -- .env (vide).</p></div>
+  <div class="champ"><div class="champ-titre">Comment savoir que c'est réparé</div>
+    <p>Relancer la recherche de secrets avec l'historique avant chaque mise en production.</p></div>
+  <div class="champ"><div class="champ-titre">Le chemin</div>
+    <div class="escalier"><span class="etape">Aucun chemin trouvé</span></div></div>
+  <div class="champ"><div class="champ-titre">Comment le corriger</div>
+    <ol class="etapes"><li>Garder .env hors des sauvegardes partagées.</li><li>Régénérer la clé si le poste est partagé ou perdu.</li></ol></div>
+</article></section>
+  <section class="bloc"><h2>Plan de correction</h2><div class="plan-groupe"><div class="plan-quand">À corriger immédiatement</div><ol class="etapes"><li>Rien : aucun problème critique ni élevé.</li></ol></div><div class="plan-groupe"><div class="plan-quand">À corriger avant production</div><ol class="etapes"><li>Renseigner auth.public_url en https et server.trusted_proxies avec l'adresse du reverse proxy (lot 32).</li><li>Faire porter par le reverse proxy HSTS et frame-ancestors (lot 32).</li><li>Lancer pip-audit et npm audit dans l'intégration continue (lot 31).</li></ol></div><div class="plan-groupe"><div class="plan-quand">À corriger rapidement</div><ol class="etapes"><li>Au lot 33, remplacer le message « adresse déjà utilisée » par un e-mail au titulaire.</li></ol></div><div class="plan-groupe"><div class="plan-quand">Améliorations recommandées</div><ol class="etapes"><li>Vérifier les mots de passe contre une base de fuites complète (service Have I Been Pwned, par plages de hachage), si l'envoi vers un tiers est accepté.</li><li>Garder les compteurs de limite en mémoire partagée si l'API tourne un jour en plusieurs instances.</li></ol></div></section>
+  <section class="bloc"><h2>Checklists</h2><div class="rangee"><div class="carte"><h3>Avant la mise en production</h3><ul class="cases"><li>auth.public_url en https (cookie Secure)</li><li>server.trusted_proxies = adresse du reverse proxy</li><li>HSTS et frame-ancestors posés par le proxy</li><li>allow_signup fermé pendant la bêta</li><li>pip-audit et npm audit à zéro</li><li>recherche de secrets avec historique à zéro</li><li>compte administrateur créé en terminal</li></ul></div><div class="carte"><h3>Après chaque mise à jour des dépendances</h3><ul class="cases"><li>pip-audit et npm audit</li><li>905+ tests serveur, 173+ tests interface</li><li>build de l'interface sans erreur CSP dans la console</li></ul></div></div></section>
+  <section class="bloc"><h2>Ce qui n'a pas pu être vérifié</h2><p class="intro">Un audit qui ne dit pas ses limites laisse croire que tout a été regardé.</p><div class="carte"><ul class="puces"><li>L'application n'est pas en production : HTTPS, configuration du reverse proxy, pare-feu et hébergeur n'ont pas pu être vérifiés.</li><li>Aucun test d'intrusion dynamique (fuzzing, scanner) : l'audit repose sur la lecture du code, les tests et des essais manuels.</li><li>La connexion Google n'a pas été testée contre le vrai Google (pas d'identifiant client ici) : le flux est testé contre une imitation locale.</li><li>L'exploitabilité réelle des 134 failles de dépendances n'a pas été analysée une par une : elles ont été corrigées par mise à jour.</li><li>La résistance au déni de service lent (connexions maintenues ouvertes) dépend du reverse proxy du lot 32 : le serveur HTTP de la bibliothèque standard n'est pas fait pour être exposé seul.</li></ul></div></section>
+</main>
+
+<footer class="pied">Rapport établi à partir du code du dépôt LucidNews le 17 octobre 2026, lot 30. Les valeurs sensibles sont masquées.</footer>
+</body></html>

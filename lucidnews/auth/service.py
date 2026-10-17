@@ -95,6 +95,13 @@ def _error(status: int, code: str, message: str, **extra: Any) -> AuthResult:
     return AuthResult(status, {"error": message, "code": code, **extra})
 
 
+def _password_refused(problem: str) -> AuthResult:
+    """A guessable password has its own code: the form says why, not just "too short"."""
+    if problem == "too_common":
+        return _error(HTTPStatus.UNPROCESSABLE_ENTITY, "common_password", "this password is too easy to guess", reason=problem)
+    return _error(HTTPStatus.UNPROCESSABLE_ENTITY, "weak_password", "password does not meet the rules", reason=problem)
+
+
 def safe_next(value: Optional[str]) -> str:
     """Only a path of this site: never ``//host``, a scheme or a backslash (open redirect)."""
     if not value or not value.startswith("/") or value.startswith("//") or "\\" in value or any(ord(c) < 32 for c in value):
@@ -203,9 +210,9 @@ class AuthService:
         email = self._email(request.body.get("email"))
         if email is None:
             return _error(HTTPStatus.UNPROCESSABLE_ENTITY, "invalid_email", "enter a valid e-mail address")
-        problem = password_problem(request.body.get("password"))
+        problem = password_problem(request.body.get("password"), email)
         if problem:
-            return _error(HTTPStatus.UNPROCESSABLE_ENTITY, "weak_password", "password does not meet the rules", reason=problem)
+            return _password_refused(problem)
         name = self._name(request.body.get("name")) or email.split("@")[0]
         user = self.db.create_user(email, name, password_hash=hash_password(request.body["password"]))
         if user is None:
@@ -308,9 +315,9 @@ class AuthService:
         refused = self._check_current_password(user, request.body.get("current"))
         if refused:
             return refused
-        problem = password_problem(request.body.get("password"))
+        problem = password_problem(request.body.get("password"), user.email)
         if problem:
-            return _error(HTTPStatus.UNPROCESSABLE_ENTITY, "weak_password", "password does not meet the rules", reason=problem)
+            return _password_refused(problem)
         self.db.change_password(user.id, hash_password(request.body["password"]), token)
         return AuthResult(HTTPStatus.OK, self._account_state(self.db.get(user.id) or user, token))
 
