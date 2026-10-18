@@ -56,6 +56,7 @@ import argparse
 from collections import Counter
 import ipaddress
 import json
+import os
 import re
 import sys
 from dataclasses import dataclass, field
@@ -79,7 +80,7 @@ from .models import Config, ContentItem, DigestConfig
 from .processing import ProfileRegistry
 from .quality_overview import quality_overview
 from .source_domains import source_domains
-from .runs_api import RunService, ScheduleService
+from .runs_api import RunService, ScheduleService, ServerScheduleService
 from .reliability import ReliabilityLabel, SourceTier
 from .reliability.assess import ReliabilityPolicy
 from .source_health import assess_health, configured_source_keys, health_to_dict
@@ -900,6 +901,9 @@ def make_handler(ctx: ApiContext) -> type[BaseHTTPRequestHandler]:
             parts = urlsplit(self.path)
             if not self._within_rate(parts.path):
                 return
+            if parts.path == "/api/healthz":  # for the orchestrator's probe: no session, no data in the answer
+                self._send(*health(ctx))
+                return
             if parts.path.rstrip("/").startswith("/api/auth"):
                 self._auth_route("GET", parts, {})
                 return
@@ -947,6 +951,15 @@ def make_handler(ctx: ApiContext) -> type[BaseHTTPRequestHandler]:
             self._write("DELETE")
 
     return Handler
+
+
+def health(ctx: "ApiContext") -> tuple[int, Dict[str, str]]:
+    """200 when the archive answers, 503 when it does not. Says nothing else."""
+    try:
+        ctx.archive.list_runs(limit=1)
+    except Exception:  # noqa: BLE001 (any failure of the database means "not healthy")
+        return HTTPStatus.SERVICE_UNAVAILABLE, {"status": "unavailable"}
+    return HTTPStatus.OK, {"status": "ok"}
 
 
 def build_context(data_dir: str, config_path: Optional[str], *, local_features: bool = False) -> ApiContext:
@@ -1011,7 +1024,12 @@ def build_context(data_dir: str, config_path: Optional[str], *, local_features: 
         ctx.sources = SourcesService(ctx.settings)
         settings = ctx.settings
         ctx.runs = RunService(Path(data_dir), config_path, secret_values=lambda: settings.secret_values())
-        ctx.schedule = ScheduleService(Path(data_dir), config_path)
+        # On a server (docker) the `lucidnews-scheduler` process runs the schedule instead of launchd.
+        ctx.schedule = (
+            ServerScheduleService(Path(data_dir))
+            if os.environ.get("LUCIDNEWS_SCHEDULER") == "server"
+            else ScheduleService(Path(data_dir), config_path)
+        )
     ctx.auth = build_auth_service(config.auth, Path(data_dir))
     ctx.trusted_proxies = frozenset(config.server.trusted_proxies)
     ctx.limiter = RateLimiter(config.server.requests_per_minute, 60)

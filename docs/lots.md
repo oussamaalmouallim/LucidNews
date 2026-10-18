@@ -55,6 +55,7 @@ Légende : ✅ clôturé · 🟡 outil livré, action humaine attendue · ⏳ pr
 - [Lot 29 — Préférences du lecteur et veille personnelle](#lot-29--préférences-du-lecteur-et-veille-personnelle) ✅
 - [Lot 30 — Sécurité applicative](#lot-30--sécurité-applicative) ✅
 - [Lot 31 — Tests de bout en bout et intégration continue](#lot-31--tests-de-bout-en-bout-et-intégration-continue) ✅
+- [Lot 32 — Exécution serveur](#lot-32--exécution-serveur) ✅
 - [Lots 27 à 46 — Plan de lancement](#lots-27-à-46--plan-de-lancement) 📋
 - [Paramètres : où ils vivent](#paramètres--où-ils-vivent-et-comment-ils-sappliquent)
 - [Blocages et décisions en attente](#blocages-et-décisions-en-attente)
@@ -833,6 +834,22 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 
 ---
 
+## Lot 32 — Exécution serveur
+
+✅ Clôturé le 18 octobre 2026. Guide : [README, « Sur un serveur »](../README.md).
+
+- **`docker compose up -d --build`** : `init` (configuration fermée et archive vide, jamais d'écrasement), `api`, `scheduler`, `web` (Caddy). Les services attendent la fin de `init` et la santé de l'API.
+- **Santé** : `GET /api/healthz`, sans session, répond `ok` ou `503` si l'archive ne répond pas, et rien d'autre. Le planificateur écrit un battement toutes les 15 secondes ; `lucidnews-scheduler --check` le lit. Caddy a sa propre sonde.
+- **Planificateur serveur** (`lucidnews-scheduler`) à la place de launchd : lit `schedule.json`, écrit par l'écran Réglages (`PUT /api/schedule`), applique un changement en quelques secondes. Lance la même commande qu'un terminal, avec l'origine « schedule » ; le verrou existant interdit deux runs à la fois. L'heure est notée avant le lancement : jamais deux fois. Un créneau manqué pendant un arrêt part au retour s'il a moins de 6 heures. L'écran Réglages dit honnêtement « active » seulement si le planificateur bat.
+- **SQLite** : les trois bases s'ouvrent en mode WAL (`PRAGMA journal_mode`), attente de 30 s, `synchronous = NORMAL`. L'API lit pendant qu'un run écrit.
+- **Caddy** : HTTPS automatique (`SITE_ADDRESS`), interface compilée, `/api` relayé, HSTS, `frame-ancestors 'none'`, cache long des fichiers à empreinte. Adresse fixe `172.28.0.10` déclarée dans `server.trusted_proxies` : le visiteur réel est vu, la limite de requêtes est par visiteur (reste du lot 30 soldé).
+- **Vérifié avec Docker** (projet isolé, volume supprimé après) : démarrage complet en 25 s ; compte administrateur créé ; planning posé depuis l'API à travers Caddy ; run déclenché à l'heure, en succès, visible dans l'historique ; arrêt puis redémarrage : compte, historique et planning conservés, aucun second run ; HTTPS local avec HSTS et redirection HTTP.
+- **CI** : nouvelle tâche qui monte la pile sur un serveur vierge, attend toutes les sondes et vérifie la porte d'entrée.
+- **Hors périmètre** : le service public (confirmation, désinscription) reste hors de la pile jusqu'à l'e-mail (lot 33) ; sauvegardes au lot 34 ; le domaine, les clés et l'hébergement au lot 37.
+- **Tests** : 920 Python (15 nouveaux dans `tests/test_server.py`), 174 interface, 5 parcours. Le premier démarrage dans la CI est à confirmer au premier push.
+
+---
+
 ## Lots 27 à 46 — Plan de lancement
 
 📋 Planifiés le 13 octobre 2026 après l'étude de marché et l'audit
@@ -843,11 +860,11 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 |---|---|---|
 | A — Finalisation fonctionnelle | 27 Rôles et isolation ✅ · 27 bis Édition par domaine ✅ · 28 Compte en libre-service ✅ · 29 Préférences et veille personnelle ✅ | Rendre l'application vendable à plusieurs clients |
 | B — Tests et sécurité | 30 Sécurité applicative ✅ · 31 Bout en bout et CI ✅ · 12 bis Preuve de qualité | Livrer sans régression, prouver la fiabilité |
-| C — Préparation de la production | 32 Exécution serveur · 33 E-mail en production · 34 Données · 35 Observabilité et coûts · 36 Conformité | Tourner seul, sans perte, légalement |
+| C — Préparation de la production | 32 Exécution serveur ✅ · 33 E-mail en production · 34 Données · 35 Observabilité et coûts · 36 Conformité | Tourner seul, sans perte, légalement |
 | D — Hébergement et déploiement | 37 Hébergement · 38 Bêta privée | Mettre en ligne, mesurer |
 | E — Après le lancement | 39 Fil d'un événement · 40 Tendances · 41 Alertes · 42 Offres et paiement · 43 Équipes · 44 Sources personnelles · 45 Arabe · 46 PostgreSQL | Différencier et monétiser |
 
-**Lots 27 à 30 clôturés le 17 octobre 2026, lot 31 le 18 octobre. Prochain lot : 12 bis — Preuve de qualité (annotation humaine), puis 32 — Exécution serveur.**
+**Lots 27 à 30 clôturés le 17 octobre 2026, lots 31 et 32 le 18 octobre. Prochain lot : 34 — Données (sauvegardes), le 12 bis restant l'annotation humaine ; le lot 33 (e-mail) est reporté.**
 Décisions du 17 octobre : produit A (veille partagée, newsletter personnalisée) confirmé ;
 hébergement reporté, on finit d'abord l'application ; annotation de 100 news confirmée ;
 **ni vérification d'e-mail ni envoi d'e-mails pour le moment**.

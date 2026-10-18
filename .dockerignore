@@ -43,3 +43,7 @@ todo.txt
 *.svg
 *.tsx
 .claude/
+
+# The API image has no use for the interface sources (Dockerfile.web builds them)
+frontend/
+deploy/

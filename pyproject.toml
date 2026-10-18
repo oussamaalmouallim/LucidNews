@@ -44,6 +44,8 @@ lucidnews-public = "lucidnews.public_api:main"
 lucidnews-users = "lucidnews.auth.cli:main"
 lucidnews-eval = "lucidnews.evaluation.cli:main"
 lucidnews-reassess = "lucidnews.reassess_cli:main"
+lucidnews-scheduler = "lucidnews.scheduler:main"
+lucidnews-init = "lucidnews.server_init:main"
 
 [build-system]
 requires = ["hatchling"]

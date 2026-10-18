@@ -228,16 +228,8 @@ class ScheduleService:
             self._unload()
             self.plist_path.unlink(missing_ok=True)
             return self.get()
-        fields: Dict[str, str] = {}
         hour, minute, weekdays = body.get("hour"), body.get("minute"), body.get("weekdays", [])
-        if isinstance(hour, bool) or not isinstance(hour, int) or not 0 <= hour <= 23:
-            fields["hour"] = "must be between 0 and 23"
-        if isinstance(minute, bool) or not isinstance(minute, int) or not 0 <= minute <= 59:
-            fields["minute"] = "must be between 0 and 59"
-        if not isinstance(weekdays, list) or any(
-            isinstance(day, bool) or not isinstance(day, int) or not 1 <= day <= 7 for day in weekdays
-        ):
-            fields["weekdays"] = "days from 1 (Monday) to 7 (Sunday); empty for every day"
+        fields = schedule_field_errors(hour, minute, weekdays)
         if fields:
             return HTTPStatus.UNPROCESSABLE_ENTITY, {"error": "invalid schedule", "fields": fields}
         self.agents_dir.mkdir(parents=True, exist_ok=True)
@@ -280,6 +272,65 @@ class ScheduleService:
             "StandardErrorPath": str(self.log_path),
             "RunAtLoad": False,
         }
+
+
+def schedule_field_errors(hour: Any, minute: Any, weekdays: Any) -> Dict[str, str]:
+    fields: Dict[str, str] = {}
+    if isinstance(hour, bool) or not isinstance(hour, int) or not 0 <= hour <= 23:
+        fields["hour"] = "must be between 0 and 23"
+    if isinstance(minute, bool) or not isinstance(minute, int) or not 0 <= minute <= 59:
+        fields["minute"] = "must be between 0 and 59"
+    if not isinstance(weekdays, list) or any(isinstance(day, bool) or not isinstance(day, int) or not 1 <= day <= 7 for day in weekdays):
+        fields["weekdays"] = "days from 1 (Monday) to 7 (Sunday); empty for every day"
+    return fields
+
+
+@dataclass
+class ServerScheduleService:
+    """The schedule of a server: kept in ``<data dir>/schedule.json`` and run by the
+    ``lucidnews-scheduler`` process (see ``scheduler``), since a container has no launchd."""
+
+    data_dir: Path
+
+    def get(self) -> Response:
+        from . import scheduler
+
+        schedule = scheduler.load(self.data_dir)
+        enabled = bool(schedule.get("enabled"))
+        hour, minute, weekdays = schedule.get("hour"), schedule.get("minute"), schedule.get("weekdays") or []
+        return HTTPStatus.OK, {
+            "supported": True,
+            "enabled": enabled,
+            "valid": True,
+            "loaded": enabled and scheduler.is_alive(self.data_dir),  # the process that runs it is up
+            "hour": hour if enabled else None,
+            "minute": minute if enabled else None,
+            "weekdays": weekdays if enabled else [],
+            "next_run": next_run(hour, minute, weekdays) if enabled and hour is not None else None,
+            "label": "server",
+            "log": str(Path(self.data_dir).resolve() / "runs" / "scheduled.log"),
+        }
+
+    def update(self, body: Dict[str, Any]) -> Response:
+        from . import scheduler
+
+        enabled = body.get("enabled")
+        if not isinstance(enabled, bool):
+            return HTTPStatus.UNPROCESSABLE_ENTITY, {"error": "invalid schedule", "fields": {"enabled": "must be true or false"}}
+        schedule = scheduler.load(self.data_dir)
+        if not enabled:
+            scheduler.save(self.data_dir, {**schedule, "enabled": False})
+            return self.get()
+        hour, minute, weekdays = body.get("hour"), body.get("minute"), body.get("weekdays", [])
+        fields = schedule_field_errors(hour, minute, weekdays)
+        if fields:
+            return HTTPStatus.UNPROCESSABLE_ENTITY, {"error": "invalid schedule", "fields": fields}
+        # A new time starts clean: a slot already past today must not fire at once.
+        scheduler.save(
+            self.data_dir,
+            {"enabled": True, "hour": hour, "minute": minute, "weekdays": sorted(set(weekdays)), "last_fire": datetime.now().astimezone().isoformat()},
+        )
+        return self.get()
 
 
 def next_run(hour: int, minute: int, weekdays: Sequence[int], now: Optional[datetime] = None) -> str:

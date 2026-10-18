@@ -31,13 +31,15 @@ RUN set -eu; \
 
 # Runtime data is mounted here; keep the image and process unprivileged.
 RUN useradd --create-home --uid 10001 lucidnews \
-    && chown -R lucidnews:lucidnews /app
+    && mkdir -p /data \
+    && chown -R lucidnews:lucidnews /app /data
 
 # Create volume mount points
-VOLUME ["/app/data"]
+VOLUME ["/app/data", "/data"]
 
 # Set environment variables
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONUNBUFFERED=1 \
+    PATH="/app/.venv/bin:$PATH"
 USER lucidnews
 
 # Run the application

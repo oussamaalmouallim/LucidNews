@@ -1,16 +1,105 @@
+# LucidNews on a server (lot 32). One command starts everything:
+#
+#     docker compose up -d --build
+#
+# then create the first administrator (once):
+#
+#     docker compose exec api lucidnews-users --data-dir /data add you@example.com --admin
+#
+# Services: init (creates the configuration and an empty archive, then stops), api (accounts,
+# editions, administration), scheduler (starts the pipeline at the times chosen in the web app),
+# web (Caddy: HTTPS, the interface, /api relayed). The data lives in the `lucidnews-data` volume:
+# a restart or a rebuild loses nothing. Keys go in a `.env` file next to this one (optional).
+name: lucidnews
+
+x-app: &app
+  build: .
+  image: lucidnews-app
+  env_file:
+    - path: .env
+      required: false
+  environment: &env
+    TZ: ${TZ:-UTC}
+    LUCIDNEWS_SCHEDULER: server
+  volumes:
+    - lucidnews-data:/data
+  restart: unless-stopped
+
 services:
-  lucidnews:
+  init:
+    <<: *app
+    entrypoint: ["lucidnews-init", "--data-dir", "/data"]
+    environment:
+      <<: *env
+      # The Caddy container, at a fixed address: the only one allowed to name the visitor.
+      LUCIDNEWS_TRUSTED_PROXIES: 172.28.0.10
+    restart: "no"
+
+  api:
+    <<: *app
+    entrypoint: ["lucidnews-api", "--host", "0.0.0.0", "--port", "8765", "--data-dir", "/data"]
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8765/api/healthz', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  scheduler:
+    <<: *app
+    entrypoint: ["lucidnews-scheduler", "--data-dir", "/data"]
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "lucidnews-scheduler", "--check", "--data-dir", "/data"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  web:
     build:
       context: .
-      # args:
-      #   EXTRAS: trafilatura  # comma-separated optional extras, e.g. "twitter"
-    container_name: lucidnews
-    volumes:
-      - ./data:/app/data
-      - ./.env:/app/.env:ro
+      dockerfile: Dockerfile.web
+    image: lucidnews-web
     environment:
-      - TZ=UTC
-    restart: "no"
-    # Run daily at 8:00 AM UTC (adjust as needed)
-    # For one-time run, use: docker compose run --rm lucidnews
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - caddy-data:/data # the certificates: kept across restarts
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      default:
+        ipv4_address: 172.28.0.10
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # One pipeline run by hand, with the same data: `docker compose run --rm run --hours 24`
+  run:
+    <<: *app
+    profiles: ["tools"]
+    entrypoint: ["lucidnews", "--data-dir", "/data"]
     command: ["--hours", "24"]
+    restart: "no"
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+
+volumes:
+  lucidnews-data:
+  caddy-data:

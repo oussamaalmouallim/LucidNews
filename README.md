@@ -194,7 +194,27 @@ Réglages du processus `lucidnews-api`, dans `data/config.json` (facultatifs) :
 | `trusted_proxies` | aucun | Adresses IP des reverse proxys autorisés à donner l'adresse du visiteur (`X-Forwarded-For`). **À renseigner derrière un proxy**, sinon tous les visiteurs partagent l'adresse du proxy et les limites de connexion les bloquent ensemble. |
 | `requests_per_minute` | `240` | Requêtes par minute et par client sur l'API ; la recherche et la période ont droit au cinquième. Au-delà : `429` et `Retry-After: 60`. |
 
-Chaque réponse de l'API porte des en-têtes de sécurité, et l'interface compilée une politique de sécurité du contenu (CSP). HTTPS, HSTS et `frame-ancestors` sont posés par le reverse proxy. Audit, modèle de menaces et liste ASVS : [docs/securite/](docs/securite/).
+Chaque réponse de l'API porte des en-têtes de sécurité, et l'interface compilée une politique de sécurité du contenu (CSP). HTTPS, HSTS et `frame-ancestors` sont posés par le reverse proxy (fourni : Caddy, voir « Sur un serveur »). Audit, modèle de menaces et liste ASVS : [docs/securite/](docs/securite/).
+
+### Sur un serveur (docker compose)
+
+Une commande démarre tout, sur un serveur vierge :
+
+```bash
+docker compose up -d --build
+docker compose exec api lucidnews-users --data-dir /data add vous@exemple.fr --admin   # une seule fois
+```
+
+| Service | Rôle |
+|---|---|
+| `init` | Crée `config.json` (comptes activés, inscription fermée, proxy de confiance) et une archive vide, puis s'arrête. Ne touche jamais à l'existant. |
+| `api` | Comptes, éditions, administration. Contrôle de santé : `GET /api/healthz` (sans session, ne renvoie que `ok`). |
+| `scheduler` | Lance le pipeline aux heures choisies dans l'interface (écran Réglages). Un run manqué pendant un arrêt part au retour, dans les 6 heures. Il ne lance jamais deux runs à la fois. |
+| `web` | Caddy : HTTPS automatique, interface compilée, `/api` relayé, HSTS et `frame-ancestors 'none'`. |
+
+Les données sont dans le volume `lucidnews-data` (`/data`) : un redémarrage ou une reconstruction ne perd rien. Variables facultatives : `SITE_ADDRESS` (nom de domaine pour un certificat réel ; `localhost` par défaut, `:80` derrière un autre proxy), `HTTP_PORT`, `HTTPS_PORT`, `TZ` (fuseau des heures de planification). Les clés (IA) vont dans un fichier `.env` à côté de `docker-compose.yml`. Un run à la main : `docker compose run --rm run --hours 24`. Le service public (confirmation et désinscription) attend l'e-mail (lot 33).
+
+Les trois bases SQLite s'ouvrent en mode WAL avec une attente de 30 secondes : l'API lit pendant qu'un run écrit, sans « database is locked ».
 
 ### Variables d'environnement
 

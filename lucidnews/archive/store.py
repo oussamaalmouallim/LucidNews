@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Iterable, List, Optional, Sequence
 
 from ..models import ContentItem
+from ..sqlite_util import connect
 from ..source_health import SourceRunOutcome
 from . import search as fts
 
@@ -179,8 +180,7 @@ class ItemArchive:
         return True
 
     def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.path)
-        conn.row_factory = sqlite3.Row
+        conn = connect(self.path)
         conn.execute("PRAGMA foreign_keys = ON")
         return conn
 

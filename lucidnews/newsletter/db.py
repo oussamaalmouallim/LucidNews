@@ -21,6 +21,7 @@ from typing import Any, Dict, Iterable, List, Optional
 
 from pydantic import ValidationError
 
+from ..sqlite_util import connect
 from .models import DigestPreferences, Subscriber, SubscriptionStatus, subscriber_id
 from .store import SubscriberStore
 
@@ -117,8 +118,7 @@ class SubscriberDB:
         self._migrate_json()
 
     def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.path, timeout=10)
-        conn.row_factory = sqlite3.Row
+        conn = connect(self.path)
         return conn
 
     # Migration ----------------------------------------------------------------------------

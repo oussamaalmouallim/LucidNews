@@ -1,0 +1,29 @@
+# The public door of LucidNews (lot 32): HTTPS, the compiled interface, and /api relayed to the API.
+#
+# SITE_ADDRESS is the domain name (Caddy then gets and renews a certificate by itself) or
+# `localhost` (a local certificate, for trying it) or `:80` (plain HTTP, behind another proxy).
+{$SITE_ADDRESS:localhost} {
+	encode zstd gzip
+
+	# Caddy puts the visitor's address in X-Forwarded-For and drops any the visitor sent
+	# itself; the API trusts this address only (server.trusted_proxies).
+	handle /api/* {
+		reverse_proxy api:8765
+	}
+
+	handle {
+		header {
+			Strict-Transport-Security "max-age=31536000"
+			Content-Security-Policy "frame-ancestors 'none'"
+			X-Content-Type-Options nosniff
+			X-Frame-Options DENY
+			Referrer-Policy no-referrer
+		}
+		header /assets/* Cache-Control "public, max-age=31536000, immutable"
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	header -Server
+}

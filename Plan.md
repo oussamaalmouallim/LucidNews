@@ -120,7 +120,7 @@ pip-audit et npm audit. Une régression volontaire (un lecteur autorisé sur les
 
 ## Phase C — Préparation de la production
 
-### Lot 32 — Exécution serveur
+### Lot 32 — Exécution serveur · ✅ clôturé le 18 octobre 2026
 
 - `docker compose` : API, pipeline planifié (cron du conteneur ou minuterie systemd, pas
   launchd), service public, Caddy (HTTPS, interface compilée servie, `/api` relayé).
@@ -128,6 +128,11 @@ pip-audit et npm audit. Une régression volontaire (un lecteur autorisé sur les
 - La planification depuis l'interface pilote le planificateur serveur.
 - **Critères** : un serveur vierge démarre tout avec une commande ; un run planifié se
   déclenche à l'heure et apparaît dans l'historique ; redémarrage sans perte.
+
+Réalisé et vérifié en vrai avec Docker (projet isolé, volume jeté après) : démarrage en une
+commande, run planifié déclenché à l'heure choisie depuis l'API et terminé en succès, historique
+et compte conservés après arrêt et redémarrage, aucun second déclenchement après redémarrage,
+HTTPS local avec HSTS. Le service public est écarté tant que l'e-mail l'est (lot 33).
 
 ### Lot 33 — E-mail en production · **reporté (décision du 17 octobre 2026)**
 

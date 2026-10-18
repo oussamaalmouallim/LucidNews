@@ -1,0 +1,8 @@
+# Context of Dockerfile.web: only the interface and the Caddyfile
+*
+!frontend/
+!deploy/
+frontend/node_modules/
+frontend/dist/
+frontend/test-results/
+frontend/playwright-report/
