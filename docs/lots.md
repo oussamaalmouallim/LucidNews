@@ -54,6 +54,7 @@ Légende : ✅ clôturé · 🟡 outil livré, action humaine attendue · ⏳ pr
 - [Lot 28 — Compte en libre-service, sans e-mail](#lot-28--compte-en-libre-service-sans-e-mail) ✅
 - [Lot 29 — Préférences du lecteur et veille personnelle](#lot-29--préférences-du-lecteur-et-veille-personnelle) ✅
 - [Lot 30 — Sécurité applicative](#lot-30--sécurité-applicative) ✅
+- [Lot 31 — Tests de bout en bout et intégration continue](#lot-31--tests-de-bout-en-bout-et-intégration-continue) ✅
 - [Lots 27 à 46 — Plan de lancement](#lots-27-à-46--plan-de-lancement) 📋
 - [Paramètres : où ils vivent](#paramètres--où-ils-vivent-et-comment-ils-sappliquent)
 - [Blocages et décisions en attente](#blocages-et-décisions-en-attente)
@@ -817,6 +818,21 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 
 ---
 
+## Lot 31 — Tests de bout en bout et intégration continue
+
+✅ Clôturé le 18 octobre 2026.
+
+- **Serveur de test** : `scripts/e2e_server.py` recrée à chaque lancement une base jetable (comptes activés, inscription ouverte, une édition de trois news dans trois domaines, un administrateur de test). Ports 8766 et 5174 : le serveur de développement reste sur 8765 et 5173. Rien n'est écrit dans `data/`.
+- **Parcours Playwright** (`frontend/e2e/`), sur l'interface compilée, CSP comprise : un lecteur s'inscrit, choisit l'IA dans « Ma veille », voit « Ma sélection » sans la news cloud puis toute l'édition, se voit refuser les réglages (écran et API 403), se déconnecte (API 401) et retrouve sa veille en se reconnectant ; mauvais mot de passe refusé ; mot de passe courant refusé à l'inscription ; un administrateur atteint les réglages ; la page porte sa CSP. Chaque parcours échoue sur toute erreur du navigateur (CSP, plantage, erreur 5xx).
+- **Intégration continue** (`.github/workflows/ci.yml`), à chaque push et pull request : API (pytest, pip-audit), interface (oxlint, prettier, types, vitest, build, npm audit), parcours (Playwright, rapport et traces gardés 7 jours en cas d'échec).
+- **Régression volontaire** : un lecteur autorisé sur `/api/settings` fait échouer le parcours lecteur (403 attendu, 200 reçu) et 3 tests de `tests/test_roles.py`.
+- **Défaut trouvé par les parcours** : après une connexion depuis la page de connexion en français, l'application repassait en anglais (la langue se perdait dans la redirection). Corrigé : le retour garde la langue, aussi pour Google.
+- **Dépendances** : pytest 9.0.2 → 9.1.1 (faille connue PYSEC-2026-1845, outil de test seulement).
+- **Vérification de l'adresse** : hors parcours, reportée avec l'e-mail (lot 33).
+- **Tests** : 905 Python, 174 interface, 5 parcours. CI verte sur GitHub : à confirmer au premier push.
+
+---
+
 ## Lots 27 à 46 — Plan de lancement
 
 📋 Planifiés le 13 octobre 2026 après l'étude de marché et l'audit
@@ -826,12 +842,12 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 | Phase | Lots | Objet |
 |---|---|---|
 | A — Finalisation fonctionnelle | 27 Rôles et isolation ✅ · 27 bis Édition par domaine ✅ · 28 Compte en libre-service ✅ · 29 Préférences et veille personnelle ✅ | Rendre l'application vendable à plusieurs clients |
-| B — Tests et sécurité | 30 Sécurité applicative ✅ · 31 Bout en bout et CI · 12 bis Preuve de qualité | Livrer sans régression, prouver la fiabilité |
+| B — Tests et sécurité | 30 Sécurité applicative ✅ · 31 Bout en bout et CI ✅ · 12 bis Preuve de qualité | Livrer sans régression, prouver la fiabilité |
 | C — Préparation de la production | 32 Exécution serveur · 33 E-mail en production · 34 Données · 35 Observabilité et coûts · 36 Conformité | Tourner seul, sans perte, légalement |
 | D — Hébergement et déploiement | 37 Hébergement · 38 Bêta privée | Mettre en ligne, mesurer |
 | E — Après le lancement | 39 Fil d'un événement · 40 Tendances · 41 Alertes · 42 Offres et paiement · 43 Équipes · 44 Sources personnelles · 45 Arabe · 46 PostgreSQL | Différencier et monétiser |
 
-**Lots 27 à 30 clôturés le 17 octobre 2026. Prochain lot : 31 — Tests de bout en bout et intégration continue.**
+**Lots 27 à 30 clôturés le 17 octobre 2026, lot 31 le 18 octobre. Prochain lot : 12 bis — Preuve de qualité (annotation humaine), puis 32 — Exécution serveur.**
 Décisions du 17 octobre : produit A (veille partagée, newsletter personnalisée) confirmé ;
 hébergement reporté, on finit d'abord l'application ; annotation de 100 news confirmée ;
 **ni vérification d'e-mail ni envoi d'e-mails pour le moment**.

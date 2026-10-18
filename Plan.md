@@ -99,12 +99,18 @@ Rapport : [docs/securite/audit-securite-2026-10.html](docs/securite/audit-securi
   débit sur l'API, audit des dépendances (`pip-audit`, `npm audit`), modèle de menaces écrit.
 - **Critères** : ASVS niveau 1 couvert et documenté ; 0 vulnérabilité haute ou critique ouverte.
 
-### Lot 31 — Tests de bout en bout et intégration continue · **prochain lot**
+### Lot 31 — Tests de bout en bout et intégration continue · ✅ clôturé le 18 octobre 2026
 
-- Parcours Playwright sur un serveur de test : inscription, vérification, connexion,
-  préférences, aperçu, déconnexion, accès refusé à l'administration.
+- Parcours Playwright sur un serveur de test : inscription, connexion,
+  préférences, aperçu, déconnexion, accès refusé à l'administration. (La vérification de
+  l'adresse est reportée avec l'e-mail au lot 33.)
 - GitHub Actions : pytest, vitest, lint, format, build, Playwright.
 - **Critères** : CI verte sur chaque push ; une régression volontaire fait échouer la CI.
+
+Réalisé : 5 parcours Playwright sur l'interface compilée devant une API jetable
+(`scripts/e2e_server.py`), CI GitHub Actions en trois tâches (API, interface, parcours) avec
+pip-audit et npm audit. Une régression volontaire (un lecteur autorisé sur les réglages) fait
+échouer un parcours et 3 tests Python. CI verte sur GitHub : à confirmer au premier push.
 
 ### Lot 12 bis — Preuve de qualité (action humaine + outil existant)
 

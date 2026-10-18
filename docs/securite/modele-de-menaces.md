@@ -35,7 +35,7 @@ Rapport d'audit associé : [audit-securite-2026-10.html](audit-securite-2026-10.
 | Site tiers malveillant | Faire agir le navigateur d'un connecté (CSRF) | Origine vérifiée, corps JSON obligatoire, cookie SameSite=Lax |
 | Éditeur d'un flux piégé | Injecter du script, faire appeler une adresse interne | Échappement React, CSP, validation http(s), garde SSRF |
 | Personne qui récupère un cookie ou un journal | Se faire passer pour un lecteur, lire ses recherches | Sessions fermées à 90 jours au plus, déconnexion côté serveur, journaux sans paramètres |
-| Dépendance compromise ou vulnérable | Exécuter du code dans l'application | Verrou des versions (uv.lock, package-lock), pip-audit et npm audit (CI au lot 31) |
+| Dépendance compromise ou vulnérable | Exécuter du code dans l'application | Verrou des versions (uv.lock, package-lock), pip-audit et npm audit dans la CI à chaque push |
 
 ## Risques acceptés (et jusqu'à quand)
 

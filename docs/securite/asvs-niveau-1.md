@@ -19,4 +19,4 @@ Les exigences sans objet (pas d'upload de fichier, pas de GraphQL, pas de WebSoc
 | V10 Code malveillant | ✅ | Aucune exécution de contenu collecté ; dépendances verrouillées. |
 | V12 Fichiers | — | Aucun envoi de fichier par les utilisateurs. |
 | V13 API | ✅ | Origine vérifiée sur toute écriture, type de contenu JSON imposé, limite de requêtes par client. |
-| V14 Configuration | 🟡 | Dépendances sans faille connue (pip-audit, npm audit), en-têtes de sécurité sur l'API, CSP sur l'interface. Automatisation de l'audit des dépendances : ⏳ lot 31. |
+| V14 Configuration | 🟡 | Dépendances sans faille connue (pip-audit, npm audit), en-têtes de sécurité sur l'API, CSP sur l'interface. Audit des dépendances automatisé dans la CI à chaque push (lot 31). |

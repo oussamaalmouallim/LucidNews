@@ -285,6 +285,16 @@ uv run pytest -k reliability
 
 La suite couvre la collecte (chaque scraper), la fusion des doublons, le filtrage, la classification, l'analyse, la fiabilité, la taxonomie, les langues, l'enrichissement, le rendu, la newsletter, le stockage, les webhooks, l'email, l'assistant et le serveur MCP.
 
+Parcours de bout en bout (Playwright, sur l'interface compilée devant une API de test jetable, ports 8766 et 5174) :
+
+```bash
+cd frontend
+npx playwright install chromium   # une seule fois
+npm run e2e
+```
+
+La CI GitHub Actions lance tout à chaque push : pytest et pip-audit, oxlint, prettier, types, vitest, build et npm audit, puis les parcours Playwright.
+
 Avant de livrer, faire aussi un vrai cycle : `uv run lucidnews --hours 6`, puis relire le digest produit.
 
 ## Structure du dépôt
