@@ -3,7 +3,7 @@ import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router'
 import { Backdrop } from '../design/Backdrop'
 import { ApiErrorCard, PageSkeleton } from '../design/PageState'
-import { AuthProvider, safeNext, useAuth } from '../lib/auth'
+import { AuthProvider, safeNext, useAuth, withLanguage } from '../lib/auth'
 import { useLanguage } from '../lib/i18n'
 import { MotionProvider } from '../lib/motion'
 import { ThemeProvider } from '../lib/theme'
@@ -56,7 +56,7 @@ export function Shell() {
       const query = new URLSearchParams({ next: `${pathname}${search}`, lang: language })
       return <Navigate to={`/sign-in?${query.toString()}`} replace />
     }
-    if (!auth.locked && onAuthPage) return <Navigate to={safeNext(params.get('next'))} replace />
+    if (!auth.locked && onAuthPage) return <Navigate to={withLanguage(safeNext(params.get('next')), language)} replace />
   } else if (onAuthPage) {
     return <Navigate to="/" replace />
   }

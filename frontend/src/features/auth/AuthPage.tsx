@@ -5,7 +5,7 @@ import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } fr
 import { Link, useSearchParams } from 'react-router'
 import { ReliabilityBadge } from '../../design/ReliabilityBadge'
 import { ApiError, signIn, signUp, type Session } from '../../lib/api'
-import { safeNext, useAuth } from '../../lib/auth'
+import { safeNext, useAuth, withLanguage } from '../../lib/auth'
 import { languages, useLanguage, type MessageKey } from '../../lib/i18n'
 import { easeSoft, useMotionPreference } from '../../lib/motion'
 import { useTheme } from '../../lib/theme'
@@ -76,7 +76,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
 
   const goGoogle = () => {
     setGoogleBusy(true)
-    window.location.assign(`/api/auth/google/start?next=${encodeURIComponent(next)}`)
+    window.location.assign(`/api/auth/google/start?next=${encodeURIComponent(withLanguage(next, language))}`)
   }
 
   const switchTo = signUpMode ? '/sign-in' : '/sign-up'

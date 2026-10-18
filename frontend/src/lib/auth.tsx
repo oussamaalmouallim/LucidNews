@@ -73,3 +73,10 @@ export function safeNext(value: string | null): string {
   if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) return '/'
   return value.startsWith('/sign-in') ? '/' : value
 }
+
+/** The same path in the reader's language, unless it already names one: signing in keeps French in French. */
+export function withLanguage(path: string, language: string): string {
+  const url = new URL(path, 'http://app.invalid')
+  if (!url.searchParams.has('lang')) url.searchParams.set('lang', language)
+  return `${url.pathname}${url.search}${url.hash}`
+}

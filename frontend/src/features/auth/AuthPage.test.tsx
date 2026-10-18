@@ -145,7 +145,7 @@ test('the Google button exists only when the server has Google configured, and s
   try {
     renderAt('/sign-in?lang=fr&next=%2Fsources', null)
     fireEvent.click(await screen.findByRole('button', { name: /Continuer avec Google/ }, { timeout: 5000 }))
-    expect(assign).toHaveBeenCalledWith('/api/auth/google/start?next=%2Fsources')
+    expect(assign).toHaveBeenCalledWith('/api/auth/google/start?next=%2Fsources%3Flang%3Dfr')
   } finally {
     Object.defineProperty(window, 'location', { configurable: true, value: original })
   }
