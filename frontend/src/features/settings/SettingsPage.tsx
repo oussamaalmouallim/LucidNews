@@ -9,6 +9,7 @@ import { capitalize, formatEditionDate, formatTime } from '../../lib/format'
 import { useLanguage } from '../../lib/i18n'
 import { listStagger, riseIn, useMotionPreference } from '../../lib/motion'
 import { RunsSection } from './RunsSection'
+import { SectorCard } from './SectorCard'
 import { SettingsForm } from './SettingsForm'
 
 export function SettingsPage() {
@@ -26,6 +27,9 @@ export function SettingsPage() {
         <ApiErrorCard error={settings.error} onRetry={() => settings.refetch()} />
       ) : (
         <>
+          <m.div variants={riseIn}>
+            <SectorCard />
+          </m.div>
           <m.div variants={riseIn}>
             <RunsSection />
           </m.div>

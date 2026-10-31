@@ -4,10 +4,11 @@ import { useId, useState, type FormEvent } from 'react'
 import { ghostButton, hintClass, labelClass, primaryButton } from '../../design/Field'
 import { Segmented } from '../../design/PageState'
 import { Switch } from '../../design/Switch'
-import { domainCategories, fetchReaderPreferences, saveReaderPreferences, type ReaderPreferences } from '../../lib/api'
+import { fetchReaderPreferences, saveReaderPreferences, type ReaderPreferences } from '../../lib/api'
+import { useDomainCategories } from '../../lib/sector'
 import { categoryLabel, useLanguage } from '../../lib/i18n'
-import { domainIcons } from '../edition/domains'
 import { Card } from './Card'
+import { DomainIcon } from '../edition/DomainIcon'
 
 const PREFS_KEY = ['reader-preferences']
 const EVERYTHING: ReaderPreferences = { domains: [], min_importance: null, include_unconfirmed: true, detail_level: 'complete' }
@@ -31,13 +32,14 @@ function WatchForm({ saved }: { saved: ReaderPreferences }) {
   const [draft, setDraft] = useState<ReaderPreferences>(saved)
   const save = useMutation({ mutationFn: saveReaderPreferences, onSuccess: (state) => queryClient.setQueryData(PREFS_KEY, state) })
   const ids = { domains: useId(), unconfirmed: useId(), unconfirmedHint: useId() }
+  const categories = useDomainCategories()
 
   const changed = JSON.stringify(draft) !== JSON.stringify(saved)
   const toggleDomain = (domain: string) =>
     setDraft((current) => ({
       ...current,
       // Kept in the taxonomy order, whatever the order of the clicks.
-      domains: domainCategories.filter((entry) => (entry === domain ? !current.domains.includes(entry) : current.domains.includes(entry))),
+      domains: categories.filter((entry) => (entry === domain ? !current.domains.includes(entry) : current.domains.includes(entry))),
     }))
   const submit = (event: FormEvent) => {
     event.preventDefault()
@@ -52,8 +54,7 @@ function WatchForm({ saved }: { saved: ReaderPreferences }) {
           {t('watch.domainsHint')}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          {domainCategories.map((domain) => {
-            const Icon = domainIcons[domain]
+          {categories.map((domain) => {
             const on = draft.domains.includes(domain)
             return (
               <button
@@ -65,7 +66,7 @@ function WatchForm({ saved }: { saved: ReaderPreferences }) {
                   on ? 'bg-accent text-on-fill shadow-accent ring-accent' : 'bg-canvas text-ink/75 ring-ink/[0.08] hover:text-ink hover:ring-ink/20'
                 }`}
               >
-                <Icon size={14} aria-hidden className={on ? '' : 'text-accent'} />
+                <DomainIcon domain={domain} size={14} aria-hidden className={on ? '' : 'text-accent'} />
                 {categoryLabel(language, domain)}
                 {on && <Check size={13} aria-hidden />}
               </button>

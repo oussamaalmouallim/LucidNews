@@ -82,7 +82,7 @@ async def _rerun(service: EvaluationService, config, console: Console) -> Dict[s
         copies.append(copy)
     console.print(f"Re-analyzing {len(copies)} annotated item(s) with {_model_name(config)}…")
     profiles = ProfileRegistry.load(Path(config.processing.profiles_dir), config.processing.default_profile)
-    analyzer = ContentAnalyzer(create_ai_client(config.ai), profiles, console=console, reliability_policy=service.policy)
+    analyzer = ContentAnalyzer(create_ai_client(config.ai), profiles, console=console, reliability_policy=service.policy, sector=config.sector)
     await analyzer.analyze_batch(copies)
     return service.report({copy.id: copy for copy in copies})
 

@@ -15,7 +15,8 @@ from .i18n import LANGUAGES
 from .newsletter.db import SubscriberDB
 from .newsletter.models import DetailLevel, DigestPreferences, Frequency, Subscriber, SubscriptionStatus, subscriber_id
 from .newsletter.plans import PLAN_LIMITS
-from .taxonomy import IMPORTANCE_ORDER, Category
+from .sectors import DEFAULT_SECTOR, get_sector
+from .taxonomy import IMPORTANCE_ORDER
 
 if TYPE_CHECKING:
     from .newsletter.mailer import Mailer
@@ -75,8 +76,11 @@ class SubscriberService:
         configured_sources: Mapping[str, str],
         weekly_day: int = 0,
         mailer: Optional[Callable[[], Optional["Mailer"]]] = None,
+        categories: Optional[Sequence[str]] = None,
     ):
         self.store = store
+        # The installation's sector decides which domains a subscriber can choose.
+        self.categories = list(categories) if categories is not None else get_sector(DEFAULT_SECTOR).category_ids
         self.weekly_day = weekly_day
         # Built per request so a key added in Settings is used without restarting the API.
         self._mailer = mailer or (lambda: None)
@@ -88,7 +92,7 @@ class SubscriberService:
             "languages": [
                 {"code": code, "name": LANGUAGES[code].native_name} for code in self.languages
             ],
-            "categories": [category.value for category in Category],
+            "categories": list(self.categories),
             "frequencies": [frequency.value for frequency in Frequency],
             "detail_levels": [level.value for level in DetailLevel],
             "weekly_day": self.weekly_day,

@@ -38,3 +38,13 @@ test('a news the AI did not analyze is kept only when nothing asks for importanc
   expect(keepsUnanalyzed(raw, prefs({ include_unconfirmed: false }))).toBe(false)
   expect(keepsUnanalyzed(raw, prefs({ min_importance: 'low' }))).toBe(false)
 })
+
+test('the edition is grouped by the categories of the installation’s sector', () => {
+  const one = {
+    ...edition,
+    sections: [{ ...edition.sections[0]!, items: [{ ...edition.sections[0]!.items[0]!, categories: ['fake-markets'] }] }],
+    unanalyzed: [],
+  }
+  expect(groupByDomain(one).map((group) => group.key)).toEqual(['other']) // unknown to the tech sector
+  expect(groupByDomain(one, null, [], ['fake-banking', 'fake-markets']).map((group) => group.key)).toEqual(['fake-markets'])
+})

@@ -659,6 +659,7 @@ class PipelineOrchestrator(CollectionMixin, SelectionMixin, DeliveryMixin):
             self.profiles,
             console=self.console,
             reliability_policy=self.reliability_policy,
+            sector=self.config.sector,
         )
         await analyzer.analyze_batch(expanded)
 
@@ -761,6 +762,7 @@ class PipelineOrchestrator(CollectionMixin, SelectionMixin, DeliveryMixin):
             self.profiles,
             console=self.console,
             reliability_policy=self.reliability_policy,
+            sector=self.config.sector,
         )
 
         await analyzer.analyze_batch(to_analyze)

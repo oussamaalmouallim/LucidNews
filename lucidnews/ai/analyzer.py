@@ -32,8 +32,10 @@ class ContentAnalyzer:
         profiles: ProfileRegistry,
         console: Optional[Console] = None,
         reliability_policy: Optional[ReliabilityPolicy] = None,
+        sector: str = "tech",
     ):
         self.client = ai_client
+        self.sector = sector  # the categories offered to the AI are this sector's
         self.profiles = profiles
         self.classifier = ContentClassifier(ai_client, profiles)
         self.console = console or Console(stderr=True)
@@ -199,14 +201,14 @@ class ContentAnalyzer:
 
         # Get AI completion
         response = await self.client.complete(
-            system=analysis_system_prompt(profile),
+            system=analysis_system_prompt(profile, self.sector),
             user=user_prompt,
         )
 
         result, failure = self._validate_analysis_response(response)
         if result is None:
             repair_response = await self.client.complete(
-                system=analysis_system_prompt(profile),
+                system=analysis_system_prompt(profile, self.sector),
                 user=(
                     user_prompt
                     + "\n\nYour previous response did not satisfy the output contract "

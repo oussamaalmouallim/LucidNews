@@ -349,6 +349,17 @@ const en = {
   'settings.saved': 'Saved. Applied from the next run.',
   'settings.conflict': 'The configuration changed elsewhere. Reload to see the current version.',
   'settings.reload': 'Reload',
+  'sector.title': 'What this watch covers',
+  'sector.hint': 'The sector decides the domains of the edition, the categories the AI uses and, sector by sector, the recommended sources and authorities.',
+  'sector.current': 'Current',
+  'sector.choose': 'Switch to this sector',
+  'sector.only': 'This is the only sector installed for now.',
+  'sector.confirmTitle': 'Switch the watch to “{name}”?',
+  'sector.confirmBody': 'The next runs will use the domains of this sector, and the watched domains are reset to all of them. The archive is kept: past news keep their domains. The current settings are saved first, so you can restore them.',
+  'sector.cancel': 'Keep the current sector',
+  'sector.confirm': 'Switch',
+  'sector.changed': 'The watch now covers “{name}”.',
+  'sector.failed': 'The sector could not be changed: {detail}',
   'settings.backups': 'Previous versions',
   'settings.backupsHint': 'A copy is kept before each change (the last 10).',
   'settings.noBackup': 'No previous version yet.',
@@ -1178,6 +1189,17 @@ const fr: Partial<Record<MessageKey, string>> = {
   'settings.saved': 'Enregistré. Appliqué dès le prochain run.',
   'settings.conflict': 'La configuration a changé ailleurs. Rechargez pour voir la version actuelle.',
   'settings.reload': 'Recharger',
+  'sector.title': 'Ce que couvre la veille',
+  'sector.hint': 'Le secteur décide des domaines de l’édition, des catégories utilisées par l’IA et, secteur par secteur, des sources et des autorités recommandées.',
+  'sector.current': 'Actuel',
+  'sector.choose': 'Passer à ce secteur',
+  'sector.only': 'C’est le seul secteur installé pour l’instant.',
+  'sector.confirmTitle': 'Passer la veille en « {name} » ?',
+  'sector.confirmBody': 'Les prochains runs utiliseront les domaines de ce secteur, et les domaines suivis sont remis à tous ceux-là. L’archive est gardée : les news passées gardent leurs domaines. Les réglages actuels sont d’abord sauvegardés, vous pourrez les restaurer.',
+  'sector.cancel': 'Garder le secteur actuel',
+  'sector.confirm': 'Changer',
+  'sector.changed': 'La veille couvre maintenant « {name} ».',
+  'sector.failed': 'Le secteur n’a pas pu être changé : {detail}',
   'settings.backups': 'Versions précédentes',
   'settings.backupsHint': 'Une copie est gardée avant chaque changement (les 10 dernières).',
   'settings.noBackup': 'Aucune version précédente pour l’instant.',
@@ -1710,7 +1732,16 @@ export const labelHintKey = (label: ReliabilityLabel) => `labelHint.${label}` as
 export const tierKey = (tier: SourceTier) => `tier.${tier}` as MessageKey
 export const healthKey = (status: HealthStatus) => `health.${status}` as MessageKey
 
+const sectorLabels = new Map<string, Record<string, string>>()
+
+/** The names the server gives the categories of the installation's sector (any sector). */
+export function registerCategoryLabels(categories: readonly { id: string; labels: Record<string, string> }[]) {
+  for (const category of categories) sectorLabels.set(category.id, category.labels)
+}
+
 export function categoryLabel(language: Language, category: string): string {
   const key = `category.${category}` as MessageKey
-  return key in en ? translate(language, key) : category
+  if (key in en) return translate(language, key)
+  const labels = sectorLabels.get(category)
+  return labels?.[language] ?? labels?.en ?? category
 }

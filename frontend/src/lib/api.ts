@@ -37,6 +37,7 @@ const itemSchema = z.object({
 })
 
 /** The 12 domains (taxonomy categories), in the order the digest uses. */
+/** The tech sector's categories: the default sector, used until the server has answered. */
 export const domainCategories = [
   'ai',
   'software-development',
@@ -51,6 +52,15 @@ export const domainCategories = [
   'infrastructure',
   'emerging-tech',
 ] as const
+
+const labelsSchema = z.record(z.string(), z.string())
+const sectorSummarySchema = z.object({ id: z.string(), labels: labelsSchema, descriptions: labelsSchema })
+export const sectorStateSchema = z.object({
+  sector: sectorSummarySchema.extend({ categories: z.array(z.object({ id: z.string(), labels: labelsSchema })) }),
+  sectors: z.array(sectorSummarySchema),
+})
+export type SectorState = z.infer<typeof sectorStateSchema>
+export type SectorSummary = z.infer<typeof sectorSummarySchema>
 
 export const aiLimits = ['provider_quota', 'token_budget', 'disabled'] as const
 
@@ -935,6 +945,16 @@ export type PreferencesState = z.infer<typeof preferencesStateSchema>
 
 export function fetchReaderPreferences(signal?: AbortSignal): Promise<PreferencesState> {
   return getJson(`${ACCOUNT}/preferences`, preferencesStateSchema, signal)
+}
+
+/** What this installation watches, and the categories its edition is grouped by. */
+export function fetchSector(signal?: AbortSignal): Promise<SectorState> {
+  return getJson('/api/sector', sectorStateSchema, signal)
+}
+
+/** Administrator: switch the installation to another sector (Settings). */
+export function changeSector(sector: string): Promise<SectorState> {
+  return request('/api/settings/sector', sectorStateSchema, { method: 'PUT', body: JSON.stringify({ sector }) })
 }
 
 export function saveReaderPreferences(preferences: ReaderPreferences): Promise<PreferencesState> {

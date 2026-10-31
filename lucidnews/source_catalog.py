@@ -19,6 +19,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from .models import Config
 from .source_health import github_repo_key, github_user_key, rss_key
+from .sectors import all_categories
 from .taxonomy import Category
 
 PROJECT_DATA = Path(__file__).resolve().parents[1] / "data"
@@ -71,7 +72,7 @@ def _entry(kind: str, values: Dict[str, object], category: str, description: Opt
 
 
 def load_catalog(data_dir: Path = PROJECT_DATA) -> List[CatalogEntry]:
-    known = {category.value for category in Category}
+    known = {category.id for category in all_categories()}
     entries: List[CatalogEntry] = []
 
     example_path = data_dir / "config.example.json"

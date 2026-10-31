@@ -6,7 +6,7 @@ the free-form ``category`` label on a source config, which only drives digest qu
 """
 
 from enum import Enum
-from typing import Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 
 class Category(str, Enum):
@@ -85,23 +85,30 @@ _ALIASES: dict[str, Category] = {
 MAX_CATEGORIES_PER_ITEM = 3
 
 
-def parse_category(value: object) -> Optional[Category]:
-    """Map a category ID, alias, or label to a Category, or None if unknown."""
+def _lookup() -> Dict[str, str]:
+    """ID, alias and label (any language, lower case) -> category ID, over every sector."""
+    from .sectors import all_categories  # sectors builds on this module's tech constants
+
+    table: Dict[str, str] = {}
+    for category in all_categories():
+        table.setdefault(category.id, category.id)
+        for alias in category.aliases:
+            table.setdefault(alias, category.id)
+    for category in all_categories():
+        for label in category.labels.values():
+            table.setdefault(label.strip().lower(), category.id)
+    return table
+
+
+def parse_category(value: object) -> Optional[str]:
+    """Map a category ID, alias, or label of any sector to its ID, or None if unknown."""
     if isinstance(value, Category):
-        return value
+        return value.value
     if not isinstance(value, str):
         return None
+    table = _lookup()
     key = value.strip().lower().replace("_", "-").replace(" ", "-").replace("/", "-")
-    try:
-        return Category(key)
-    except ValueError:
-        pass
-    if key in _ALIASES:
-        return _ALIASES[key]
-    for category, labels in CATEGORY_LABELS.items():
-        if any(value.strip().lower() == label.lower() for label in labels.values()):
-            return category
-    return None
+    return table.get(key) or table.get(value.strip().lower())
 
 
 def normalize_categories(values: Iterable[object]) -> List[str]:
@@ -109,26 +116,28 @@ def normalize_categories(values: Iterable[object]) -> List[str]:
     result: List[str] = []
     for value in values:
         category = parse_category(value)
-        if category is not None and category.value not in result:
-            result.append(category.value)
+        if category is not None and category not in result:
+            result.append(category)
         if len(result) == MAX_CATEGORIES_PER_ITEM:
             break
     return result
 
 
 def category_label(category: str, language: str) -> str:
+    from .sectors import all_categories
+
     parsed = parse_category(category)
-    if parsed is None:
-        return category
-    labels = CATEGORY_LABELS[parsed]
-    return labels.get(language, labels["en"])
+    for entry in all_categories():
+        if entry.id == parsed:
+            return entry.label(language)
+    return category
 
 
-def category_catalog_text() -> str:
-    """Category catalog rendered for AI prompts."""
-    return "\n".join(
-        f"- `{category.value}`: {CATEGORY_SCOPES[category]}" for category in Category
-    )
+def category_catalog_text(sector_id: str = "tech") -> str:
+    """The sector's categories, rendered for AI prompts."""
+    from .sectors import get_sector
+
+    return "\n".join(f"- `{category.id}`: {category.scope}" for category in get_sector(sector_id).categories)
 
 
 class Importance(str, Enum):

@@ -56,6 +56,7 @@ Légende : ✅ clôturé · 🟡 outil livré, action humaine attendue · ⏳ pr
 - [Lot 30 — Sécurité applicative](#lot-30--sécurité-applicative) ✅
 - [Lot 31 — Tests de bout en bout et intégration continue](#lot-31--tests-de-bout-en-bout-et-intégration-continue) ✅
 - [Lot 32 — Exécution serveur](#lot-32--exécution-serveur) ✅
+- [Lot 47 — Secteurs : le socle](#lot-47--secteurs--le-socle) ✅
 - [Lots 27 à 46 — Plan de lancement](#lots-27-à-46--plan-de-lancement) 📋
 - [Paramètres : où ils vivent](#paramètres--où-ils-vivent-et-comment-ils-sappliquent)
 - [Blocages et décisions en attente](#blocages-et-décisions-en-attente)
@@ -850,6 +851,23 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 
 ---
 
+## Lot 47 — Secteurs : le socle
+
+✅ Clôturé le 30 octobre 2026, sur la branche `dev`. Demande : ouvrir l'application à d'autres domaines que la tech (finance, juridique…), choisis dans Réglages.
+
+Décisions du 30 octobre : quatre secteurs (finance, juridique et réglementaire, santé et pharma, énergie et climat) ; **un secteur par installation**, choisi par l'administrateur ; changer de secteur remplace les sources par celles du nouveau secteur (anciennes désactivées, pas supprimées), et LucidNews prépare lui-même des sources fiables pour chaque secteur.
+
+- **Registre des secteurs** (`lucidnews/sectors.py`) : un secteur porte ses catégories (libellés FR/EN, portée d'une ligne lue par l'IA, alias). `tech` reprend la taxonomie d'origine, à l'identique, et reste le défaut. Les identifiants de catégorie sont uniques entre secteurs (vérifié au chargement) : une news garde ses catégories quel que soit le secteur actuel.
+- **Configuration** : `sector` (défaut `tech`, un secteur inconnu est refusé). Sans liste explicite, les domaines suivis sont tous ceux du secteur ; une liste explicite doit appartenir au secteur.
+- **IA** : la consigne d'analyse propose les catégories du secteur actif seulement. Pour la tech, la consigne est identique à avant (test).
+- **API** : `GET /api/sector` (lecteurs compris : l'édition est rangée par ces catégories) ; `PUT /api/settings/sector` (administrateur) réécrit la configuration avec une copie de sauvegarde, remet les domaines suivis à ceux du nouveau secteur, et sert le changement aussitôt. Couverture, Qualité, options des abonnés et filtres par catégorie suivent le secteur ; l'archive reste lisible.
+- **Interface** : les catégories viennent du serveur (Édition, filtres, Ma veille, recherche, Sources) ; une catégorie sans icône dédiée reçoit l'icône générique ; Réglages gagne la carte « Ce que couvre la veille » avec confirmation avant changement.
+- **Corrigé en passant** : un test de l'écran Sources dépendait de la date du jour (fenêtre de 30 jours sur des données du 6 octobre).
+- **Reste pour les lots 48 à 51** : un lot par secteur (catégories, consigne éditoriale, 15 à 25 sources vérifiées une à une, autorités dans le registre de confiance, run réel), et le remplacement des sources au changement de secteur, testé dès qu'il existe un second secteur. La page de connexion dit encore « La veille tech » : à rendre neutre avec le premier nouveau secteur.
+- **Tests** : 931 Python (11 nouveaux dans `tests/test_sectors.py`), 177 interface, 5 parcours (la carte Secteur vérifiée dans le parcours administrateur). Vérifié dans le navigateur sur l'application compilée : carte affichée, aucune erreur.
+
+---
+
 ## Lots 27 à 46 — Plan de lancement
 
 📋 Planifiés le 13 octobre 2026 après l'étude de marché et l'audit
@@ -864,7 +882,7 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 | D — Hébergement et déploiement | 37 Hébergement · 38 Bêta privée | Mettre en ligne, mesurer |
 | E — Après le lancement | 39 Fil d'un événement · 40 Tendances · 41 Alertes · 42 Offres et paiement · 43 Équipes · 44 Sources personnelles · 45 Arabe · 46 PostgreSQL | Différencier et monétiser |
 
-**Lots 27 à 30 clôturés le 17 octobre 2026, lots 31 et 32 le 18 octobre. Prochain lot : 34 — Données (sauvegardes), le 12 bis restant l'annotation humaine ; le lot 33 (e-mail) est reporté.**
+**Lots 27 à 30 clôturés le 17 octobre 2026, lots 31 et 32 le 18 octobre, lot 47 (socle des secteurs) le 30 octobre. Prochain lot : 48 — secteur Finance ; puis 49 Juridique, 50 Santé, 51 Énergie. Le 34 (sauvegardes) reste à faire, le 33 (e-mail) est reporté.**
 Décisions du 17 octobre : produit A (veille partagée, newsletter personnalisée) confirmé ;
 hébergement reporté, on finit d'abord l'application ; annotation de 100 news confirmée ;
 **ni vérification d'e-mail ni envoi d'e-mails pour le moment**.

@@ -188,6 +188,18 @@ authentifié du lot 33) attendent l'hébergement.
 - **Critères** : taux d'ouverture, de désabonnement et de rétention à 4 semaines mesurés ;
   10 entretiens ; décision écrite sur les prix et sur l'arabe.
 
+## Phase F — Nouveaux secteurs (décision du 30 octobre 2026)
+
+Ouvrir LucidNews à d'autres métiers que la tech. Un secteur par installation, choisi dans Réglages.
+
+- **Lot 47 — Socle** · ✅ clôturé le 30 octobre 2026 ([détail](docs/lots.md#lot-47--secteurs--le-socle)).
+- **Lot 48 — Finance** : marchés, banques, assurance, crypto-actifs, fusions-acquisitions, macroéconomie, régulation financière, fintech. Autorités : AMF, ACPR, Banque de France, BCE, ESMA, SEC.
+- **Lot 49 — Juridique et réglementaire** : législation, jurisprudence, droit des affaires, droit du travail, données personnelles, droit européen, conformité. Sources : Légifrance, EUR-Lex, Conseil d'État, Cour de cassation, CNIL.
+- **Lot 50 — Santé et pharma** : réglementation, essais cliniques, médicaments, dispositifs médicaux, santé publique, e-santé. Autorités : HAS, ANSM, EMA, OMS, FDA.
+- **Lot 51 — Énergie et climat** : marchés de l'énergie, renouvelables, efficacité énergétique et CEE, réglementation, climat et RSE. Autorités : CRE, ADEME, ministère de la Transition écologique, AIE.
+- **Chaque lot** : catégories, consigne éditoriale, 15 à 25 sources fiables vérifiées une à une (flux réellement lus), autorités dans le registre de confiance, libellés FR/EN et icônes, run réel qui produit une édition.
+- **Critères** : changer de secteur dans Réglages remplace les sources (anciennes désactivées, pas supprimées) ; le premier run du nouveau secteur produit une édition rangée par ses catégories ; la tech reste identique (suites au vert).
+
 ## Phase E — Après le lancement
 
 Dans l'ordre proposé. Chacun reste à confirmer par les résultats de la bêta.

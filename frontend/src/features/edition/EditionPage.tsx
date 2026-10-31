@@ -3,7 +3,8 @@ import { m } from 'motion/react'
 import { useMemo, type ReactNode } from 'react'
 import { useParams, useSearchParams } from 'react-router'
 import { ApiErrorCard } from '../../design/PageState'
-import { domainCategories, fetchAllEditions, fetchEdition, fetchPeriod, fetchReaderPreferences, type Edition, type Period } from '../../lib/api'
+import { fetchAllEditions, fetchEdition, fetchPeriod, fetchReaderPreferences, type Edition, type Period } from '../../lib/api'
+import { useDomainCategories } from '../../lib/sector'
 import { useAuth } from '../../lib/auth'
 import { capitalize, formatPeriod, periodBounds, type PeriodKind } from '../../lib/format'
 import { translatePlural, useLanguage } from '../../lib/i18n'
@@ -28,10 +29,10 @@ function periodFromParams(params: URLSearchParams): PeriodChoice {
   return null
 }
 
-/** The domain in the address (`?domain=ai`), if it is one of the 12. */
-function domainFromParams(params: URLSearchParams): string | null {
+/** The domain in the address (`?domain=ai`), if it is one of the sector's. */
+function domainFromParams(params: URLSearchParams, categories: readonly string[]): string | null {
   const value = params.get('domain')
-  return value && (domainCategories as readonly string[]).includes(value) ? value : null
+  return value && categories.includes(value) ? value : null
 }
 
 const itemsOf = (edition: Edition) => edition.sections.flatMap((section) => section.items)
@@ -54,8 +55,9 @@ export function EditionPage() {
   const { editionId = 'latest' } = useParams()
   const [params, setParams] = useSearchParams()
   const { language } = useLanguage()
+  const categories = useDomainCategories()
   const choice = editionId === 'latest' ? periodFromParams(params) : null
-  const domain = editionId === 'latest' ? domainFromParams(params) : null
+  const domain = editionId === 'latest' ? domainFromParams(params, categories) : null
   const editions = useQuery({ queryKey: ['editions', 'all'], queryFn: ({ signal }) => fetchAllEditions(signal), enabled: editionId === 'latest' })
 
   const setChoice = (next: PeriodChoice) =>
@@ -118,11 +120,11 @@ export function EditionPage() {
   const domainOptions: DomainOption[] = useMemo(() => {
     const items = data ? itemsOf(data) : []
     const unanalyzed = data?.unanalyzed ?? []
-    return domainCategories.map((category) => ({
+    return categories.map((category) => ({
       category,
       count: items.filter((item) => item.categories.includes(category)).length + unanalyzed.filter((item) => item.source_domain === category).length,
     }))
-  }, [data])
+  }, [data, categories])
 
   const filter =
     editionId === 'latest' && editions.data && editions.data.length > 0 ? (
@@ -211,7 +213,8 @@ function EditionView({
   display: Display
 }) {
   const { enabled } = useMotionPreference()
-  const groups = useMemo(() => groupByDomain(edition, domain, display.followed), [edition, domain, display.followed])
+  const categories = useDomainCategories()
+  const groups = useMemo(() => groupByDomain(edition, domain, display.followed, categories), [edition, domain, display.followed, categories])
   const editionId = period ? undefined : edition.id
   return (
     <m.div

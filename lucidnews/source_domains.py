@@ -16,10 +16,10 @@ from typing import Dict, Iterable, List, Optional, Sequence
 from .models import ContentItem
 from .source_catalog import CatalogEntry
 from .source_quality import item_source_key
-from .taxonomy import Category
+from .sectors import all_categories
 
 TOP_CATEGORIES = 3
-_ORDER = {category.value: index for index, category in enumerate(Category)}
+_ORDER = {category.id: index for index, category in enumerate(all_categories())}
 
 
 def source_domains(

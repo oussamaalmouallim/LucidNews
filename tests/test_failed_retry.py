@@ -36,6 +36,7 @@ def make_orchestrator(delay):  # type: ignore[no-untyped-def]
     orchestrator.config = SimpleNamespace(
         ai=SimpleNamespace(failed_retry_delay_sec=delay, languages=["en"]),
         archive=None,
+        sector="tech",
     )
     return orchestrator
 

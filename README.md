@@ -181,6 +181,10 @@ Pièges fréquents : `localhost` et `127.0.0.1` sont deux adresses différentes 
 
 Sécurité, en bref : flux « code d'autorisation » avec PKCE, `state` à usage unique lié au navigateur, `nonce` vérifié dans le jeton, adresse e-mail Google obligatoirement vérifiée ; mots de passe hachés (scrypt, sel aléatoire) ; limitation des tentatives ; requêtes d'écriture refusées si leur origine n'est pas le site. Comme l'inscription par e-mail n'est pas vérifiée, un compte à mot de passe dont l'adresse se connecte ensuite avec Google **devient un compte Google** (son mot de passe est supprimé et ses autres sessions sont fermées) : sinon la personne qui s'est inscrite en premier avec l'adresse d'un autre garderait l'accès. Ne protège pas les routes de `lucidnews-public` (liens de confirmation et de désabonnement des newsletters), qui restent publiques par conception.
 
+### Secteur de la veille
+
+Une installation suit **un secteur** : `"sector": "tech"` dans `data/config.json` (défaut). Le secteur décide des domaines de l'édition et des catégories proposées à l'IA. Il se change dans l'écran **Réglages** (administrateur) : la configuration est sauvegardée avant, l'archive est gardée. Aujourd'hui seul `tech` est installé ; finance, juridique, santé et énergie arrivent (lots 48 à 51).
+
 ### Serveur et sécurité
 
 Réglages du processus `lucidnews-api`, dans `data/config.json` (facultatifs) :

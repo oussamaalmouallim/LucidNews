@@ -44,7 +44,8 @@ LucidNews est une application Python asynchrone en ligne de commande. Elle n'a n
 | `lucidnews/processing/profiles.py` | Chargement et validation des profils éditoriaux (`profiles/*/profile.json`) |
 | `lucidnews/processing/tools.py`, `history.py` | Outils d'enrichissement : recherche web, recherche dans l'historique |
 | `lucidnews/reliability/` | Registre de confiance des domaines, règles de combinaison, types |
-| `lucidnews/taxonomy.py` | 12 catégories IT, alias, libellés, niveaux d'importance |
+| `lucidnews/taxonomy.py` | 12 catégories IT, alias, libellés, niveaux d'importance ; lecture des catégories de tous les secteurs |
+| `lucidnews/sectors.py` | Secteurs (lot 47) : un secteur par installation (`Config.sector`, défaut `tech`), ses catégories et leur portée pour l'IA ; identifiants uniques entre secteurs |
 | `lucidnews/i18n.py` | Registre des langues, textes fixes du digest, format des dates |
 | `lucidnews/archive/` | Archive SQLite des runs et des news ; réutilisation des analyses ; compteurs de sélection par run (schéma 5) |
 | `lucidnews/quality_overview.py` | Indicateurs de la page Qualité : couverture, diversité, santé, fraîcheur, doublons, filtrage, fiabilité publiée |

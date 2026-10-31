@@ -14,6 +14,7 @@ from .reliability.models import (
     ReliabilityLabel,
     SourceTier,
 )
+from .sectors import DEFAULT_SECTOR, SECTORS, all_categories, get_sector
 from .taxonomy import Category, normalize_categories
 
 
@@ -662,12 +663,12 @@ class DigestConfig(BaseModel):
     @field_validator("watched_categories")
     @classmethod
     def validate_watched_categories(cls, value: List[str]) -> List[str]:
-        known = {category.value for category in Category}
+        known = [category.id for category in all_categories()]
         unknown = [entry for entry in value if entry not in known]
         if unknown:
             raise ValueError(f"unknown categories: {', '.join(map(str, unknown))}")
         # Taxonomy order, no duplicates: the same choice is always written the same way.
-        return [category.value for category in Category if category.value in value]
+        return [category for category in known if category in value]
 
     @model_validator(mode="after")
     def require_a_watched_category(self) -> "DigestConfig":
@@ -795,3 +796,25 @@ class Config(BaseModel):
     webhook: Optional[WebhookConfig] = None
     auth: AuthConfig = Field(default_factory=AuthConfig)
     server: ServerConfig = Field(default_factory=ServerConfig)
+    # What this installation watches (see ``sectors``): its categories, and, sector by sector,
+    # its profile, sources and authorities. Changed from the Settings screen.
+    sector: str = DEFAULT_SECTOR
+
+    @field_validator("sector")
+    @classmethod
+    def known_sector(cls, value: str) -> str:
+        if value not in SECTORS:
+            raise ValueError(f"unknown sector: {value} (known: {', '.join(SECTORS)})")
+        return value
+
+    @model_validator(mode="after")
+    def watched_categories_of_the_sector(self) -> "Config":
+        """Unset, the watched domains are all of the sector's; set, they must belong to it."""
+        sector = get_sector(self.sector)
+        if "watched_categories" not in self.digest.model_fields_set:
+            self.digest.watched_categories = sector.category_ids
+            return self
+        foreign = [entry for entry in self.digest.watched_categories if entry not in sector.category_ids]
+        if foreign:
+            raise ValueError(f"digest.watched_categories: not categories of the {sector.id} sector: {', '.join(foreign)}")
+        return self

@@ -27,6 +27,7 @@ READER_REQUESTS = [
     ("GET", "/api/editions/period?since=2026-10-01T00:00:00Z&until=2026-10-02T00:00:00Z"),
     ("GET", "/api/items/some-item"),
     ("GET", "/api/search?q=ab"),
+    ("GET", "/api/sector"),  # the categories the edition is grouped by
 ]
 ADMIN_GETS = [
     "/api/settings",
@@ -53,6 +54,7 @@ ADMIN_GETS = [
 ADMIN_SAFE_WRITES = [
     ("PUT", "/api/settings", {"nope": 1}),
     ("POST", "/api/settings/restore", {}),
+    ("PUT", "/api/settings/sector", {"sector": "nope"}),
     ("POST", "/api/sources/test", {}),
     ("POST", "/api/sources/config", {}),
     ("PUT", "/api/sources/config/unknown", {}),

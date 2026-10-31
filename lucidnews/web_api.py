@@ -92,7 +92,8 @@ from .sources_api import SourcesService
 from .newsletter.mailer import build_mailer
 from .newsletter.preview import PreviewService
 from .subscribers_api import SubscriberService
-from .taxonomy import Category, importance_from_score
+from .sectors import DEFAULT_SECTOR, SECTORS, Sector, all_categories, get_sector
+from .taxonomy import importance_from_score
 
 RUN_ID = re.compile(r"^\d{8}T\d{6}Z-[0-9a-f]{8}$")
 ITEM_ID = re.compile(r"^[^\x00-\x1f\x7f]{1,300}$")
@@ -115,7 +116,7 @@ LOCAL_PREFIXES = (
 SOURCE_KEY = re.compile(r"^[^\x00-\x1f\x7f]{1,200}$")
 # What a reader (an account without the admin role) may call: the published news, read-only.
 # Deny by default: a route missing from this list is for administrators.
-READER_ROUTES = re.compile(r"^/api/(health|search|editions(/.+)?|items/.+)$")
+READER_ROUTES = re.compile(r"^/api/(health|sector|search|editions(/.+)?|items/.+)$")
 ADMIN_ONLY = {"error": "administrators only", "code": "admin_only"}
 # Routes whose answer costs a scan of the archive: a fifth of the general rate.
 HEAVY_ROUTES = ("/api/search", "/api/editions/period")
@@ -448,6 +449,7 @@ def coverage_payload(ctx: ApiContext, days: int) -> Dict[str, Any]:
         digest.watched_categories,
         CoverageThresholds(digest.coverage_min_sources, digest.coverage_min_items),
         ctx.reliability_policy,
+        current_sector(ctx).category_ids,
     )
     return {
         "days": days,
@@ -483,7 +485,7 @@ def search_payload(ctx: ApiContext, query: Dict[str, List[str]], language: str) 
     except SearchQueryError as exc:
         return HTTPStatus.BAD_REQUEST, {"error": str(exc)}
     category, source, label = one("category"), one("source"), one("label")
-    if category is not None and category not in {entry.value for entry in Category}:
+    if category is not None and not is_category(category):
         return HTTPStatus.BAD_REQUEST, {"error": "unknown category"}
     if label is not None and label not in {entry.value for entry in ReliabilityLabel}:
         return HTTPStatus.BAD_REQUEST, {"error": "unknown reliability label"}
@@ -573,6 +575,53 @@ def _days(query: Dict[str, List[str]]) -> Optional[int]:
     return days if 1 <= days <= MAX_HEALTH_DAYS else None
 
 
+def current_sector(ctx: "ApiContext") -> Sector:
+    return get_sector(ctx.config.sector if ctx.config is not None else DEFAULT_SECTOR)
+
+
+def is_category(value: str) -> bool:
+    """A category of any sector: the archive keeps the categories of a former sector."""
+    return any(category.id == value for category in all_categories())
+
+
+def sector_payload(ctx: "ApiContext") -> Dict[str, Any]:
+    """The installation's sector, its categories, and the sectors it could switch to."""
+    return {
+        "sector": current_sector(ctx).payload(),
+        "sectors": [
+            {"id": sector.id, "labels": dict(sector.labels), "descriptions": dict(sector.descriptions)}
+            for sector in SECTORS.values()
+        ],
+    }
+
+
+def change_sector(ctx: "ApiContext", body: Dict[str, Any]) -> tuple[int, Dict[str, Any]]:
+    """Switch the installation to another sector. The watched domains become the new sector's;
+    the archive is kept as it is (its news keep their categories)."""
+    if ctx.settings is None:
+        return HTTPStatus.FORBIDDEN, LOCAL_ONLY
+    target = body.get("sector")
+    if not isinstance(target, str) or target not in SECTORS:
+        return HTTPStatus.UNPROCESSABLE_ENTITY, {"error": "unknown sector", "fields": {"sector": f"one of {', '.join(SECTORS)}"}}
+
+    def mutate(raw: Dict[str, Any]) -> None:
+        raw["sector"] = target
+        digest = raw.get("digest")
+        if isinstance(digest, dict) and "watched_categories" in digest:
+            digest["watched_categories"] = get_sector(target).category_ids
+        return None
+
+    _, version, _ = ctx.settings.snapshot()
+    refusal = ctx.settings.edit_raw(
+        version,
+        mutate,
+        lambda exc: (HTTPStatus.UNPROCESSABLE_ENTITY, {"error": "invalid configuration", "detail": str(exc.errors()[0].get("msg"))}),
+    )
+    if refusal is not None:
+        return refusal
+    return HTTPStatus.OK, sector_payload(ctx)
+
+
 def resolve(ctx: ApiContext, path: str, query: Dict[str, List[str]]) -> tuple[int, Dict[str, Any]]:
     """Route a GET request to a JSON payload: (status, body)."""
     language = (query.get("lang") or [ctx.default_language])[0].lower()
@@ -580,6 +629,8 @@ def resolve(ctx: ApiContext, path: str, query: Dict[str, List[str]]) -> tuple[in
         return HTTPStatus.BAD_REQUEST, {"error": f"unsupported language: {language}"}
 
     path = path.rstrip("/")
+    if path == "/api/sector":
+        return HTTPStatus.OK, sector_payload(ctx)
     if path.startswith(("/api/settings", "/api/secrets")):
         if ctx.settings is None:
             return HTTPStatus.FORBIDDEN, LOCAL_ONLY
@@ -638,13 +689,14 @@ def resolve(ctx: ApiContext, path: str, query: Dict[str, List[str]]) -> tuple[in
                 policy=ctx.reliability_policy,
                 # Annotations are local data: their summary only on the local API.
                 evaluation=ctx.evaluation.report() if ctx.evaluation is not None else None,
+                categories=current_sector(ctx).category_ids,
             )
         if path == "/api/coverage":
             return HTTPStatus.OK, coverage_payload(ctx, days)
         return HTTPStatus.OK, source_health_payload(ctx, days)
     if path == "/api/catalog":
         category = (query.get("category") or [None])[0]
-        if category is not None and category not in {entry.value for entry in Category}:
+        if category is not None and not is_category(category):
             return HTTPStatus.BAD_REQUEST, {"error": "unknown category"}
         return HTTPStatus.OK, catalog_payload(ctx, category)
     if path == "/api/preferences/options":
@@ -716,6 +768,8 @@ def resolve_write(ctx: ApiContext, method: str, path: str, body: Dict[str, Any])
             return ctx.settings.update(body)
         if path == "/api/settings/restore" and method == "POST":
             return ctx.settings.restore(body)
+        if path == "/api/settings/sector" and method == "PUT":
+            return change_sector(ctx, body)
         return HTTPStatus.METHOD_NOT_ALLOWED, {"error": "method not allowed"}
     if path.startswith(("/api/runs", "/api/schedule")):
         if ctx.runs is None or ctx.schedule is None:
@@ -1001,6 +1055,7 @@ def build_context(data_dir: str, config_path: Optional[str], *, local_features: 
                     if config.email and config.email.enabled
                     else None
                 ),
+                categories=get_sector(config.sector).category_ids,
             )
             if local_features
             else None

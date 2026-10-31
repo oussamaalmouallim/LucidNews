@@ -102,6 +102,10 @@ test('an administrator reaches the administration screens', async ({ page }) => 
   await nav.getByRole('link', { name: 'Réglages' }).click()
   await expect(page.getByRole('heading', { name: 'Réservé à l’administration' })).toHaveCount(0)
   expect((await page.request.get('/api/settings')).status()).toBe(200)
+  // The sector of the watch, read from the server (lot 47).
+  const sector = page.getByRole('region', { name: 'Ce que couvre la veille' })
+  await expect(sector.getByText('Tech et IT')).toBeVisible()
+  await expect(sector.getByText('Actuel')).toBeVisible()
   await signOut(page)
 })
 

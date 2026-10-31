@@ -3,16 +3,8 @@ import { ArrowLeft, ArrowRight, Search, X } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { ReliabilityBadge } from '../../design/ReliabilityBadge'
-import {
-  ApiError,
-  domainCategories,
-  fetchSearch,
-  reliabilityLabels,
-  SEARCH_MAX_QUERY,
-  SEARCH_PAGE_SIZE,
-  type SearchHit,
-  type SearchResult,
-} from '../../lib/api'
+import { ApiError, fetchSearch, reliabilityLabels, SEARCH_MAX_QUERY, SEARCH_PAGE_SIZE, type SearchHit, type SearchResult } from '../../lib/api'
+import { useDomainCategories } from '../../lib/sector'
 import { formatEditionDate, formatItemTime, formatScore, itemPath, sourceName } from '../../lib/format'
 import { highlight } from '../../lib/highlight'
 import { categoryLabel, labelKey, translatePlural, useLanguage, type Language } from '../../lib/i18n'
@@ -168,6 +160,7 @@ export function SearchResults({ state }: { state: SearchState }) {
 
 function Filters({ state, data }: { state: SearchState; data: SearchResult }) {
   const { language, t } = useLanguage()
+  const categories = useDomainCategories()
   const field =
     'rounded-control border border-ink/10 bg-surface px-3.5 py-2 text-[14px] font-semibold outline-none transition-shadow duration-150 hover:border-accent/40 focus-visible:ring-3 focus-visible:ring-accent/20'
   const sources = data.facets.sources.some((entry) => entry.source === state.source)
@@ -185,7 +178,7 @@ function Filters({ state, data }: { state: SearchState; data: SearchResult }) {
         {t('search.filter.domain')}
         <select value={state.category ?? ''} onChange={(event) => state.update({ category: event.target.value || undefined })} className={field}>
           <option value="">{t('search.filter.all')}</option>
-          {domainCategories.map((category) => (
+          {categories.map((category) => (
             <option key={category} value={category} disabled={!data.facets.categories[category] && category !== state.category}>
               {categoryLabel(language, category)} ({data.facets.categories[category] ?? 0})
             </option>

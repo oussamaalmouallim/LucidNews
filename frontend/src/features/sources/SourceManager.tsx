@@ -5,7 +5,6 @@ import { Segmented } from '../../design/PageState'
 import { Switch } from '../../design/Switch'
 import {
   ApiError,
-  domainCategories,
   fetchSourceDomains,
   updateSource,
   type SourceDomain,
@@ -14,6 +13,7 @@ import {
   type SourceEntry,
   type SourceHealth,
 } from '../../lib/api'
+import { useDomainCategories } from '../../lib/sector'
 import { formatItemTime } from '../../lib/format'
 import { categoryLabel, translatePlural, useLanguage, type MessageKey } from '../../lib/i18n'
 import { HealthBadge, QualityScore, SourceDetail } from './SourceBits'
@@ -64,6 +64,7 @@ function matches(filter: Filter, state: State) {
 
 export function SourceManager({ config, health, onReload }: { config: SourceConfig; health: SourceHealth[]; onReload: () => void }) {
   const { language, t } = useLanguage()
+  const categories = useDomainCategories()
   const queryClient = useQueryClient()
   const [filter, setFilter] = useState<Filter>('all')
   const [groupBy, setGroupBy] = useState<GroupBy>('domain')
@@ -114,9 +115,13 @@ export function SourceManager({ config, health, onReload }: { config: SourceConf
     entries: entries.filter((entry) => group.kinds.includes(entry.kind)),
     switchEntry: group.switchKey ? config.sources.find((entry) => entry.key === group.switchKey) : undefined,
   }))
-  const domainOf = (entry: SourceEntry) => domains?.[entry.key]?.category ?? null
+  // A domain outside the sector (news collected under a former sector) counts as unknown here.
+  const domainOf = (entry: SourceEntry) => {
+    const category = domains?.[entry.key]?.category ?? null
+    return category !== null && categories.includes(category) ? category : null
+  }
   const domainSections: Section[] = [
-    ...domainCategories.map((category) => ({
+    ...categories.map((category) => ({
       id: `domain-${category}`,
       title: categoryLabel(language, category),
       entries: entries.filter((entry) => domainOf(entry) === category),

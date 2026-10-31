@@ -14,7 +14,7 @@ from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Set
 from .models import ContentItem
 from .reliability import ReliabilityLabel
 from .source_quality import item_source_key
-from .taxonomy import Category
+from .sectors import DEFAULT_SECTOR, get_sector
 
 TRUSTED_LABELS = {ReliabilityLabel.CONFIRMED, ReliabilityLabel.RELIABLE}
 TOP_SOURCES = 6
@@ -33,6 +33,7 @@ def compute_coverage(
     watched: Sequence[str],
     thresholds: CoverageThresholds,
     policy: Optional[object] = None,
+    categories: Optional[Sequence[str]] = None,
 ) -> Dict[str, object]:
     """Per-category coverage, in taxonomy order, plus totals for the period.
 
@@ -54,20 +55,20 @@ def compute_coverage(
         reliability = assess_item(item, policy) if policy is not None else item.processing.reliability  # type: ignore[union-attr]
         return reliability is not None and reliability.label in TRUSTED_LABELS
 
-    categories = []
-    for category in Category:
-        members = [item for item in analyzed if category.value in item.processing.analysis.categories]  # type: ignore[union-attr]
+    rows = []
+    for category in categories if categories is not None else get_sector(DEFAULT_SECTOR).category_ids:
+        members = [item for item in analyzed if category in item.processing.analysis.categories]  # type: ignore[union-attr]
         by_source = Counter(item_source_key(item) for item in members)
         active = sorted(key for key in by_source if key in configured_sources)
-        is_watched = category.value in watched
+        is_watched = category in watched
         reasons = []
         if is_watched and len(active) < thresholds.min_sources:
             reasons.append("sources")
         if is_watched and len(members) < thresholds.min_items:
             reasons.append("items")
-        categories.append(
+        rows.append(
             {
-                "category": category.value,
+                "category": category,
                 "watched": is_watched,
                 "gap": bool(reasons),
                 "gap_reasons": reasons,
@@ -84,12 +85,12 @@ def compute_coverage(
                 ),
             }
         )
-    for entry in categories:
+    for entry in rows:
         if entry["latest_at"] is not None:
             entry["latest_at"] = entry["latest_at"].isoformat()  # type: ignore[union-attr]
     return {
         "analyzed": len(analyzed),
         "unanalyzed": unanalyzed,
         "uncategorized": sum(1 for item in analyzed if not item.processing.analysis.categories),  # type: ignore[union-attr]
-        "categories": categories,
+        "categories": rows,
     }

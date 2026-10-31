@@ -17,8 +17,9 @@ import {
 import { domainCategories, type Edition, type EditionItem } from '../../lib/api'
 import { categoryLabel, translate, type Language } from '../../lib/i18n'
 
-/** A domain section of an edition: ``other`` holds the news no domain could be given to. */
-export type DomainKey = (typeof domainCategories)[number] | 'other'
+/** A domain section of an edition: a category of the installation's sector, or ``other`` for the
+ * news no domain could be given to. The categories come from the server (``useDomainCategories``). */
+export type DomainKey = string
 
 export type DomainGroup = {
   key: DomainKey
@@ -28,7 +29,7 @@ export type DomainGroup = {
   unanalyzed: EditionItem[]
 }
 
-export const domainIcons: Record<DomainKey, LucideIcon> = {
+const icons: Record<string, LucideIcon> = {
   ai: Sparkles,
   'software-development': CodeXml,
   cloud: Cloud,
@@ -44,9 +45,10 @@ export const domainIcons: Record<DomainKey, LucideIcon> = {
   other: Layers,
 }
 
-export const domainTitle = (language: Language, key: DomainKey) => (key === 'other' ? translate(language, 'domain.other') : categoryLabel(language, key))
+/** The icon of a domain; a category without its own icon (another sector) gets the generic one. */
+export const domainIcon = (key: DomainKey): LucideIcon => icons[key] ?? Layers
 
-const isDomain = (value: string | null | undefined): value is DomainKey => !!value && (domainCategories as readonly string[]).includes(value)
+export const domainTitle = (language: Language, key: DomainKey) => (key === 'other' ? translate(language, 'domain.other') : categoryLabel(language, key))
 
 const byScore = (a: EditionItem, b: EditionItem) => (b.score ?? 0) - (a.score ?? 0) || b.published_at.localeCompare(a.published_at)
 
@@ -55,7 +57,13 @@ const byScore = (a: EditionItem, b: EditionItem) => (b.score ?? 0) - (a.score ??
  * With ``focus`` (the domain filter), every news shown belongs to that one section; with
  * ``followed`` (the reader's domains), a news goes under the first of them it belongs to.
  */
-export function groupByDomain(edition: Edition, focus: string | null = null, followed: readonly string[] = []): DomainGroup[] {
+export function groupByDomain(
+  edition: Edition,
+  focus: string | null = null,
+  followed: readonly string[] = [],
+  categories: readonly string[] = domainCategories,
+): DomainGroup[] {
+  const isDomain = (value: string | null | undefined): value is DomainKey => !!value && categories.includes(value)
   const groups = new Map<DomainKey, DomainGroup>()
   const add = (key: DomainKey, kind: 'items' | 'unanalyzed', item: EditionItem) => {
     if (!groups.has(key)) groups.set(key, { key, items: [], unanalyzed: [] })
@@ -68,7 +76,7 @@ export function groupByDomain(edition: Edition, focus: string | null = null, fol
   }
   for (const item of edition.unanalyzed) add(isDomain(item.source_domain) ? item.source_domain : 'other', 'unanalyzed', item)
 
-  const order: DomainKey[] = [...domainCategories, 'other']
+  const order: DomainKey[] = [...categories, 'other']
   return order.flatMap((key) => {
     const group = groups.get(key)
     return group ? [{ ...group, items: group.items.sort(byScore) }] : []

@@ -20,7 +20,7 @@ VERIFICATION_RULES = """Judge how well the item's main claim is supported, using
 Popularity, votes, and comments are not evidence. When unsure between two levels, choose the weaker one."""
 
 
-def analysis_system_prompt(profile: LoadedProfile) -> str:
+def analysis_system_prompt(profile: LoadedProfile, sector: str = "tech") -> str:
     return f"""{ANALYSIS_RULES}
 
 # Profile policy
@@ -30,7 +30,7 @@ def analysis_system_prompt(profile: LoadedProfile) -> str:
 # Categories
 
 Assign one to three categories from this catalog, most relevant first:
-{category_catalog_text()}
+{category_catalog_text(sector)}
 
 # Claim verification
 

@@ -275,5 +275,5 @@ def test_source_domains_use_the_archive_then_the_catalog(tmp_path) -> None:
     assert domains["rss/Unknown"] == {"category": None, "origin": None, "categories": []}
     # A source that is not configured any more still gets its domain (the interface may list it).
     ctx.configured_sources = {}
-    assert resolve(ctx, "/api/sources/domains", {})[1]["domains"][key]["category"] == "web"
+    assert resolve(ctx, "/api/sources/domains", {"days": ["90"]})[1]["domains"][key]["category"] == "web"
     assert resolve(ctx, "/api/sources/domains", {"days": ["0"]})[0] == 400

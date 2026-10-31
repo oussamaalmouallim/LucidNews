@@ -9,7 +9,7 @@ count of what is missing, never with an estimate.
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from statistics import median
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from .archive import ItemArchive
 from .coverage import CoverageThresholds, compute_coverage
@@ -55,6 +55,7 @@ def quality_overview(
     policy: Optional[object] = None,
     evaluation: Optional[Dict[str, Any]] = None,
     now: Optional[datetime] = None,
+    categories: Optional[Sequence[str]] = None,
 ) -> Dict[str, Any]:
     now = now or datetime.now(timezone.utc)
     since = now - timedelta(days=days)
@@ -70,6 +71,7 @@ def quality_overview(
         digest.watched_categories,
         CoverageThresholds(digest.coverage_min_sources, digest.coverage_min_items),
         policy,
+        categories,
     )
     watched = [entry for entry in coverage["categories"] if entry["watched"]]
 
