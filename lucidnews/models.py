@@ -345,6 +345,8 @@ class PageSourceConfig(BaseModel):
     item_selector: str
     link_selector: str = "a"
     date_selector: str = "time"
+    # Where the title is, when the link wraps more than the title (a date, a lead); none: the link text.
+    title_selector: Optional[str] = None
     enabled: bool = True
     category: Optional[str] = None
     profile: ProfileRoute = None

@@ -121,7 +121,8 @@ test('an administrator switches the watch to another sector and back, and the so
   await expect(page).not.toHaveURL(/\/sign-in/) // signed in before opening Settings
   await page.goto('/settings?lang=fr')
   const card = page.getByRole('region', { name: 'Ce que couvre la veille' })
-  const choose = card.getByRole('button', { name: 'Passer à ce secteur' })
+  // Several sectors can be chosen (tech, finance, the test one): the button of the test sector's card.
+  const choose = card.getByRole('listitem').filter({ hasText: "Secteur d'essai" }).getByRole('button', { name: 'Passer à ce secteur' })
   await expect(choose).toBeEnabled() // once the effect on the sources is known
   await choose.click()
   const dialog = page.getByRole('alertdialog')
@@ -139,7 +140,11 @@ test('an administrator switches the watch to another sector and back, and the so
   await signIn(page, ADMIN.email, ADMIN.password)
   await expect(page).not.toHaveURL(/\/sign-in/) // signed in before opening Settings
   await page.goto('/settings?lang=fr')
-  const back = page.getByRole('region', { name: 'Ce que couvre la veille' }).getByRole('button', { name: 'Passer à ce secteur' })
+  const back = page
+    .getByRole('region', { name: 'Ce que couvre la veille' })
+    .getByRole('listitem')
+    .filter({ hasText: 'Tech et IT' })
+    .getByRole('button', { name: 'Passer à ce secteur' })
   await expect(back).toBeEnabled()
   await back.click()
   await expect(page.getByRole('alertdialog').getByText(/Sources : 0 ajoutées, \d+ réactivées, 1 désactivées/)).toBeVisible()

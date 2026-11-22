@@ -90,7 +90,72 @@ def _tech() -> Sector:
     )
 
 
-SECTORS: Dict[str, Sector] = {sector.id: sector for sector in (_tech(),)}
+def _finance() -> Sector:
+    """Finance (phase 2): markets, banks, insurance, crypto-assets, deals, the economy, the
+    rules of finance and fintech. A news watch for people who follow money, never an adviser."""
+    return Sector(
+        id="finance",
+        labels={"en": "Finance", "fr": "Finance"},
+        nouns={"en": "finance", "fr": "finance"},
+        descriptions={
+            "en": "Markets, banks, insurance, crypto-assets, deals, the economy and financial regulation.",
+            "fr": "Marchés, banques, assurance, crypto-actifs, fusions, économie et régulation financière.",
+        },
+        categories=(
+            SectorCategory(
+                "finance-markets",
+                {"en": "Markets", "fr": "Marchés"},
+                "stock, bond, currency and commodity markets, indices, listings and trading venues",
+                ("markets", "stock-market", "bourse", "equities", "bonds", "forex"),
+            ),
+            SectorCategory(
+                "finance-banking",
+                {"en": "Banking", "fr": "Banques"},
+                "banks, lending, deposits, payments by banks, bank results and bank supervision",
+                ("banking", "banks", "banque", "banques"),
+            ),
+            SectorCategory(
+                "finance-insurance",
+                {"en": "Insurance", "fr": "Assurance"},
+                "insurers, reinsurance, pensions and asset managers' insurance products",
+                ("insurance", "assurance", "assurances", "pensions"),
+            ),
+            SectorCategory(
+                "finance-crypto",
+                {"en": "Crypto-assets", "fr": "Crypto-actifs"},
+                "crypto-assets, stablecoins, central bank digital currencies and their platforms",
+                ("crypto", "cryptocurrency", "cryptocurrencies", "bitcoin", "stablecoins", "crypto-actifs"),
+            ),
+            SectorCategory(
+                "finance-deals",
+                {"en": "Mergers & acquisitions", "fr": "Fusions et acquisitions"},
+                "mergers, acquisitions, IPOs, private equity and venture funding rounds",
+                ("m&a", "mergers", "acquisitions", "ipo", "private-equity", "fusions"),
+            ),
+            SectorCategory(
+                "finance-macro",
+                {"en": "Economy", "fr": "Économie"},
+                "inflation, growth, jobs, interest rates, central bank policy and public finances",
+                ("macro", "macroeconomics", "economy", "economie", "monetary-policy", "central-banks"),
+            ),
+            SectorCategory(
+                "finance-regulation",
+                {"en": "Financial regulation", "fr": "Régulation financière"},
+                "financial rules, supervisors' decisions, sanctions, enforcement and compliance",
+                ("financial-regulation", "regulation", "compliance", "enforcement", "regulateurs"),
+            ),
+            SectorCategory(
+                "finance-fintech",
+                {"en": "Fintech", "fr": "Fintech"},
+                "fintech companies, digital payments, neobanks and financial technology",
+                ("fintech", "payments", "neobanks", "paiements"),
+            ),
+        ),
+        rules=(NO_ADVICE_RULE,),
+    )
+
+
+SECTORS: Dict[str, Sector] = {sector.id: sector for sector in (_tech(), _finance())}
 
 
 def get_sector(sector_id: str) -> Sector:

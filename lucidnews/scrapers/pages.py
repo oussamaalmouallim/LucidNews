@@ -72,7 +72,8 @@ def parse_list_page(html: str, page: PageSourceConfig) -> List[PageEntry]:
         if link is None or not link.get("href") or date is None:
             continue
         url = urljoin(base, str(link["href"]))
-        title = " ".join(link.get_text(" ").split())
+        holder = block.select_one(page.title_selector) if page.title_selector else link
+        title = " ".join(holder.get_text(" ").split()) if holder is not None else ""
         if not title or urlsplit(url).scheme != "https" or urlsplit(url).hostname != host or url in seen:
             continue
         published = parse_date(str(date.get("datetime") or date.get_text(" ")))

@@ -49,6 +49,9 @@ class Verdict:
         return not self.reasons
 
 
+FUTURE_SLACK = timedelta(days=1)  # time zones and clocks; beyond it, a date is in the future
+
+
 def _entry_time(entry: dict) -> Optional[datetime]:
     for key in ("published_parsed", "updated_parsed"):
         value = entry.get(key)
@@ -72,7 +75,8 @@ def judge_feed(name: str, url: str, status: int, body: bytes, now: datetime, max
         # feedparser names the format it recognised (rss20, atom10…); nothing means it is no feed at all.
         verdict.reasons.append("no news with a title and a link" if parsed.get("version") else "not a feed")
         return verdict
-    dates = [moment for moment in (_entry_time(entry) for entry in usable) if moment is not None]
+    # A date in the future (an event announced ahead, a wrong clock) says nothing of freshness.
+    dates = [moment for moment in (_entry_time(entry) for entry in usable) if moment is not None and moment <= now + FUTURE_SLACK]
     verdict.newest = max(dates) if dates else None
     if verdict.newest is None:
         verdict.reasons.append("no dated news")
@@ -114,8 +118,11 @@ def judge_page(page: PageSourceConfig, allowed: bool, status: int, html: str, no
     if not entries:
         verdict.reasons.append("no dated news found with the selectors")
         return verdict
-    verdict.newest = max(entry.published_at for entry in entries)
-    if now - verdict.newest > timedelta(days=max_age_days):
+    dates = [entry.published_at for entry in entries if entry.published_at <= now + FUTURE_SLACK]
+    verdict.newest = max(dates) if dates else None
+    if verdict.newest is None:
+        verdict.reasons.append("no dated news")
+    elif now - verdict.newest > timedelta(days=max_age_days):
         verdict.reasons.append(f"newest news is {(now - verdict.newest).days} days old")
     return verdict
 

@@ -3,7 +3,7 @@
 import asyncio
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Literal, Optional
 from urllib.parse import unquote_plus, urlsplit
 import httpx
@@ -80,6 +80,23 @@ def _deduplication_url_key(url: str) -> tuple[str, str, str, str, Optional[int],
         path,
         "&".join(query_parts),
     )
+
+
+FUTURE_SLACK = timedelta(days=1)  # time zones and clocks; beyond it, a date is in the future
+
+
+def drop_future_items(items: List[ContentItem], now: Optional[datetime] = None) -> List[ContentItem]:
+    """Leave out what a source dates in the future (an event announced ahead, a wrong clock):
+    it is not news yet, and it would sit at the top of every edition until that date."""
+    limit = (now or datetime.now(timezone.utc)) + FUTURE_SLACK
+    kept = [item for item in items if item.published_at is None or _aware(item.published_at) <= limit]
+    if len(kept) < len(items):
+        logger.info("Left out %d item(s) dated in the future", len(items) - len(kept))
+    return kept
+
+
+def _aware(moment: datetime) -> datetime:
+    return moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)
 
 
 @dataclass
@@ -238,7 +255,7 @@ class CollectionMixin:
             for outcome in outcomes:
                 all_items.extend(outcome.items)
 
-            return all_items
+            return drop_future_items(all_items)
 
     async def _fetch_with_progress(
         self, name: str, scraper, since: datetime

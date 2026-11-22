@@ -55,3 +55,15 @@ def test_the_report_says_what_is_kept_and_why_the_rest_is_not() -> None:
     assert "| [Mort](https://example.org/dead) | **écartée** | 0 | — | HTTP 410 |" in report
     assert report.index("Mort") < report.index("Banque")  # what needs attention comes first
     assert "GDELT : banque OR bourse" in report
+
+
+def test_a_date_in_the_future_does_not_make_a_stale_feed_look_fresh() -> None:
+    # Phase 2: a feed announced an event months ahead; its real news were old.
+    body = rss(("Conférence 2027", "https://example.org/event", NOW + timedelta(days=90)), ("Vieux", "https://example.org/old", NOW - timedelta(days=60)))
+    verdict = judge_feed("Agenda", "https://example.org/feed", 200, body, NOW)
+    assert not verdict.kept and verdict.newest == NOW - timedelta(days=60)
+    only_future = rss(("Conférence 2027", "https://example.org/event", NOW + timedelta(days=90)))
+    assert judge_feed("Agenda", "https://example.org/feed", 200, only_future, NOW).reasons == ["no dated news"]
+    # A few hours ahead is a time zone, not the future.
+    soon = rss(("Ce matin", "https://example.org/now", NOW + timedelta(hours=5)))
+    assert judge_feed("Fuseau", "https://example.org/feed", 200, soon, NOW).kept

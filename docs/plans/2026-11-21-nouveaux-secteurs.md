@@ -9,7 +9,7 @@
 | **Date et version** | 21 novembre 2026, v1 |
 | **Auteur** | Claude, pour Oussama |
 | **Branche de travail** | `dev` (dépôt perso `oussamaalmouallim/LucidNews`) ; `main` seulement sur validation |
-| **État** | 22/11/2026 — Phase 1 (mécanique commune) **clôturée**. Prochaine : phase 2 (Finance), à ouvrir par son analyse et ses déblocages. |
+| **État** | 22/11/2026 — Phase 1 **clôturée**. Phase 2 (Finance) **en cours** : lots 2.1 à 2.4 faits (2.4 en collecte seule, décision 11) ; 2.5 attend une IA avec quota. |
 
 ---
 
@@ -75,6 +75,7 @@ domaines du secteur.
 | 8 | 22/11/2026 | Langues des sources (D3) | Français et anglais ; l'édition reste traduite | Lots 2.3, 3.3, 4.3, 5.3 |
 | 9 | 22/11/2026 | Runs réels avec l'IA (D4) | Oui, avec un budget de tokens par run | Lots 2.4, 3.4, 4.4, 5.4 |
 | 10 | 22/11/2026 | Commit `e56476e` au message faux (D5) | On le laisse ; le journal des lots l'explique | Journal des lots, lot 47 |
+| 11 | 22/11/2026 | Runs réels avec l'IA (révise la décision 9) | Arrêtés : l'offre d'IA gratuite ne tient pas un run. On valide la **collecte** seule, source par source, sans IA | Lots 2.4, 3.4, 4.4, 5.4 ; lot 2.5 en attente d'une IA avec quota |
 
 ---
 
@@ -143,6 +144,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : phase 1.
 - **Tests du lot** : identifiants uniques, libellés FR/EN présents, portée lue dans la consigne.
 - **Résultat attendu** : « Finance » apparaît dans Réglages avec ses 8 domaines.
+- **Fait (2026-11-22)** : secteur `finance` dans le registre, 8 domaines (`finance-markets`, `-banking`, `-insurance`, `-crypto`, `-deals`, `-macro`, `-regulation`, `-fintech`), libellés FR/EN, portée pour l'IA, alias, icônes ; règle « jamais de conseil ». Les mots tech (« LLM », « security ») restent à la tech. Le secteur factice des tests a reçu des mots à lui (« Banque » est désormais un mot de la finance). Preuve : `tests/test_finance_sector.py` (lot 2.1, 4 tests).
 
 <a id="lot-2-2"></a>
 ### Lot 2.2 — La consigne finance
@@ -152,6 +154,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : 2.1.
 - **Tests du lot** : consigne construite avec le profil finance ; règle « pas de conseil » présente.
 - **Résultat attendu** : la consigne finance est lisible dans les tests.
+- **Fait (2026-11-22)** : profil `profiles/finance-news/` : routage (écarte conseils, prédictions de cours, contenus sponsorisés), grille de score d'analyste prudent (banque centrale et régulateurs en tête, une prévision n'est jamais un fait), rédaction en trois blocs (résumé, contexte, conséquence) sans recommandation d'achat ou de vente. Preuve : `tests/test_finance_sector.py` (lot 2.2, 3 tests) ; l'ordre des profils de l'édition inclut le nouveau profil (`tests/test_balanced_digest.py`).
 
 <a id="lot-2-3"></a>
 ### Lot 2.3 — Les sources finance
@@ -164,6 +167,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : 2.1, 1.5, 1.6.
 - **Tests du lot** : le catalogue finance se charge ; le rapport de vérification ne garde aucune source écartée.
 - **Résultat attendu** : rapport de vérification daté, avec 15 sources gardées ou plus.
+- **Fait (2026-11-22)** : `data/sectors/finance.json` : 24 flux et 1 page officielle, **25 gardées sur 25** (rapport : `docs/sources/verification/finance-2026-11-22.md`). Autorités : BCE (deux flux), Fed, Banque d'Angleterre, INSEE, AMF, EBA, BRI, FSB, SEC, CFTC, ESMA (page lue par le lecteur du lot 1.6) ; presse gratuite : Le Monde, Le Figaro, BFM Business, CNBC, MarketWatch, CoinDesk, The Block, Decrypt, Finextra, Maddyness, Crunchbase News, Insurance Journal, Reinsurance News. Les 8 domaines ont chacun une source. 16 autorités en `official`, 13 éditeurs en `reputable`. GDELT (mots FR et EN, sans filtre de langue) et Google News (EN) activés. **Écartées** : Banque de France, ACPR, Les Echos, Argus de l'assurance, OCDE, OFAC (accès refusé, 403), FMI, EIOPA (404), FCA (news sans date), Financial Times (payant). **En plus du prévu** : le vérificateur ignore une date dans le futur (Finextra annonçait un événement de 2027) ; le lecteur de pages accepte `title_selector`, quand le lien couvre aussi la date et le chapeau (ESMA). Preuve : `tests/test_finance_sector.py` (lot 2.3, 3 tests), `tests/test_source_check.py`, `tests/test_page_sources.py`.
 
 <a id="lot-2-4"></a>
 ### Lot 2.4 — Run réel en finance
@@ -173,6 +177,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : 2.2, 2.3.
 - **Tests du lot** : le run se termine en succès ; aucune news rangée « Autre » par erreur de domaine.
 - **Résultat attendu** : capture de l'édition finance, et nombre de news par domaine noté dans le plan.
+- **Fait (2026-11-22), en collecte seule (décision 11)** : sur une copie des données Docker, basculée en Finance comme le fait Réglages (27 sources ajoutées, 33 sources tech désactivées), collecte sur 7 jours sans IA. **Les 27 sources ramènent des news**, 338 au total : crypto-actifs 82, économie 64, marchés 62, assurance 40, fintech 32, régulation 25, fusions 20, banques 5 + 12 avec les deux sources ajoutées. Contrôle : aucune news sans titre, aucun lien hors HTTPS, aucun doublon, rien hors de la fenêtre. Le run avec l'IA (Gemini gratuit, 10 requêtes par minute) a été arrêté à l'analyse, sur ta demande. **Corrigé en chemin** : la collecte écarte une news datée de plus d'un jour dans le futur (8 annonces d'événements Finextra, jusqu'en février 2027, auraient trôné en tête de l'édition) ; GDELT (75 news de sites inconnus en toutes langues) et Google News (conseils de bourse, puis refus 429) sont **désactivés** dans le catalogue finance, leurs requêtes gardées ; les banques, trop peu couvertes, reçoivent l'OCC (superviseur américain) et Banking Dive. Copies supprimées. Preuve : `tests/test_future_items.py`, `tests/test_finance_sector.py`.
 
 <a id="lot-2-5"></a>
 ### Lot 2.5 — Ta relecture de l'édition finance

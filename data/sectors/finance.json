@@ -1,0 +1,230 @@
+{
+  "profile": "finance-news",
+  "authorities": {
+    "ecb.europa.eu": "official",
+    "bankingsupervision.europa.eu": "official",
+    "federalreserve.gov": "official",
+    "bankofengland.co.uk": "official",
+    "insee.fr": "official",
+    "amf-france.org": "official",
+    "eba.europa.eu": "official",
+    "bis.org": "official",
+    "fsb.org": "official",
+    "sec.gov": "official",
+    "cftc.gov": "official",
+    "esma.europa.eu": "official",
+    "banque-france.fr": "official",
+    "acpr.banque-france.fr": "official",
+    "imf.org": "official",
+    "eiopa.europa.eu": "official",
+    "lemonde.fr": "reputable",
+    "lefigaro.fr": "reputable",
+    "bfmtv.com": "reputable",
+    "cnbc.com": "reputable",
+    "marketwatch.com": "reputable",
+    "coindesk.com": "reputable",
+    "theblock.co": "reputable",
+    "decrypt.co": "reputable",
+    "finextra.com": "reputable",
+    "maddyness.com": "reputable",
+    "news.crunchbase.com": "reputable",
+    "insurancejournal.com": "reputable",
+    "reinsurancene.ws": "reputable",
+    "occ.gov": "official",
+    "bankingdive.com": "reputable"
+  },
+  "sources": {
+    "rss": [
+      {
+        "name": "BCE — communiqués",
+        "url": "https://www.ecb.europa.eu/rss/press.html",
+        "category": "finance-macro",
+        "profile": "finance-news"
+      },
+      {
+        "name": "BCE — supervision bancaire",
+        "url": "https://www.bankingsupervision.europa.eu/rss/press.html",
+        "category": "finance-banking",
+        "profile": "finance-news"
+      },
+      {
+        "name": "OCC — superviseur bancaire américain",
+        "url": "https://www.occ.gov/rss/occ_news.xml",
+        "category": "finance-banking",
+        "profile": "finance-news"
+      },
+      {
+        "name": "Banking Dive",
+        "url": "https://www.bankingdive.com/feeds/news/",
+        "category": "finance-banking",
+        "profile": "finance-news"
+      },
+      {
+        "name": "Réserve fédérale (Fed)",
+        "url": "https://www.federalreserve.gov/feeds/press_all.xml",
+        "category": "finance-macro",
+        "profile": "finance-news"
+      },
+      {
+        "name": "Banque d'Angleterre",
+        "url": "https://www.bankofengland.co.uk/rss/news",
+        "category": "finance-macro",
+        "profile": "finance-news"
+      },
+      {
+        "name": "INSEE — informations rapides",
+        "url": "https://www.insee.fr/fr/flux/1",
+        "category": "finance-macro",
+        "profile": "finance-news"
+      },
+      {
+        "name": "AMF — actualités",
+        "url": "https://www.amf-france.org/fr/flux-rss/display/21",
+        "category": "finance-regulation",
+        "profile": "finance-news"
+      },
+      {
+        "name": "Autorité bancaire européenne (EBA)",
+        "url": "https://www.eba.europa.eu/rss.xml",
+        "category": "finance-regulation",
+        "profile": "finance-news"
+      },
+      {
+        "name": "Banque des règlements internationaux (BRI)",
+        "url": "https://www.bis.org/doclist/all_pressrels.rss",
+        "category": "finance-regulation",
+        "profile": "finance-news"
+      },
+      {
+        "name": "Conseil de stabilité financière (FSB)",
+        "url": "https://www.fsb.org/feed/",
+        "category": "finance-regulation",
+        "profile": "finance-news"
+      },
+      {
+        "name": "SEC — communiqués",
+        "url": "https://www.sec.gov/news/pressreleases.rss",
+        "category": "finance-regulation",
+        "profile": "finance-news"
+      },
+      {
+        "name": "CFTC — communiqués",
+        "url": "https://www.cftc.gov/RSS/RSSGP/rssgp.xml",
+        "category": "finance-regulation",
+        "profile": "finance-news"
+      },
+      {
+        "name": "Le Monde — Économie",
+        "url": "https://www.lemonde.fr/economie/rss_full.xml",
+        "category": "finance-macro",
+        "profile": "finance-news"
+      },
+      {
+        "name": "Le Figaro — Économie",
+        "url": "https://www.lefigaro.fr/rss/figaro_economie.xml",
+        "category": "finance-macro",
+        "profile": "finance-news"
+      },
+      {
+        "name": "BFM Business — Économie",
+        "url": "https://www.bfmtv.com/rss/economie/",
+        "category": "finance-markets",
+        "profile": "finance-news"
+      },
+      {
+        "name": "CNBC — Finance",
+        "url": "https://www.cnbc.com/id/10000664/device/rss/rss.html",
+        "category": "finance-markets",
+        "profile": "finance-news"
+      },
+      {
+        "name": "MarketWatch — Top stories",
+        "url": "https://feeds.content.dowjones.io/public/rss/mw_topstories",
+        "category": "finance-markets",
+        "profile": "finance-news"
+      },
+      {
+        "name": "CoinDesk",
+        "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
+        "category": "finance-crypto",
+        "profile": "finance-news"
+      },
+      {
+        "name": "The Block",
+        "url": "https://www.theblock.co/rss.xml",
+        "category": "finance-crypto",
+        "profile": "finance-news"
+      },
+      {
+        "name": "Decrypt",
+        "url": "https://decrypt.co/feed",
+        "category": "finance-crypto",
+        "profile": "finance-news"
+      },
+      {
+        "name": "Finextra",
+        "url": "https://www.finextra.com/rss/headlines.aspx",
+        "category": "finance-fintech",
+        "profile": "finance-news"
+      },
+      {
+        "name": "Maddyness — levées de fonds",
+        "url": "https://www.maddyness.com/feed/",
+        "category": "finance-deals",
+        "profile": "finance-news"
+      },
+      {
+        "name": "Crunchbase News",
+        "url": "https://news.crunchbase.com/feed/",
+        "category": "finance-deals",
+        "profile": "finance-news"
+      },
+      {
+        "name": "Insurance Journal",
+        "url": "https://www.insurancejournal.com/rss/news/",
+        "category": "finance-insurance",
+        "profile": "finance-news"
+      },
+      {
+        "name": "Reinsurance News",
+        "url": "https://www.reinsurancene.ws/feed/",
+        "category": "finance-insurance",
+        "profile": "finance-news"
+      }
+    ],
+    "pages": [
+      {
+        "name": "ESMA — actualités",
+        "url": "https://www.esma.europa.eu/press-news/esma-news",
+        "item_selector": "article.node--type-news",
+        "link_selector": "a[rel=bookmark]",
+        "date_selector": ".search-date",
+        "title_selector": ".search-title",
+        "category": "finance-regulation",
+        "profile": "finance-news",
+        "max_items": 10
+      }
+    ],
+    "gdelt": {
+      "enabled": false,
+      "query": "(\"central bank\" OR \"banque centrale\" OR \"financial regulator\" OR \"autorité des marchés\" OR \"interest rates\" OR \"taux directeurs\")",
+      "mode": "ArtList",
+      "max_records": 75,
+      "timespan": null,
+      "language": null,
+      "country": null,
+      "category": "finance-macro",
+      "profile": "finance-news"
+    },
+    "google_news": {
+      "enabled": false,
+      "query": "\"central bank\" OR \"bank regulator\" OR \"financial regulation\" OR \"stock market\"",
+      "language": "en",
+      "country": "US",
+      "ceid": null,
+      "max_results": 100,
+      "category": "finance-markets",
+      "profile": "finance-news"
+    }
+  }
+}

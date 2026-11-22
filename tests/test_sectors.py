@@ -21,8 +21,8 @@ FAKE = Sector(
     labels={"en": "Fake sector", "fr": "Secteur factice"},
     descriptions={"en": "For tests.", "fr": "Pour les tests."},
     categories=(
-        SectorCategory("fake-markets", {"en": "Markets", "fr": "Marchés"}, "stock and bond markets", ("bourse",)),
-        SectorCategory("fake-banking", {"en": "Banking", "fr": "Banque"}, "banks and lending"),
+        SectorCategory("fake-markets", {"en": "Markets", "fr": "Marchés"}, "stock and bond markets", ("fake-exchange",)),
+        SectorCategory("fake-banking", {"en": "Fake banking", "fr": "Banque factice"}, "banks and lending"),
     ),
 )
 
@@ -87,9 +87,9 @@ def test_the_ai_is_offered_the_categories_of_the_sector_only(two_sectors) -> Non
 
 
 def test_news_of_a_former_sector_keep_their_categories_and_labels(two_sectors) -> None:
-    assert normalize_categories(["ai", "fake-markets", "Banque"]) == ["ai", "fake-markets", "fake-banking"]
-    assert normalize_categories(["bourse"]) == ["fake-markets"]
-    assert category_label("fake-banking", "fr") == "Banque" and category_label("ai", "en") == "AI / LLM / Agents"
+    assert normalize_categories(["ai", "fake-markets", "Banque factice"]) == ["ai", "fake-markets", "fake-banking"]
+    assert normalize_categories(["fake-exchange"]) == ["fake-markets"]
+    assert category_label("fake-banking", "fr") == "Banque factice" and category_label("ai", "en") == "AI / LLM / Agents"
 
 
 def test_coverage_lists_the_categories_it_is_given() -> None:
@@ -127,7 +127,7 @@ def test_a_reader_reads_the_sector_and_its_categories(api) -> None:
     status, body, _ = reader.request("GET", "/api/sector")
     assert status == 200 and body["sector"]["id"] == "tech"
     assert body["sector"]["categories"][0] == {"id": "ai", "labels": {"en": "AI / LLM / Agents", "fr": "IA / LLM / Agents"}}
-    assert {sector["id"] for sector in body["sectors"]} == {"tech", "fake"}
+    assert {sector["id"] for sector in body["sectors"]} == {"tech", "finance", "fake"}
 
 
 def test_only_an_administrator_changes_the_sector(api) -> None:

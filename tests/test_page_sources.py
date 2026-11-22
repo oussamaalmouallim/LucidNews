@@ -104,3 +104,17 @@ def test_a_page_is_a_configured_source_with_a_feed_key() -> None:
     raw["sources"]["pages"] = [{**PAGE.model_dump(mode="json", exclude_none=True), "category": None}]
     keys = configured_source_keys(Config.model_validate(raw))
     assert keys["rss/Autorité — communiqués"] == "rss"
+
+
+def test_the_title_is_read_where_the_page_puts_it_when_the_link_wraps_more() -> None:
+    # Phase 2 (ESMA): the link wraps the title, the date and a lead.
+    html = f"""<article class="news"><a href="/news/t1" rel="bookmark">
+      <div class="title"><span>One year to go for T+1 settlement</span></div>
+      <div class="date"> {RECENT}</div><div class="lead">The EU will switch.</div></a></article>"""
+    page = PageSourceConfig(name="ESMA", url="https://esma.example/news", item_selector="article.news", link_selector="a[rel=bookmark]", date_selector=".date", title_selector=".title")
+    [entry] = parse_list_page(html, page)
+    assert entry.title == "One year to go for T+1 settlement"
+    assert entry.url == "https://esma.example/news/t1"
+    # Without it, the whole link text is the title, as before.
+    [plain] = parse_list_page(html, page.model_copy(update={"title_selector": None}))
+    assert plain.title.startswith("One year to go") and "The EU will switch." in plain.title
