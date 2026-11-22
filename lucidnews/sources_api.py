@@ -48,6 +48,7 @@ from .settings_api import Response, SettingsService
 from .source_health import github_repo_key, github_user_key, rss_key
 from .storage.manager import _ENV_VAR_PATTERN
 from .url_security import UnsafeURLError, validate_public_http_url
+from .sectors import DEFAULT_SECTOR
 
 COLLECTOR_USER_AGENT = "Mozilla/5.0 (compatible; LucidNews/1.0; RSS reader)"
 TEST_TIMEOUT_SECONDS = 45
@@ -510,6 +511,8 @@ class SourcesService:
             if duplicate:
                 return HTTPStatus.CONFLICT, {"error": "duplicate source", "fields": duplicate}
             sources = raw.setdefault("sources", {})
+            if kind.path in (("rss",), ("github",)) and config.sector != DEFAULT_SECTOR:
+                new_raw["sector"] = config.sector  # a source added in a sector leaves and returns with it
             _container(sources, kind.path, create=True).append(new_raw)
             return None
 

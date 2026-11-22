@@ -213,6 +213,7 @@ def make_orchestrator(**digest) -> PipelineOrchestrator:  # type: ignore[no-unty
         digest=SimpleNamespace(unanalyzed_max_items=digest.get("limit", 15)),
         reliability=SimpleNamespace(exclude_labels=digest.get("exclude", [])),
         archive=SimpleNamespace(reuse_enrichment=True),
+        sector="tech",
     )
     return orchestrator
 

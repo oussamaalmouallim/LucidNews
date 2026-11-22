@@ -55,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
         if not archive_path.is_absolute():
             archive_path = Path(args.data_dir) / archive_path
         configured = configured_source_keys(config)
-        policy = ReliabilityPolicy.with_overrides(config.reliability.domains, config.reliability.accounts)
+        policy = ReliabilityPolicy.for_config(config)
         quality_days = config.digest.source_quality_days
     except FileNotFoundError:
         pass

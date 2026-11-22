@@ -5,6 +5,7 @@ from ...models import ContentItem
 from ...processing.content import select_content, split_content
 from ...processing.profiles import LoadedProfile, ProfileBlock
 from ...processing.tools import ToolResult
+from .analysis import sector_rules_section
 from .common import EVIDENCE_RULES, UNTRUSTED_INPUT_RULE
 
 MAX_TOOL_REQUESTS = 3
@@ -61,6 +62,7 @@ def block_prompt(
     block: ProfileBlock,
     *,
     include_header: bool,
+    sector: str = "tech",
 ) -> str:
     header_instruction = (
         "Set `title` to the localized artifact title."
@@ -80,7 +82,7 @@ Write the complete artifact in {target_language_instruction(language)}.
 
 # Grounding rules
 
-{GROUNDING_RULES}
+{GROUNDING_RULES}{sector_rules_section(sector)}
 
 # Block contract
 
@@ -105,6 +107,7 @@ def artifact_prompt(
     profile: LoadedProfile,
     language: str,
     blocks: list[ProfileBlock],
+    sector: str = "tech",
 ) -> str:
     block_contract = "\n".join(
         f"- `{block.id}`"
@@ -119,7 +122,7 @@ Write the complete artifact in {target_language_instruction(language)}.
 
 # Grounding rules
 
-{GROUNDING_RULES}
+{GROUNDING_RULES}{sector_rules_section(sector)}
 
 # Block contract
 

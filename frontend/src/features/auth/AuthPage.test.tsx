@@ -17,7 +17,7 @@ const signedOut = (overrides: Partial<Session> = {}): Session => ({
 const signedIn: Session = { ...signedOut(), authenticated: true, user }
 
 /** An API with accounts on: the session starts as given and follows sign-in, sign-up and sign-out. */
-function mockAuthApi(start: Session, replies: Partial<Record<'sign-in' | 'sign-up', [number, unknown]>> = {}) {
+function mockAuthApi(start: Session, replies: Partial<Record<'sign-in' | 'sign-up', [number, unknown]>> = {}, sectorNoun?: string) {
   let session = start
   const calls: Call[] = []
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
@@ -35,6 +35,10 @@ function mockAuthApi(start: Session, replies: Partial<Record<'sign-in' | 'sign-u
     if (path === '/api/auth/sign-out') {
       session = signedOut()
       return reply(200, session)
+    }
+    if (path === '/api/sector' && sectorNoun) {
+      const labels = { en: sectorNoun, fr: sectorNoun }
+      return reply(200, { sector: { id: sectorNoun, labels, descriptions: labels, nouns: labels, categories: [] }, sectors: [] })
     }
     if (path.startsWith('/api/editions/')) return reply(200, fixtures.editionFr)
     if (path === '/api/editions') return reply(200, fixtures.editions)
@@ -196,4 +200,16 @@ test('a session that ends while the app is open sends the reader back to sign in
 test('without accounts the sign-in page does not exist: the app stays open', async () => {
   renderAt('/sign-in?lang=fr')
   await waitFor(() => expect(window.location.pathname).toBe('/'), { timeout: 5000 })
+})
+
+test('the sign-in page names the sector of the installation', async () => {
+  mockAuthApi(signedOut(), {}, 'finance')
+  renderAt('/sign-in?lang=fr', null)
+  expect(await screen.findByRole('heading', { name: 'La veille finance à laquelle on peut se fier.' }, { timeout: 5000 })).toBeInTheDocument()
+})
+
+test('until the server names it, the sign-in page speaks of the default sector', async () => {
+  mockAuthApi(signedOut())
+  renderAt('/sign-in?lang=en', null)
+  expect(await screen.findByRole('heading', { name: 'Tech news you can trust.' }, { timeout: 5000 })).toBeInTheDocument()
 })

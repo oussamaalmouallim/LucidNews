@@ -56,10 +56,13 @@ export const domainCategories = [
 const labelsSchema = z.record(z.string(), z.string())
 const sectorSummarySchema = z.object({ id: z.string(), labels: labelsSchema, descriptions: labelsSchema })
 export const sectorStateSchema = z.object({
-  sector: sectorSummarySchema.extend({ categories: z.array(z.object({ id: z.string(), labels: labelsSchema })) }),
+  sector: sectorSummarySchema.extend({ nouns: labelsSchema.default({}), categories: z.array(z.object({ id: z.string(), labels: labelsSchema })) }),
   sectors: z.array(sectorSummarySchema),
 })
 export type SectorState = z.infer<typeof sectorStateSchema>
+const switchCountsSchema = z.object({ added: z.number(), enabled: z.number(), disabled: z.number() })
+export const sectorPreviewSchema = z.object({ sector: z.string(), sources: switchCountsSchema })
+export type SectorPreview = z.infer<typeof sectorPreviewSchema>
 export type SectorSummary = z.infer<typeof sectorSummarySchema>
 
 export const aiLimits = ['provider_quota', 'token_budget', 'disabled'] as const
@@ -950,6 +953,11 @@ export function fetchReaderPreferences(signal?: AbortSignal): Promise<Preference
 /** What this installation watches, and the categories its edition is grouped by. */
 export function fetchSector(signal?: AbortSignal): Promise<SectorState> {
   return getJson('/api/sector', sectorStateSchema, signal)
+}
+
+/** Administrator: what switching to ``sector`` would do to the sources, nothing written. */
+export function fetchSectorPreview(sector: string, signal?: AbortSignal): Promise<SectorPreview> {
+  return getJson(`/api/settings/sector/preview?sector=${encodeURIComponent(sector)}`, sectorPreviewSchema, signal)
 }
 
 /** Administrator: switch the installation to another sector (Settings). */

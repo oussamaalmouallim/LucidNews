@@ -109,7 +109,7 @@ def api(tmp_path, monkeypatch, two_sectors):  # type: ignore[no-untyped-def]
     for name in ("config.example.json", "presets.json"):
         shutil.copy(ROOT / "data" / name, project_data / name)
     feed = {"name": "Marchés", "url": "https://example.org/m.xml", "category": "fake-markets"}
-    (project_data / "sectors" / "fake.json").write_text(json.dumps({"profile": "tech-news", "authorities": {}, "sources": {"rss": [feed]}}))
+    (project_data / "sectors" / "fake.json").write_text(json.dumps({"profile": "tech-blog", "authorities": {}, "sources": {"rss": [feed]}}))
     monkeypatch.setattr(sector_catalog, "PROJECT_DATA", project_data)
     monkeypatch.setattr(source_catalog, "PROJECT_DATA", project_data)
     ctx, server = start_api(tmp_path, monkeypatch)
@@ -142,12 +142,24 @@ def test_changing_the_sector_rewrites_the_configuration_and_is_served_at_once(ap
     raw.setdefault("digest", {})["watched_categories"] = ["ai", "web"]
     (tmp_path / "config.json").write_text(json.dumps(raw))
 
+    status, body, _ = admin.request("GET", "/api/settings/sector/preview?sector=fake")
+    assert status == 200 and body["sources"]["added"] == 1 and body["sources"]["disabled"] > 0
+    assert json.loads((tmp_path / "config.json").read_text())["digest"]["watched_categories"] == ["ai", "web"]  # nothing written
+
     status, body, _ = admin.request("PUT", "/api/settings/sector", {"sector": "fake"})
     assert status == 200 and body["sector"]["id"] == "fake"
+    assert body["sources"]["added"] == 1  # lot 1.4: the sector's catalog source is installed
     written = json.loads((tmp_path / "config.json").read_text())
     assert written["sector"] == "fake" and written["digest"]["watched_categories"] == ["fake-markets", "fake-banking"]
+    assert written["processing"]["default_profile"] == "tech-blog"  # the sector's editorial profile (lot 1.2)
     assert reader.request("GET", "/api/sector")[1]["sector"]["categories"][0]["id"] == "fake-markets"
     assert list((tmp_path / "backups").glob("config-*.json"))  # the previous file is kept
+
+    # A source added by hand in this sector belongs to it.
+    status, body, _ = admin.request("POST", "/api/sources/config", {"version": admin.request("GET", "/api/sources/config")[1]["version"], "kind": "rss", "values": {"name": "Mine", "url": "https://example.org/mine.xml"}})
+    assert status == 201, body
+    feeds = json.loads((tmp_path / "config.json").read_text())["sources"]["rss"]
+    assert next(feed for feed in feeds if feed["name"] == "Mine")["sector"] == "fake"
 
     assert admin.request("PUT", "/api/settings/sector", {"sector": "tech"})[1]["sector"]["id"] == "tech"
 
@@ -167,3 +179,17 @@ def test_an_unknown_sector_is_refused_by_the_api(api) -> None:
     status, body, _ = admin.request("PUT", "/api/settings/sector", {"sector": "astrology"})
     assert (status, body["error"]) == (422, "unknown sector")
     assert (tmp_path / "config.json").read_text() == before
+
+
+def test_the_sector_is_readable_before_signing_in(tmp_path, monkeypatch) -> None:
+    """The sign-in page names the sector; nothing private is in the answer."""
+    _, server = start_api(tmp_path, monkeypatch)
+    try:
+        visitor = Client(server)
+        assert visitor.request("GET", "/api/editions")[0] == 401
+        status, body, _ = visitor.request("GET", "/api/sector")
+        assert status == 200 and body["sector"]["nouns"] == {"en": "tech", "fr": "tech"}
+        assert set(body) == {"sector", "sectors"}
+    finally:
+        server.shutdown()
+        server.server_close()

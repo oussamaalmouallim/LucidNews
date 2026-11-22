@@ -64,6 +64,9 @@ def configured_source_keys(config: Config) -> Dict[str, str]:
     for feed in sources.rss:
         if feed.enabled:
             keys[rss_key(feed.name)] = SourceType.RSS.value
+    for page in sources.pages:  # a list page is read as a feed and keyed like one
+        if page.enabled:
+            keys[rss_key(page.name)] = SourceType.RSS.value
     for entry in sources.github:
         if not entry.enabled:
             continue

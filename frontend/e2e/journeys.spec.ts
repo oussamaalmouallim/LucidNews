@@ -115,3 +115,34 @@ test('the built page carries its Content-Security-Policy', async ({ page }) => {
   expect(policy).toContain("default-src 'self'")
   expect(policy).toContain("object-src 'none'")
 })
+
+test('an administrator switches the watch to another sector and back, and the sources follow', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password)
+  await expect(page).not.toHaveURL(/\/sign-in/) // signed in before opening Settings
+  await page.goto('/settings?lang=fr')
+  const card = page.getByRole('region', { name: 'Ce que couvre la veille' })
+  const choose = card.getByRole('button', { name: 'Passer à ce secteur' })
+  await expect(choose).toBeEnabled() // once the effect on the sources is known
+  await choose.click()
+  const dialog = page.getByRole('alertdialog')
+  await expect(dialog.getByText(/Sources : 1 ajoutées, 0 réactivées, \d+ désactivées/)).toBeVisible()
+  await dialog.getByRole('button', { name: 'Changer' }).click()
+  await expect(card.getByText("La veille couvre maintenant « Secteur d'essai ».")).toBeVisible()
+
+  // The whole app follows: the watch offers the new sector's domains, the sign-in page names it.
+  await page.goto('/account?lang=fr')
+  await expect(page.getByRole('region', { name: 'Ma veille' }).getByRole('button', { name: /Marchés/ })).toBeVisible()
+  await signOut(page)
+  await expect(page.getByRole('heading', { name: 'La veille essai à laquelle on peut se fier.' })).toBeVisible()
+
+  // And back to tech: the tech sources come back.
+  await signIn(page, ADMIN.email, ADMIN.password)
+  await expect(page).not.toHaveURL(/\/sign-in/) // signed in before opening Settings
+  await page.goto('/settings?lang=fr')
+  const back = page.getByRole('region', { name: 'Ce que couvre la veille' }).getByRole('button', { name: 'Passer à ce secteur' })
+  await expect(back).toBeEnabled()
+  await back.click()
+  await expect(page.getByRole('alertdialog').getByText(/Sources : 0 ajoutées, \d+ réactivées, 1 désactivées/)).toBeVisible()
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Changer' }).click()
+  await expect(page.getByRole('region', { name: 'Ce que couvre la veille' }).getByText('La veille couvre maintenant « Tech et IT ».')).toBeVisible()
+})

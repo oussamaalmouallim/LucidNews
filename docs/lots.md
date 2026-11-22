@@ -870,6 +870,14 @@ Décisions du 30 octobre : quatre secteurs (finance, juridique et réglementaire
 
 ---
 
+## Nouveaux secteurs — Phase 1 : mécanique commune
+
+✅ Clôturée le 22 novembre 2026, sur `dev`. Détail lot par lot, décisions et preuves : [plan du chantier](plans/2026-11-21-nouveaux-secteurs.md#phase-1).
+
+Catalogue par secteur (`data/sectors/`), consigne de l'IA par secteur avec la règle « jamais de conseil », autorités du secteur reconnues comme officielles, bascule des sources sans rien supprimer (aperçu des nombres avant de confirmer), vérificateur de sources (`lucidnews-sources-check`), lecteur de pages officielles sans RSS (respect de `robots.txt`), interface neutre. Tests : 970 Python, 181 interface, 6 parcours.
+
+---
+
 ## Lots 27 à 46 — Plan de lancement
 
 📋 Planifiés le 13 octobre 2026 après l'étude de marché et l'audit

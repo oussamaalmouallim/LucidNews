@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { vi } from 'vitest'
 import { renderAt } from '../../test/render'
 import settingsFixture from '../../test/fixtures/settings.json'
@@ -20,6 +20,7 @@ function mockApi() {
     calls.push({ method, path, body })
     const reply = (payload: unknown, status = 200) => new Response(JSON.stringify(payload), { status })
     if (path === '/api/sector') return reply(state(tech, [{ id: 'ai', labels: { en: 'AI', fr: 'IA' } }]))
+    if (path === '/api/settings/sector/preview') return reply({ sector: 'fake', sources: { added: 12, enabled: 0, disabled: 34 } })
     if (path === '/api/settings/sector') return reply(state(fake, [{ id: 'fake-markets', labels: { en: 'Markets', fr: 'Marchés' } }]))
     if (path === '/api/settings') return reply(settingsFixture)
     if (path === '/api/settings/backups') return reply({ backups: [] })
@@ -36,9 +37,12 @@ test('the administrator sees the current sector and switches after confirming', 
   expect(await card.findByText('Actuel')).toBeInTheDocument()
   expect(card.getByText('Tech et IT')).toBeInTheDocument()
 
-  fireEvent.click(card.getByRole('button', { name: 'Passer à ce secteur' }))
+  const choose = card.getByRole('button', { name: 'Passer à ce secteur' })
+  await waitFor(() => expect(choose).toBeEnabled()) // once the effect on the sources is known
+  fireEvent.click(choose)
   const dialog = await screen.findByRole('alertdialog')
   expect(within(dialog).getByText('Passer la veille en « Secteur factice » ?')).toBeInTheDocument()
+  expect(within(dialog).getByText(/Sources : 12 ajoutées, 0 réactivées, 34 désactivées/)).toBeInTheDocument()
   fireEvent.click(within(dialog).getByRole('button', { name: 'Changer' }))
 
   expect(await card.findByText('La veille couvre maintenant « Secteur factice ».')).toBeInTheDocument()
@@ -50,7 +54,27 @@ test('nothing is changed when the administrator keeps the current sector', async
   const calls = mockApi()
   renderAt('/settings?lang=fr')
   const card = within(await screen.findByRole('region', { name: 'Ce que couvre la veille' }, { timeout: 5000 }))
-  fireEvent.click(await card.findByRole('button', { name: 'Passer à ce secteur' }))
+  const choose = await card.findByRole('button', { name: 'Passer à ce secteur' })
+  await waitFor(() => expect(choose).toBeEnabled())
+  fireEvent.click(choose)
   fireEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Garder le secteur actuel' }))
   expect(calls.some((call) => call.path === '/api/settings/sector')).toBe(false)
+})
+
+test('a sector the server cannot switch to says why, and offers no switch', async () => {
+  mockApi()
+  vi.mocked(globalThis.fetch).mockImplementation(async (input) => {
+    const path = new URL(String(input), 'http://localhost').pathname
+    const reply = (payload: unknown, status = 200) => new Response(JSON.stringify(payload), { status })
+    if (path === '/api/sector') return reply(state(tech, [{ id: 'ai', labels: { en: 'AI', fr: 'IA' } }]))
+    if (path === '/api/settings/sector/preview') return reply({ error: 'sector not ready' }, 422)
+    if (path === '/api/settings') return reply(settingsFixture)
+    if (path === '/api/settings/backups') return reply({ backups: [] })
+    if (path === '/api/secrets') return reply({ secrets: [] })
+    return reply({ error: 'not found' }, 404)
+  })
+  renderAt('/settings?lang=fr')
+  const card = within(await screen.findByRole('region', { name: 'Ce que couvre la veille' }, { timeout: 5000 }))
+  expect(await card.findByText(/Ce secteur n’est pas encore prêt/)).toBeInTheDocument()
+  expect(card.queryByRole('button', { name: 'Passer à ce secteur' })).toBeNull()
 })

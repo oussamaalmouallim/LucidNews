@@ -10,6 +10,8 @@ import { languages, useLanguage, type MessageKey } from '../../lib/i18n'
 import { easeSoft, useMotionPreference } from '../../lib/motion'
 import { useTheme } from '../../lib/theme'
 import { MAX_PASSWORD, MIN_PASSWORD, StrengthMeter } from './strength'
+import { capitalize } from '../../lib/format'
+import { useSector } from '../../lib/sector'
 
 const EMAIL = /^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$/
 const SUCCESS_PAUSE_MS = 700
@@ -441,7 +443,10 @@ function TextField({
 }
 
 function BrandPanel() {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
+  // The sector of the installation, readable before signing in; tech until the server answers.
+  const sector = useSector()
+  const noun = sector.data?.sector.nouns[language] ?? sector.data?.sector.nouns.en ?? 'tech'
   const { enabled } = useMotionPreference()
   const points: MessageKey[] = ['auth.brand.point1', 'auth.brand.point2', 'auth.brand.point3']
   const float = (delay: number) =>
@@ -470,7 +475,9 @@ function BrandPanel() {
       </div>
 
       <div className="mt-16 max-w-[30rem]">
-        <h2 className="font-serif text-[52px] leading-[1.03] font-medium tracking-[-0.02em]">{t('auth.brand.title')}</h2>
+        <h2 className="font-serif text-[52px] leading-[1.03] font-medium tracking-[-0.02em]">
+          {t('auth.brand.title', { noun: language === 'en' ? capitalize(noun) : noun })}
+        </h2>
         <p className="mt-5 text-[17px] leading-relaxed text-on-fill/80">{t('auth.brand.subtitle')}</p>
         <ul className="mt-9 space-y-3.5">
           {points.map((point) => (

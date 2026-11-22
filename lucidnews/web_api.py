@@ -53,6 +53,7 @@ Who may use the routes above depends on ``auth.enabled``:
 """
 
 import argparse
+import copy
 from collections import Counter
 import ipaddress
 import json
@@ -88,6 +89,7 @@ from .source_quality import DEFAULT_DAYS, compute_source_quality, item_source_ke
 from .storage.manager import StorageManager
 from .settings_api import SettingsService
 from .sector_catalog import CatalogError, load_sector_catalog
+from .sector_switch import switch_sources
 from .source_catalog import CatalogEntry, load_catalog, recommendations
 from .sources_api import SourcesService
 from .newsletter.mailer import build_mailer
@@ -605,12 +607,18 @@ def change_sector(ctx: "ApiContext", body: Dict[str, Any]) -> tuple[int, Dict[st
     if not isinstance(target, str) or target not in SECTORS:
         return HTTPStatus.UNPROCESSABLE_ENTITY, {"error": "unknown sector", "fields": {"sector": f"one of {', '.join(SECTORS)}"}}
     try:
-        load_sector_catalog(target)  # a sector without a usable catalog is never switched to
+        catalog = load_sector_catalog(target)  # a sector without a usable catalog is never switched to
     except CatalogError as exc:
         return HTTPStatus.UNPROCESSABLE_ENTITY, {"error": "sector not ready", "detail": str(exc)}
 
+    current = current_sector(ctx).id
+    summary: Dict[str, Any] = {}
+
     def mutate(raw: Dict[str, Any]) -> None:
         raw["sector"] = target
+        # The AI reads the sector's editorial profile for news no source routes elsewhere.
+        raw.setdefault("processing", {})["default_profile"] = catalog.profile
+        summary.update(switch_sources(raw, current, catalog).counts())  # lot 1.4: nothing deleted
         digest = raw.get("digest")
         if isinstance(digest, dict) and "watched_categories" in digest:
             digest["watched_categories"] = get_sector(target).category_ids
@@ -624,7 +632,21 @@ def change_sector(ctx: "ApiContext", body: Dict[str, Any]) -> tuple[int, Dict[st
     )
     if refusal is not None:
         return refusal
-    return HTTPStatus.OK, sector_payload(ctx)
+    return HTTPStatus.OK, {**sector_payload(ctx), "sources": summary}
+
+
+def sector_preview(ctx: "ApiContext", target: Optional[str]) -> tuple[int, Dict[str, Any]]:
+    """What switching to ``target`` would do to the sources, without writing anything."""
+    if ctx.settings is None:
+        return HTTPStatus.FORBIDDEN, LOCAL_ONLY
+    if target not in SECTORS:
+        return HTTPStatus.UNPROCESSABLE_ENTITY, {"error": "unknown sector"}
+    try:
+        catalog = load_sector_catalog(target)
+    except CatalogError as exc:
+        return HTTPStatus.UNPROCESSABLE_ENTITY, {"error": "sector not ready", "detail": str(exc)}
+    raw, _, _ = ctx.settings.snapshot()
+    return HTTPStatus.OK, {"sector": target, "sources": switch_sources(copy.deepcopy(raw), current_sector(ctx).id, catalog).counts()}
 
 
 def resolve(ctx: ApiContext, path: str, query: Dict[str, List[str]]) -> tuple[int, Dict[str, Any]]:
@@ -643,6 +665,8 @@ def resolve(ctx: ApiContext, path: str, query: Dict[str, List[str]]) -> tuple[in
             return ctx.settings.get()
         if path == "/api/settings/backups":
             return ctx.settings.backups()
+        if path == "/api/settings/sector/preview":
+            return sector_preview(ctx, (query.get("sector") or [None])[0])
         if path == "/api/secrets":
             return ctx.settings.secrets()
         return HTTPStatus.NOT_FOUND, {"error": "not found"}
@@ -963,6 +987,9 @@ def make_handler(ctx: ApiContext) -> type[BaseHTTPRequestHandler]:
             if parts.path == "/api/healthz":  # for the orchestrator's probe: no session, no data in the answer
                 self._send(*health(ctx))
                 return
+            if parts.path == "/api/sector":  # the sign-in page names the sector: nothing private in it
+                self._send(HTTPStatus.OK, sector_payload(ctx))
+                return
             if parts.path.rstrip("/").startswith("/api/auth"):
                 self._auth_route("GET", parts, {})
                 return
@@ -1043,9 +1070,7 @@ def build_context(data_dir: str, config_path: Optional[str], *, local_features: 
         profile_order=list(config.digest.profile_order),
         default_language=(config.ai.languages or [DEFAULT_LANGUAGE])[0],
         configured_sources=configured_source_keys(config),
-        reliability_policy=ReliabilityPolicy.with_overrides(
-            config.reliability.domains, config.reliability.accounts
-        ),
+        reliability_policy=ReliabilityPolicy.for_config(config),
         source_quality_days=config.digest.source_quality_days,
         config=config,
         catalog=load_catalog(sector=config.sector),

@@ -15,7 +15,7 @@ and a rumor is always labelled as a rumor, whatever the source.
 
 import re
 from dataclasses import dataclass, field
-from typing import List, Mapping, Optional, Sequence, Tuple
+from typing import Any, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import urlsplit
 
 from ..models import ContentItem
@@ -55,6 +55,18 @@ class ReliabilityPolicy:
         for account, tier in (accounts or {}).items():
             account_tiers[normalize_account(account)] = SourceTier(tier)
         return cls(domain_tiers=tiers, account_tiers=account_tiers)
+
+    @classmethod
+    def for_config(cls, config: Any) -> "ReliabilityPolicy":
+        """The registry an installation uses: the built-in list, then the authorities of its
+        sector (``data/sectors/<sector>.json``), then ``reliability.domains``, which always wins."""
+        from ..sector_catalog import CatalogError, load_sector_catalog
+
+        try:
+            authorities: Mapping[str, SourceTier] = load_sector_catalog(config.sector).authorities
+        except CatalogError:
+            authorities = {}  # a hand-edited sector without a catalog: the built-in list only
+        return cls.with_overrides({**authorities, **config.reliability.domains}, config.reliability.accounts)
 
     def tier_for_account(self, account: Optional[str]) -> Optional[SourceTier]:
         return self.account_tiers.get(account) if account else None

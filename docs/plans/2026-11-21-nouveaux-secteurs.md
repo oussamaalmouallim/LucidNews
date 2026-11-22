@@ -9,7 +9,7 @@
 | **Date et version** | 21 novembre 2026, v1 |
 | **Auteur** | Claude, pour Oussama |
 | **Branche de travail** | `dev` (dépôt perso `oussamaalmouallim/LucidNews`) ; `main` seulement sur validation |
-| **État** | 22/11/2026 — Phase 1 en cours : lot 1.1 fait. Prochain : lot 1.2 (profil éditorial d'un secteur). |
+| **État** | 22/11/2026 — Phase 1 (mécanique commune) **clôturée**. Prochaine : phase 2 (Finance), à ouvrir par son analyse et ses déblocages. |
 
 ---
 
@@ -20,13 +20,13 @@
 - [Ce qu'on a trouvé](#constats)
 - [Comment les morceaux s'emboîtent](#emboitement)
 - [Phases non clôturées](#phases-ouvertes)
-  - [Phase 1 — Mécanique commune des secteurs](#phase-1) : [1.1](#lot-1-1) · [1.2](#lot-1-2) · [1.3](#lot-1-3) · [1.4](#lot-1-4) · [1.5](#lot-1-5) · [1.6](#lot-1-6) · [1.7](#lot-1-7)
   - [Phase 2 — Secteur Finance](#phase-2) : [2.1](#lot-2-1) · [2.2](#lot-2-2) · [2.3](#lot-2-3) · [2.4](#lot-2-4) · [2.5](#lot-2-5)
   - [Phase 3 — Secteur Juridique et réglementaire](#phase-3) : [3.1](#lot-3-1) · [3.2](#lot-3-2) · [3.3](#lot-3-3) · [3.4](#lot-3-4) · [3.5](#lot-3-5)
   - [Phase 4 — Secteur Santé et pharma](#phase-4) : [4.1](#lot-4-1) · [4.2](#lot-4-2) · [4.3](#lot-4-3) · [4.4](#lot-4-4) · [4.5](#lot-4-5)
   - [Phase 5 — Secteur Énergie et climat](#phase-5) : [5.1](#lot-5-1) · [5.2](#lot-5-2) · [5.3](#lot-5-3) · [5.4](#lot-5-4) · [5.5](#lot-5-5)
   - [Phase 6 — Fin du chantier](#phase-6) : [6.1](#lot-6-1) · [6.2](#lot-6-2) · [6.3](#lot-6-3)
 - [Phases clôturées](#phases-cloturees)
+  - [Phase 1 — Mécanique commune des secteurs](#phase-1) : [1.1](#lot-1-1) · [1.2](#lot-1-2) · [1.3](#lot-1-3) · [1.4](#lot-1-4) · [1.5](#lot-1-5) · [1.6](#lot-1-6) · [1.7](#lot-1-7)
   - [Phase 0 — Socle multi-secteurs (lot 47)](#phase-0)
 - [Actions de l'utilisateur](#actions)
 - [Points à confirmer](#a-confirmer)
@@ -128,99 +128,6 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 
 <a id="phases-ouvertes"></a>
 ## Phases non clôturées
-
-<a id="phase-1"></a>
-## Phase 1 — Mécanique commune des secteurs
-
-**Objectif** : tout ce qu'un secteur réutilise, construit une fois, testé avec un secteur factice.
-**Pourquoi** : sans ce socle, chaque secteur referait le catalogue, la consigne et le remplacement des sources.
-**Résultat de phase** : un secteur factice complet bascule depuis Réglages, avec ses sources, sa consigne et ses autorités. La tech est intacte.
-
-<a id="lot-1-1"></a>
-### Lot 1.1 — Le catalogue d'un secteur
-
-- **Objectif** : chaque secteur a un fichier de catalogue lisible, chargé avec le secteur.
-- **À faire**
-  - Un fichier par secteur dans `data/sectors/` : sources RSS (nom, adresse, domaine, rang de confiance), requêtes GDELT et Google News, autorités, profil.
-  - Pour la tech, le catalogue reprend les 31 flux et les 4 dépôts actuels, sans changement.
-  - Le registre des secteurs charge et valide ces fichiers : un domaine inconnu ou une adresse mal formée sont refusés.
-- **Dépend de** : rien.
-- **Tests du lot** : chargement et refus d'un catalogue invalide ; le catalogue tech donne les mêmes sources qu'avant.
-- **Résultat attendu** : `uv run pytest` vert, et le catalogue tech listé à l'identique dans l'écran Sources.
-- **Fait (2026-11-22)** : un fichier par secteur dans `data/sectors/`. Celui de la tech renvoie à la configuration d'exemple (`sources_from`), qui reste sa seule liste : 31 flux, 4 dépôts. Le chargeur refuse un profil inconnu, une catégorie d'un autre secteur, une adresse mal formée, un domaine ou un rang de confiance invalides. **En plus du prévu** : le serveur refuse de basculer vers un secteur sans catalogue utilisable (422 « sector not ready »), avant d'écrire la configuration ; l'image Docker embarque `data/sectors/`. Preuve : 12 tests nouveaux (`tests/test_sector_catalog.py`, `tests/test_sectors.py`) ; les recommandations tech de l'écran Sources sont identiques (test). Suite : 942 tests verts, 1 échec ancien sans lien (voir « Points à confirmer »).
-
-<a id="lot-1-2"></a>
-### Lot 1.2 — Le profil éditorial d'un secteur
-
-- **Objectif** : chaque secteur a sa consigne pour l'IA (ce qui compte, comment noter l'importance).
-- **À faire**
-  - Le secteur nomme son profil par défaut ; le changement de secteur le pose dans la configuration.
-  - Un règlement commun à tous les profils hors tech : jamais de conseil (investissement, juridique, médical), et seulement ce que la source dit.
-- **Dépend de** : 1.1.
-- **Tests du lot** : la consigne envoyée à l'IA contient le profil du secteur et la règle « pas de conseil ».
-- **Résultat attendu** : après un changement vers le secteur factice, le profil par défaut de la configuration est le sien.
-
-<a id="lot-1-3"></a>
-### Lot 1.3 — Les autorités du secteur, sources officielles
-
-- **Objectif** : un communiqué d'une autorité du secteur (AMF, CNIL…) est reconnu comme source officielle.
-- **À faire**
-  - Le registre de confiance ajoute les autorités du secteur actif à sa liste intégrée.
-  - Ce que la configuration fixe (`reliability.domains`) garde le dernier mot.
-- **Dépend de** : 1.1.
-- **Tests du lot** : une news d'une autorité du secteur factice reçoit le rang officiel ; hors du secteur, elle ne le reçoit pas.
-- **Résultat attendu** : l'étiquette « Confirmé » est possible pour une annonce d'autorité.
-
-<a id="lot-1-4"></a>
-### Lot 1.4 — Changer de secteur remplace les sources
-
-- **Objectif** : basculer de secteur installe ses sources et désactive les autres, sans rien supprimer.
-- **À faire**
-  - Commencer par la sauvegarde : la copie de la configuration existe déjà (lot 47), le vérifier dans le test.
-  - Chaque source ajoutée par un catalogue est marquée de son secteur ; une source sans marque est tech.
-  - Au changement : les sources des autres secteurs sont désactivées, celles du nouveau sont ajoutées ou réactivées. Au retour, les anciennes reviennent.
-  - Réglages montre, avant la confirmation, le nombre de sources ajoutées et désactivées.
-- **Dépend de** : 1.1.
-- **Tests du lot** : aller-retour tech → factice → tech, sources identiques au départ ; une source ajoutée à la main n'est jamais supprimée.
-- **Résultat attendu** : dans l'écran Sources, après la bascule, seules les sources du secteur sont actives.
-
-<a id="lot-1-5"></a>
-### Lot 1.5 — Vérifier une source avant de la cataloguer
-
-- **Objectif** : un outil dit, pour chaque source d'un catalogue, si elle est vivante et utilisable.
-- **À faire**
-  - Une commande lit chaque source pour de vrai : adresse en HTTPS, flux lisible, news de moins de 30 jours, titres et liens présents.
-  - Elle écrit un rapport daté, source par source : gardée, écartée, et pourquoi.
-  - La CI ne lance pas cette commande, car elle dépend du réseau ; un test la vérifie sur des flux factices.
-- **Dépend de** : 1.1.
-- **Tests du lot** : flux valide, flux mort, flux trop ancien, adresse en HTTP, chacun classé comme il faut.
-- **Résultat attendu** : la commande, lancée sur le catalogue tech, donne un rapport lisible.
-
-<a id="lot-1-6"></a>
-### Lot 1.6 — Lire une source qui n'a pas de flux RSS
-
-- **Objectif** : une autorité qui publie une page de communiqués sans flux RSS devient une source.
-- **Décidé (22/11/2026, décision 7)** : un lecteur de pages de liste, limité aux sites officiels et publics. Il respecte `robots.txt` (règles d'accès posées par le site) et lit lentement. L'outil 1.5 détecte quand une page change de forme.
-- **À faire** : un lecteur configuré par site (adresse de la liste, sélecteur des liens), qui respecte `robots.txt`, avec un délai entre deux pages ; il passe par la vérification 1.5.
-- **Dépend de** : 1.5.
-- **Tests du lot** : une page de liste enregistrée donne ses news ; une page interdite par `robots.txt` n'est pas lue.
-- **Résultat attendu** : une page d'autorité factice devient une source comme une autre.
-
-<a id="lot-1-7"></a>
-### Lot 1.7 — Une interface neutre
-
-- **Objectif** : plus aucun texte qui dit « tech » hors du secteur tech.
-- **À faire**
-  - La page de connexion dit le secteur de l'installation. La lecture du secteur est ouverte sans session, sans rien de privé.
-  - Relire les textes de l'interface qui disent « tech » ou « IT ».
-  - Respecter la charte : jetons de design, vérification ordinateur et téléphone.
-- **Dépend de** : 1.4.
-- **Tests du lot** : la page de connexion affiche le nom du secteur factice ; aucun texte « tech » hors du secteur tech (test sur les traductions).
-- **Résultat attendu** : en secteur factice, la page de connexion parle de ce secteur.
-
-**Clôture de la phase 1** : `uv run pytest`, `npm run lint`, `format:check`, `typecheck`, `npm test`, `npm run build`, `npm run e2e`. Parcours réel : bascule tech → factice → tech dans Réglages, sur l'application compilée.
-
----
 
 <a id="phase-2"></a>
 ## Phase 2 — Secteur Finance
@@ -485,6 +392,107 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 <a id="phases-cloturees"></a>
 ## Phases clôturées
 
+<a id="phase-1"></a>
+## Phase 1 — Mécanique commune des secteurs
+
+**Objectif** : tout ce qu'un secteur réutilise, construit une fois, testé avec un secteur factice.
+**Pourquoi** : sans ce socle, chaque secteur referait le catalogue, la consigne et le remplacement des sources.
+**Résultat de phase** : un secteur factice complet bascule depuis Réglages, avec ses sources, sa consigne et ses autorités. La tech est intacte.
+
+<a id="lot-1-1"></a>
+### Lot 1.1 — Le catalogue d'un secteur
+
+- **Objectif** : chaque secteur a un fichier de catalogue lisible, chargé avec le secteur.
+- **À faire**
+  - Un fichier par secteur dans `data/sectors/` : sources RSS (nom, adresse, domaine, rang de confiance), requêtes GDELT et Google News, autorités, profil.
+  - Pour la tech, le catalogue reprend les 31 flux et les 4 dépôts actuels, sans changement.
+  - Le registre des secteurs charge et valide ces fichiers : un domaine inconnu ou une adresse mal formée sont refusés.
+- **Dépend de** : rien.
+- **Tests du lot** : chargement et refus d'un catalogue invalide ; le catalogue tech donne les mêmes sources qu'avant.
+- **Résultat attendu** : `uv run pytest` vert, et le catalogue tech listé à l'identique dans l'écran Sources.
+- **Fait (2026-11-22)** : un fichier par secteur dans `data/sectors/`. Celui de la tech renvoie à la configuration d'exemple (`sources_from`), qui reste sa seule liste : 31 flux, 4 dépôts. Le chargeur refuse un profil inconnu, une catégorie d'un autre secteur, une adresse mal formée, un domaine ou un rang de confiance invalides. **En plus du prévu** : le serveur refuse de basculer vers un secteur sans catalogue utilisable (422 « sector not ready »), avant d'écrire la configuration ; l'image Docker embarque `data/sectors/`. Preuve : 12 tests nouveaux (`tests/test_sector_catalog.py`, `tests/test_sectors.py`) ; les recommandations tech de l'écran Sources sont identiques (test). Suite : 942 tests verts, 1 échec ancien sans lien (voir « Points à confirmer »).
+
+<a id="lot-1-2"></a>
+### Lot 1.2 — Le profil éditorial d'un secteur
+
+- **Objectif** : chaque secteur a sa consigne pour l'IA (ce qui compte, comment noter l'importance).
+- **À faire**
+  - Le secteur nomme son profil par défaut ; le changement de secteur le pose dans la configuration.
+  - Un règlement commun à tous les profils hors tech : jamais de conseil (investissement, juridique, médical), et seulement ce que la source dit.
+- **Dépend de** : 1.1.
+- **Tests du lot** : la consigne envoyée à l'IA contient le profil du secteur et la règle « pas de conseil ».
+- **Résultat attendu** : après un changement vers le secteur factice, le profil par défaut de la configuration est le sien.
+- **Fait (2026-11-22)** : le secteur porte ses règles (`rules`) ; hors tech, la règle « jamais de conseil, seulement ce que la source dit » s'ajoute à la consigne d'analyse et aux deux consignes d'écriture. Le changement de secteur pose le profil du catalogue comme profil par défaut. Les consignes tech restent identiques au caractère près (test). Preuve : `tests/test_sector_prompts.py` (3 tests), `tests/test_sectors.py`.
+
+<a id="lot-1-3"></a>
+### Lot 1.3 — Les autorités du secteur, sources officielles
+
+- **Objectif** : un communiqué d'une autorité du secteur (AMF, CNIL…) est reconnu comme source officielle.
+- **À faire**
+  - Le registre de confiance ajoute les autorités du secteur actif à sa liste intégrée.
+  - Ce que la configuration fixe (`reliability.domains`) garde le dernier mot.
+- **Dépend de** : 1.1.
+- **Tests du lot** : une news d'une autorité du secteur factice reçoit le rang officiel ; hors du secteur, elle ne le reçoit pas.
+- **Résultat attendu** : l'étiquette « Confirmé » est possible pour une annonce d'autorité.
+- **Fait (2026-11-22)** : `ReliabilityPolicy.for_config` : liste intégrée, puis autorités du secteur actif, puis `reliability.domains` qui garde le dernier mot ; utilisé partout où la politique était construite (API, pipeline, CLI, évaluation). Un communiqué d'autorité confirmé reçoit « Confirmé » dans son secteur, pas ailleurs. Preuve : `tests/test_sector_authorities.py` (6 tests).
+
+<a id="lot-1-4"></a>
+### Lot 1.4 — Changer de secteur remplace les sources
+
+- **Objectif** : basculer de secteur installe ses sources et désactive les autres, sans rien supprimer.
+- **À faire**
+  - Commencer par la sauvegarde : la copie de la configuration existe déjà (lot 47), le vérifier dans le test.
+  - Chaque source ajoutée par un catalogue est marquée de son secteur ; une source sans marque est tech.
+  - Au changement : les sources des autres secteurs sont désactivées, celles du nouveau sont ajoutées ou réactivées. Au retour, les anciennes reviennent.
+  - Réglages montre, avant la confirmation, le nombre de sources ajoutées et désactivées.
+- **Dépend de** : 1.1.
+- **Tests du lot** : aller-retour tech → factice → tech, sources identiques au départ ; une source ajoutée à la main n'est jamais supprimée.
+- **Résultat attendu** : dans l'écran Sources, après la bascule, seules les sources du secteur sont actives.
+- **Fait (2026-11-22)** : `lucidnews/sector_switch.py`. Flux RSS, pages et dépôts marqués par secteur ; ceux des autres secteurs désactivés avec `disabled_by_sector`, ceux du secteur réactivés, ceux du catalogue ajoutés. Les sources uniques (Hacker News, Reddit, GDELT…) sont mises de côté par secteur (`sources.parked`) et rendues au retour. Une source ajoutée à la main dans un secteur en porte la marque. Aperçu sans écriture : `GET /api/settings/sector/preview` ; la fenêtre de confirmation affiche les nombres et refuse un secteur pas prêt. Preuve : `tests/test_sector_switch.py` (6 tests, dont l'aller-retour identique), `tests/test_sectors.py`, `SectorCard.test.tsx`.
+
+<a id="lot-1-5"></a>
+### Lot 1.5 — Vérifier une source avant de la cataloguer
+
+- **Objectif** : un outil dit, pour chaque source d'un catalogue, si elle est vivante et utilisable.
+- **À faire**
+  - Une commande lit chaque source pour de vrai : adresse en HTTPS, flux lisible, news de moins de 30 jours, titres et liens présents.
+  - Elle écrit un rapport daté, source par source : gardée, écartée, et pourquoi.
+  - La CI ne lance pas cette commande, car elle dépend du réseau ; un test la vérifie sur des flux factices.
+- **Dépend de** : 1.1.
+- **Tests du lot** : flux valide, flux mort, flux trop ancien, adresse en HTTP, chacun classé comme il faut.
+- **Résultat attendu** : la commande, lancée sur le catalogue tech, donne un rapport lisible.
+- **Fait (2026-11-22)** : commande `lucidnews-sources-check <secteur> [--out]` : HTTPS, réponse 200, flux lisible, news titrées avec lien, plus récente de moins de 30 jours ; rapport Markdown daté. Lancée en vrai sur la tech : 26 flux gardés sur 30, 4 sans publication depuis 46 à 263 jours (rapport : `docs/sources/verification/tech-2026-11-22.md`) ; le catalogue tech n'est pas modifié par ce chantier. Preuve : `tests/test_source_check.py` (4 tests).
+
+<a id="lot-1-6"></a>
+### Lot 1.6 — Lire une source qui n'a pas de flux RSS
+
+- **Objectif** : une autorité qui publie une page de communiqués sans flux RSS devient une source.
+- **Décidé (22/11/2026, décision 7)** : un lecteur de pages de liste, limité aux sites officiels et publics. Il respecte `robots.txt` (règles d'accès posées par le site) et lit lentement. L'outil 1.5 détecte quand une page change de forme.
+- **À faire** : un lecteur configuré par site (adresse de la liste, sélecteur des liens), qui respecte `robots.txt`, avec un délai entre deux pages ; il passe par la vérification 1.5.
+- **Dépend de** : 1.5.
+- **Tests du lot** : une page de liste enregistrée donne ses news ; une page interdite par `robots.txt` n'est pas lue.
+- **Résultat attendu** : une page d'autorité factice devient une source comme une autre.
+- **Fait (2026-11-22)** : `sources.pages` et `lucidnews/scrapers/pages.py`. `robots.txt` lu d'abord, une requête par page et par run, pause entre deux sites, HTTPS obligatoire, liens du même site seulement, dates françaises ou anglaises ; un bloc sans date est ignoré (sinon un communiqué reviendrait comme neuf à chaque run). Une page est clé `rss/<nom>` : santé, archive et édition la traitent comme un flux ; le vérificateur 1.5 la juge aussi. Preuve : `tests/test_page_sources.py` (7 tests), `tests/test_sector_switch.py`.
+
+<a id="lot-1-7"></a>
+### Lot 1.7 — Une interface neutre
+
+- **Objectif** : plus aucun texte qui dit « tech » hors du secteur tech.
+- **À faire**
+  - La page de connexion dit le secteur de l'installation. La lecture du secteur est ouverte sans session, sans rien de privé.
+  - Relire les textes de l'interface qui disent « tech » ou « IT ».
+  - Respecter la charte : jetons de design, vérification ordinateur et téléphone.
+- **Dépend de** : 1.4.
+- **Tests du lot** : la page de connexion affiche le nom du secteur factice ; aucun texte « tech » hors du secteur tech (test sur les traductions).
+- **Résultat attendu** : en secteur factice, la page de connexion parle de ce secteur.
+- **Fait (2026-11-22)** : `GET /api/sector` lisible sans session (nom, domaines, rien de privé) ; chaque secteur a un nom court (`nouns`). La page de connexion dit « La veille {secteur} à laquelle on peut se fier. » ; exemples neutres ; « domaines IT » devient « domaines ». Un test garde les traductions sans « tech » ni « IT » hors noms de secteurs et de catégories. Vu dans le navigateur, ordinateur et téléphone : connexion, carte Secteur, fenêtre de confirmation. Preuve : `i18n.sector.test.ts`, `AuthPage.test.tsx` (2 tests), `tests/test_sectors.py`.
+
+**Clôture de la phase 1** : `uv run pytest`, `npm run lint`, `format:check`, `typecheck`, `npm test`, `npm run build`, `npm run e2e`. Parcours réel : bascule tech → factice → tech dans Réglages, sur l'application compilée.
+
+**Clôturée (2026-11-22)** : 970 tests Python verts ; interface : lint sans erreur (2 avertissements anciens), format, types, 181 tests verts, build ; 6 parcours Playwright verts sur l'application compilée, dont le nouveau parcours réel « un administrateur bascule tech → secteur d'essai → tech, les sources suivent » (secteur d'essai présent seulement sur le serveur de test jetable). Pile Docker reconstruite et saine. **En plus du prévu** : l'image Docker ne contenait pas `data/sectors/` (exception mal écrite, puis dossier caché par un volume anonyme déclaré sur `/app/data`) : corrigé dans `.dockerignore` et `Dockerfile` ; le test `test_3xx_redirect_prints_warning` ne dépend plus du réseau.
+
+---
+
 <a id="phase-0"></a>
 ## Phase 0 — Socle multi-secteurs (lot 47)
 
@@ -514,7 +522,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 | # | Point | Quand | Pourquoi |
 |---|---|---|---|
 | — | Flux RSS publics des autorités | Lots 2.3, 3.3, 4.3, 5.3 | Vérifiés flux par flux par l'outil 1.5 |
-| — | Le test `test_3xx_redirect_prints_warning` échoue en local depuis le 22/11 | Clôture de la phase 1 | Il résout un vrai nom de domaine (DNS) : il échoue sans réseau ou sans résolution. Déjà rouge avant le lot 1.1. À rendre indépendant du réseau, ou à confirmer vert en CI |
+| ~~—~~ | ~~Le test `test_3xx_redirect_prints_warning` échoue en local~~ | — | **Réglé le 22/11/2026** : le test ne dépend plus du DNS |
 
 ---
 
@@ -538,9 +546,10 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 
 - **Secteurs** : `lucidnews/sectors.py`, `lucidnews/sector_catalog.py` (lot 1.1), `lucidnews/taxonomy.py`, `lucidnews/models.py` (`Config.sector`), `data/sectors/tech.json`, `.dockerignore`
 - **API** : `lucidnews/web_api.py` (`GET /api/sector`, `PUT /api/settings/sector`), `lucidnews/settings_api.py`
-- **Sources** : `lucidnews/source_catalog.py`, `lucidnews/sources_cli.py`, `lucidnews/scrapers/` (`rss.py`, `gdelt.py`, `google_news.py`), `data/config.example.json`, `data/presets.json`
-- **IA** : `lucidnews/ai/prompting/analysis.py`, `lucidnews/ai/analyzer.py`, `profiles/` (nouveaux profils par secteur)
-- **Fiabilité** : `lucidnews/reliability/registry.py`, `lucidnews/reliability/assess.py`
+- **Sources** : `lucidnews/source_catalog.py`, `lucidnews/sector_switch.py` (1.4), `lucidnews/source_check.py` et la commande `lucidnews-sources-check` (1.5), `lucidnews/scrapers/pages.py` et `sources.pages` (1.6), `lucidnews/source_health.py`, `lucidnews/pipeline/collect.py`, `lucidnews/scrapers/` (`rss.py`, `gdelt.py`, `google_news.py`), `data/config.example.json`, `data/presets.json`, `docs/sources/verification/`
+- **IA** : `lucidnews/ai/prompting/analysis.py` et `enrichment.py` (règles du secteur, 1.2), `lucidnews/ai/analyzer.py`, `lucidnews/ai/enricher.py`, `profiles/` (nouveaux profils par secteur)
+- **Fiabilité** : `lucidnews/reliability/registry.py`, `lucidnews/reliability/assess.py` (`ReliabilityPolicy.for_config`, 1.3)
 - **Interface** : `frontend/src/features/settings/SectorCard.tsx`, `frontend/src/features/auth/AuthPage.tsx`, `frontend/src/features/edition/domains.ts`, `frontend/src/lib/sector.ts`, `frontend/src/lib/i18n.ts`
-- **Tests** : `tests/test_sectors.py`, `frontend/e2e/journeys.spec.ts`, `frontend/src/features/settings/SectorCard.test.tsx`
+- **Tests** : `tests/test_sectors.py`, `test_sector_catalog.py`, `test_sector_prompts.py`, `test_sector_authorities.py`, `test_sector_switch.py`, `test_source_check.py`, `test_page_sources.py`, `frontend/e2e/journeys.spec.ts`, `scripts/e2e_server.py` (secteur d'essai), `frontend/src/features/settings/SectorCard.test.tsx`, `frontend/src/lib/i18n.sector.test.ts`
+- **Docker** : `Dockerfile` (volume `/data` seulement), `.dockerignore`
 - **Documentation** : `docs/lots.md`, `docs/architecture.md`, `README.md`, `Plan.md`

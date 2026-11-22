@@ -7,7 +7,7 @@ import type { HealthStatus, ReliabilityLabel, SourceTier } from './api'
 export const languages = ['en', 'fr'] as const
 export type Language = (typeof languages)[number]
 
-const en = {
+export const en = {
   'nav.edition': 'Edition',
   'nav.quality': 'Quality',
   'quality.title': 'Quality',
@@ -357,6 +357,8 @@ const en = {
   'sector.confirmTitle': 'Switch the watch to “{name}”?',
   'sector.confirmBody': 'The next runs will use the domains of this sector, and the watched domains are reset to all of them. The archive is kept: past news keep their domains. The current settings are saved first, so you can restore them.',
   'sector.cancel': 'Keep the current sector',
+  'sector.sources': 'Sources: {added} added, {enabled} switched back on, {disabled} switched off. None is deleted; they come back if you return to the current sector.',
+  'sector.notReady': 'This sector is not ready yet: {detail}',
   'sector.confirm': 'Switch',
   'sector.changed': 'The watch now covers “{name}”.',
   'sector.failed': 'The sector could not be changed: {detail}',
@@ -446,7 +448,7 @@ const en = {
   'sources.tab': 'View',
   'sources.tab.sources': 'Sources',
   'sources.tab.domains': 'Domains',
-  'domains.subtitle': 'Which IT domains you follow, and whether your sources cover them.',
+  'domains.subtitle': 'Which domains you follow, and whether your sources cover them.',
   'domains.watched': 'Domains followed',
   'domains.covered': 'Well covered',
   'domains.gaps': 'Gaps',
@@ -728,13 +730,13 @@ const en = {
   'auth.error.email_not_verified': 'Google has not verified this e-mail address.',
   'auth.error.account_conflict': 'This address is already linked to another Google account.',
   'auth.error.busy': 'The server is busy. Try again in a moment.',
-  'auth.brand.title': 'Tech news you can trust.',
+  'auth.brand.title': '{noun} news you can trust.',
   'auth.brand.subtitle': 'Collected, checked and labeled by reliability. Nothing unconfirmed is ever shown as a fact.',
   'auth.brand.point1': 'Every item carries a reliability label',
   'auth.brand.point2': 'AI analysis is optional, never required',
   'auth.brand.point3': 'Your data stays on your own server',
-  'auth.brand.sample1': 'A vendor announces a new release',
-  'auth.brand.sample2': 'A leak about an unreleased product',
+  'auth.brand.sample1': 'An announcement published by its author',
+  'auth.brand.sample2': 'A rumor nobody has confirmed',
   'motion.on': 'Animations on',
   'motion.off': 'Animations off',
   'theme.toDark': 'Switch to the dark theme',
@@ -847,7 +849,7 @@ const en = {
 
 export type MessageKey = keyof typeof en
 
-const fr: Partial<Record<MessageKey, string>> = {
+export const fr: Partial<Record<MessageKey, string>> = {
   'nav.edition': 'Édition',
   'nav.quality': 'Qualité',
   'quality.title': 'Qualité',
@@ -1197,6 +1199,8 @@ const fr: Partial<Record<MessageKey, string>> = {
   'sector.confirmTitle': 'Passer la veille en « {name} » ?',
   'sector.confirmBody': 'Les prochains runs utiliseront les domaines de ce secteur, et les domaines suivis sont remis à tous ceux-là. L’archive est gardée : les news passées gardent leurs domaines. Les réglages actuels sont d’abord sauvegardés, vous pourrez les restaurer.',
   'sector.cancel': 'Garder le secteur actuel',
+  'sector.sources': 'Sources : {added} ajoutées, {enabled} réactivées, {disabled} désactivées. Aucune n’est supprimée ; elles reviennent si vous revenez au secteur actuel.',
+  'sector.notReady': 'Ce secteur n’est pas encore prêt : {detail}',
   'sector.confirm': 'Changer',
   'sector.changed': 'La veille couvre maintenant « {name} ».',
   'sector.failed': 'Le secteur n’a pas pu être changé : {detail}',
@@ -1286,7 +1290,7 @@ const fr: Partial<Record<MessageKey, string>> = {
   'sources.tab': 'Vue',
   'sources.tab.sources': 'Sources',
   'sources.tab.domains': 'Domaines',
-  'domains.subtitle': 'Les domaines IT que vous suivez, et si vos sources les couvrent.',
+  'domains.subtitle': 'Les domaines que vous suivez, et si vos sources les couvrent.',
   'domains.watched': 'Domaines suivis',
   'domains.covered': 'Bien couverts',
   'domains.gaps': 'Lacunes',
@@ -1568,13 +1572,13 @@ const fr: Partial<Record<MessageKey, string>> = {
   'auth.error.email_not_verified': 'Google n’a pas vérifié cette adresse e-mail.',
   'auth.error.account_conflict': 'Cette adresse est déjà liée à un autre compte Google.',
   'auth.error.busy': 'Le serveur est occupé. Réessayez dans un instant.',
-  'auth.brand.title': 'La veille tech à laquelle on peut se fier.',
+  'auth.brand.title': 'La veille {noun} à laquelle on peut se fier.',
   'auth.brand.subtitle': 'Collectée, vérifiée et étiquetée selon sa fiabilité. Rien de non confirmé n’est présenté comme un fait.',
   'auth.brand.point1': 'Chaque news porte une étiquette de fiabilité',
   'auth.brand.point2': 'L’analyse IA est facultative, jamais obligatoire',
   'auth.brand.point3': 'Vos données restent sur votre propre serveur',
-  'auth.brand.sample1': 'Un éditeur annonce une nouvelle version',
-  'auth.brand.sample2': 'Une fuite sur un produit non annoncé',
+  'auth.brand.sample1': 'Une annonce publiée par son auteur',
+  'auth.brand.sample2': 'Une rumeur que personne n’a confirmée',
   'motion.on': 'Animations activées',
   'motion.off': 'Animations désactivées',
   'theme.toDark': 'Passer au thème sombre',

@@ -12,6 +12,7 @@ import logging
 from ..models import ContentItem
 from ..scrapers.github import GitHubScraper
 from ..scrapers.hackernews import HackerNewsScraper
+from ..scrapers.pages import PageListScraper
 from ..scrapers.rss import RSSScraper
 from ..scrapers.reddit import RedditScraper
 from ..scrapers.telegram import TelegramScraper
@@ -188,6 +189,11 @@ class CollectionMixin:
                     ExtractorRegistry(self.config.extractors),
                 )
                 tasks.append(self._fetch_with_progress("RSS Feeds", rss_scraper, since))
+
+            # Official list pages without a feed (read politely, robots.txt obeyed)
+            if any(page.enabled for page in self.config.sources.pages):
+                page_scraper = PageListScraper(self.config.sources.pages, client)
+                tasks.append(self._fetch_with_progress("Official pages", page_scraper, since))
 
             # Reddit
             if self.config.sources.reddit.enabled:

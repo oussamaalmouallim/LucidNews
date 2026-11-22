@@ -44,6 +44,7 @@ class SectorCatalog:
 
     def categories_used(self) -> List[str]:
         used = [feed.category for feed in self.sources.rss if feed.category]
+        used += [page.category for page in self.sources.pages if page.category]
         used += [repo.category for repo in self.sources.github if repo.category]
         return used
 

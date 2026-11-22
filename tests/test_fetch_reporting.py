@@ -41,6 +41,7 @@ def make_sources(**overrides):  # type: ignore[no-untyped-def]
         "github": [],
         "hackernews": SimpleNamespace(enabled=False),
         "rss": [],
+        "pages": [],
         "reddit": SimpleNamespace(enabled=False),
         "telegram": SimpleNamespace(enabled=False),
         "twitter": None,

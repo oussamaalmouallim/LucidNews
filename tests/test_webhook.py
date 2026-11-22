@@ -1580,7 +1580,10 @@ class TestHTTPStatusHandling:
 
         mock_console = MagicMock()
 
-        with patch("httpx.AsyncClient") as mock_client_cls:
+        # The redirect target is checked against private addresses, which resolves its name:
+        # answer with a public address so the test never depends on the network's DNS.
+        public = AsyncMock(return_value={"93.184.215.14"})
+        with patch("httpx.AsyncClient") as mock_client_cls, patch("lucidnews.url_security._resolve_hostname", public):
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_response)
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)

@@ -64,7 +64,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     archive = ItemArchive(archive_path)
-    policy = ReliabilityPolicy.with_overrides(config.reliability.domains, config.reliability.accounts)
+    policy = ReliabilityPolicy.for_config(config)
     changes, before, after = reassess(archive, policy)
     written = archive.update_reliability(item for item, _ in changes) if args.apply else 0
 

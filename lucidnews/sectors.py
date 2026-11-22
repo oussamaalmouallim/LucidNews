@@ -11,12 +11,20 @@ the AI* is the current sector's list only.
 ``tech`` is the original LucidNews taxonomy (``taxonomy.Category``) and stays the default.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
 
 from .taxonomy import _ALIASES, CATEGORY_LABELS, CATEGORY_SCOPES, Category
 
 DEFAULT_SECTOR = "tech"
+
+# The rule every sector outside tech adds to what the AI is told (finance, law and health are
+# regulated trades: a news watch reports, it never advises).
+NO_ADVICE_RULE = (
+    "Report what the source says; never give advice. Do not recommend buying, selling or holding "
+    "anything, do not tell a reader what to do legally or medically, and do not turn a forecast, "
+    "an opinion or a draft into a fact. A figure, a date or a decision appears only if the source gives it."
+)
 
 
 @dataclass(frozen=True)
@@ -36,6 +44,14 @@ class Sector:
     labels: Dict[str, str]
     descriptions: Dict[str, str]
     categories: Tuple[SectorCategory, ...]
+    # Rules added to every prompt of this sector (analysis and writing). Empty for tech, whose
+    # prompts stay exactly as they were.
+    rules: Tuple[str, ...] = ()
+    # The sector in a sentence ("tech" in « la veille tech », "tech news"), lower case.
+    nouns: Dict[str, str] = field(default_factory=dict)
+
+    def rules_text(self) -> str:
+        return "\n".join(f"- {rule}" for rule in self.rules)
 
     @property
     def category_ids(self) -> List[str]:
@@ -50,6 +66,7 @@ class Sector:
             "id": self.id,
             "labels": dict(self.labels),
             "descriptions": dict(self.descriptions),
+            "nouns": dict(self.nouns),
             "categories": [{"id": category.id, "labels": dict(category.labels)} for category in self.categories],
         }
 
@@ -61,6 +78,7 @@ def _tech() -> Sector:
     return Sector(
         id="tech",
         labels={"en": "Technology & IT", "fr": "Tech et IT"},
+        nouns={"en": "tech", "fr": "tech"},
         descriptions={
             "en": "AI, software, cloud, security, data and the rest of IT.",
             "fr": "IA, logiciel, cloud, sécurité, data et le reste de l'IT.",

@@ -1,8 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Check, Compass } from 'lucide-react'
 import { useState } from 'react'
 import { ConfirmDialog } from '../../design/ConfirmDialog'
-import { ApiError, changeSector, type SectorState } from '../../lib/api'
+import { ApiError, changeSector, fetchSectorPreview, type SectorState, type SectorSummary } from '../../lib/api'
 import { registerCategoryLabels, useLanguage, type Language } from '../../lib/i18n'
 import { SECTOR_KEY, useSector } from '../../lib/sector'
 
@@ -53,24 +53,7 @@ export function SectorCard() {
                   )}
                 </p>
                 <p className="mt-1 text-[13px] leading-relaxed text-muted">{name(entry.descriptions, language)}</p>
-                {!current && (
-                  <ConfirmDialog
-                    trigger={
-                      <button
-                        type="button"
-                        disabled={change.isPending}
-                        className="mt-3 rounded-full px-3 py-1 text-[13px] font-semibold text-accent transition-colors duration-150 hover:bg-accent-soft disabled:opacity-50"
-                      >
-                        {t('sector.choose')}
-                      </button>
-                    }
-                    title={t('sector.confirmTitle', { name: name(entry.labels, language) })}
-                    description={t('sector.confirmBody')}
-                    cancel={t('sector.cancel')}
-                    confirm={t('sector.confirm')}
-                    onConfirm={() => change.mutate(entry.id)}
-                  />
-                )}
+                {!current && <SwitchAction sector={entry} busy={change.isPending} onConfirm={() => change.mutate(entry.id)} />}
               </li>
             )
           })}
@@ -89,5 +72,34 @@ export function SectorCard() {
         )}
       </p>
     </section>
+  )
+}
+
+/** The switch to one sector: what it does to the sources is read from the server first, and said
+ * in the confirmation. A sector the server cannot switch to says why instead. */
+function SwitchAction({ sector, busy, onConfirm }: { sector: SectorSummary; busy: boolean; onConfirm: () => void }) {
+  const { language, t } = useLanguage()
+  const preview = useQuery({ queryKey: ['sector-preview', sector.id], queryFn: ({ signal }) => fetchSectorPreview(sector.id, signal) })
+  if (preview.isError) {
+    const detail = preview.error instanceof ApiError ? preview.error.message : String(preview.error)
+    return <p className="mt-3 text-[12.5px] text-muted">{t('sector.notReady', { detail })}</p>
+  }
+  return (
+    <ConfirmDialog
+      trigger={
+        <button
+          type="button"
+          disabled={busy || !preview.data}
+          className="mt-3 rounded-full px-3 py-1 text-[13px] font-semibold text-accent transition-colors duration-150 hover:bg-accent-soft disabled:opacity-50"
+        >
+          {t('sector.choose')}
+        </button>
+      }
+      title={t('sector.confirmTitle', { name: name(sector.labels, language) })}
+      description={preview.data ? `${t('sector.confirmBody')} ${t('sector.sources', preview.data.sources)}` : t('sector.confirmBody')}
+      cancel={t('sector.cancel')}
+      confirm={t('sector.confirm')}
+      onConfirm={onConfirm}
+    />
   )
 }

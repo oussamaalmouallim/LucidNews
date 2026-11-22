@@ -121,8 +121,10 @@ class ContentEnricher:
         languages: list[str],
         console: Optional[Console] = None,
         tools: Optional[ToolRegistry] = None,
+        sector: str = "tech",
     ):
         self.client = ai_client
+        self.sector = sector  # its rules are added to every writing prompt
         self.profiles = profiles
         self.languages = languages
         self.console = console or Console(stderr=True)
@@ -360,7 +362,7 @@ class ContentEnricher:
 
             generated = await self._complete_model(
                 GeneratedArtifact,
-                system=artifact_prompt(profile, language, base_blocks),
+                system=artifact_prompt(profile, language, base_blocks, sector=self.sector),
                 user=(
                     item_context(item, profile, include_content=True)
                     + "\n\n# Tool results\n\nNo tool results are available to these blocks."
@@ -418,6 +420,7 @@ class ContentEnricher:
                     language,
                     block,
                     include_header=not title,
+                    sector=self.sector,
                 ),
                 user=(
                     item_context(item, profile, include_content=True)

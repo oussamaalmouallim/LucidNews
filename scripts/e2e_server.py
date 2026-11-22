@@ -81,6 +81,34 @@ def prepare(data_dir: Path) -> None:
     archive.finish_run(run_id, "success")
 
 
+def add_test_sector(data_dir: Path) -> None:
+    """A second sector, for the journey that switches sectors in Settings. It exists in this test
+    server only: registered in memory, its catalog in a copy of the project's data."""
+    from lucidnews import sector_catalog, sectors, source_catalog
+    from lucidnews.sectors import NO_ADVICE_RULE, Sector, SectorCategory
+
+    labels = {"en": "Test sector", "fr": "Secteur d'essai"}
+    sectors.SECTORS["essai"] = Sector(
+        id="essai",
+        labels=labels,
+        descriptions={"en": "Only on the end-to-end test server.", "fr": "Seulement sur le serveur de test."},
+        categories=(
+            SectorCategory("essai-marches", {"en": "Markets", "fr": "Marchés"}, "markets"),
+            SectorCategory("essai-banque", {"en": "Banking", "fr": "Banque"}, "banks"),
+        ),
+        rules=(NO_ADVICE_RULE,),
+        nouns={"en": "trial", "fr": "essai"},
+    )
+    project = data_dir / "project-data"
+    shutil.copytree(ROOT / "data" / "sectors", project / "sectors")
+    for name in ("config.example.json", "presets.json"):
+        shutil.copy(ROOT / "data" / name, project / name)
+    feed = {"name": "Essai — marchés", "url": "https://example.org/essai.xml", "category": "essai-marches"}
+    (project / "sectors" / "essai.json").write_text(json.dumps({"profile": "tech-news", "authorities": {}, "sources": {"rss": [feed]}}), encoding="utf-8")
+    sector_catalog.PROJECT_DATA = project
+    source_catalog.PROJECT_DATA = project
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--data-dir", required=True, type=Path)
@@ -89,6 +117,7 @@ def main() -> int:
 
     os.chdir(ROOT)  # profiles and the source catalog are read relative to the project
     prepare(args.data_dir)
+    add_test_sector(args.data_dir)
     ctx = build_context(str(args.data_dir), None)
     ctx.auth.db.create_user(ADMIN_EMAIL, "Admin", password_hash=hash_password(ADMIN_PASSWORD), role="admin")
 

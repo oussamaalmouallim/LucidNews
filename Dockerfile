@@ -35,7 +35,7 @@ RUN useradd --create-home --uid 10001 lucidnews \
     && chown -R lucidnews:lucidnews /app /data
 
 # Create volume mount points
-VOLUME ["/app/data", "/data"]
+VOLUME ["/data"]
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \

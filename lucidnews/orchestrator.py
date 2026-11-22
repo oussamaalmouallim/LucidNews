@@ -101,9 +101,7 @@ class PipelineOrchestrator(CollectionMixin, SelectionMixin, DeliveryMixin):
                 for profile in self.profiles.profiles
                 if profile.id not in configured_profiles
             )
-        self.reliability_policy = ReliabilityPolicy.with_overrides(
-            config.reliability.domains, config.reliability.accounts
-        )
+        self.reliability_policy = ReliabilityPolicy.for_config(config)
         self.email_manager = EmailManager(config.email, console=self.console) if config.email else None
         self.mailer = (
             build_mailer(config.email, self.storage.subscribers, console=self.console)
@@ -697,6 +695,7 @@ class PipelineOrchestrator(CollectionMixin, SelectionMixin, DeliveryMixin):
             self.config.ai.languages,
             console=self.console,
             tools=ToolRegistry(self.storage.summaries_dir),
+            sector=self.config.sector,
         )
         result = await enricher.enrich_batch(items)
         failed = [item for item in items if item.id in result.failures]

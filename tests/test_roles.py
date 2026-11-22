@@ -32,6 +32,7 @@ READER_REQUESTS = [
 ADMIN_GETS = [
     "/api/settings",
     "/api/settings/backups",
+    "/api/settings/sector/preview?sector=tech",
     "/api/secrets",
     "/api/sources/config",
     "/api/runs",

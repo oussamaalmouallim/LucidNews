@@ -2,6 +2,7 @@
 
 from ...models import ContentItem
 from ...processing.profiles import LoadedProfile
+from ...sectors import get_sector
 from ...taxonomy import category_catalog_text
 from .common import EVIDENCE_RULES, UNTRUSTED_INPUT_RULE
 
@@ -20,8 +21,14 @@ VERIFICATION_RULES = """Judge how well the item's main claim is supported, using
 Popularity, votes, and comments are not evidence. When unsure between two levels, choose the weaker one."""
 
 
+def sector_rules_section(sector: str) -> str:
+    """The sector's own rules, as a prompt section; nothing at all for a sector without any."""
+    rules = get_sector(sector).rules_text()
+    return f"\n\n# Sector rules\n\n{rules}" if rules else ""
+
+
 def analysis_system_prompt(profile: LoadedProfile, sector: str = "tech") -> str:
-    return f"""{ANALYSIS_RULES}
+    return f"""{ANALYSIS_RULES}{sector_rules_section(sector)}
 
 # Profile policy
 

@@ -267,6 +267,9 @@ class GitHubSourceConfig(BaseModel):
     enabled: bool = True
     category: Optional[str] = None
     profile: ProfileRoute = None
+    # The sector this source belongs to (none: tech), and whether a change of sector switched it off.
+    sector: Optional[str] = None
+    disabled_by_sector: bool = False
 
     @model_validator(mode="after")
     def normalize_repo(self) -> "GitHubSourceConfig":
@@ -324,6 +327,38 @@ class RSSSourceConfig(BaseModel):
     content_extractor: Optional[str] = None
     profile: ProfileRoute = None
     trust: Optional[SourceTier] = None  # pin the publisher tier for this feed's items
+    # The sector this source belongs to (none: tech), and whether a change of sector switched it off.
+    sector: Optional[str] = None
+    disabled_by_sector: bool = False
+
+
+class PageSourceConfig(BaseModel):
+    """A list page of an official site without a feed (communiqués, decisions), read as a feed.
+
+    ``item_selector`` finds each news block on the page (CSS); inside it, ``link_selector`` the
+    link (its text is the title) and ``date_selector`` the date (a ``datetime`` attribute or the
+    text). A block without a date is not a news and is skipped. The site's robots.txt is obeyed.
+    """
+
+    name: str
+    url: HttpUrl
+    item_selector: str
+    link_selector: str = "a"
+    date_selector: str = "time"
+    enabled: bool = True
+    category: Optional[str] = None
+    profile: ProfileRoute = None
+    trust: Optional[SourceTier] = None
+    max_items: int = Field(default=20, ge=1, le=100)
+    sector: Optional[str] = None
+    disabled_by_sector: bool = False
+
+    @field_validator("url")
+    @classmethod
+    def https_only(cls, value: HttpUrl) -> HttpUrl:
+        if value.scheme != "https":
+            raise ValueError("a page source must be HTTPS")
+        return value
 
 
 class RedditSubredditConfig(BaseModel):
@@ -475,12 +510,16 @@ class SourcesConfig(BaseModel):
     github: List[GitHubSourceConfig] = Field(default_factory=list)
     hackernews: HackerNewsConfig = Field(default_factory=HackerNewsConfig)
     rss: List[RSSSourceConfig] = Field(default_factory=list)
+    # Official list pages without a feed, read as feeds (chantier « Nouveaux secteurs », lot 1.6).
+    pages: List["PageSourceConfig"] = Field(default_factory=list)
     reddit: RedditConfig = Field(default_factory=RedditConfig)
     telegram: TelegramConfig = Field(default_factory=TelegramConfig)
     twitter: Optional[TwitterConfig] = None
     ossinsight: OSSInsightConfig = Field(default_factory=OSSInsightConfig)
     gdelt: Optional[GDELTConfig] = None
     google_news: Optional[GoogleNewsConfig] = None
+    # Single sources set aside by a change of sector, by sector, given back when it returns.
+    parked: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
 
 
 class WebhookConfig(BaseModel):
