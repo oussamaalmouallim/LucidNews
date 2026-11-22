@@ -1,0 +1,199 @@
+{
+  "profile": "health-news",
+  "authorities": {
+    "has-sante.fr": "official",
+    "ema.europa.eu": "official",
+    "fda.gov": "official",
+    "ansm.sante.fr": "official",
+    "santepubliquefrance.fr": "official",
+    "ecdc.europa.eu": "official",
+    "cdc.gov": "official",
+    "tools.cdc.gov": "official",
+    "inserm.fr": "official",
+    "presse.inserm.fr": "official",
+    "who.int": "official",
+    "sante.gouv.fr": "official",
+    "nih.gov": "official",
+    "nejm.org": "reputable",
+    "thelancet.com": "reputable",
+    "bmj.com": "reputable",
+    "nature.com": "reputable",
+    "medtechdive.com": "reputable",
+    "lemonde.fr": "reputable",
+    "dsih.fr": "reputable",
+    "statnews.com": "reputable",
+    "biopharmadive.com": "reputable",
+    "healthcaredive.com": "reputable",
+    "hospitalia.fr": "reputable",
+    "gov.uk": "official"
+  },
+  "sources": {
+    "rss": [
+      {
+        "name": "HAS — Haute Autorité de santé",
+        "url": "https://www.has-sante.fr/feed/Rss2.jsp?id=p_3081452",
+        "category": "health-regulation",
+        "profile": "health-news"
+      },
+      {
+        "name": "MHRA — autorité britannique du médicament",
+        "url": "https://www.gov.uk/government/organisations/medicines-and-healthcare-products-regulatory-agency.atom",
+        "category": "health-regulation",
+        "profile": "health-news"
+      },
+      {
+        "name": "Ministère britannique de la Santé (DHSC)",
+        "url": "https://www.gov.uk/government/organisations/department-of-health-and-social-care.atom",
+        "category": "health-regulation",
+        "profile": "health-news"
+      },
+      {
+        "name": "EMA — Agence européenne des médicaments",
+        "url": "https://www.ema.europa.eu/en/news.xml",
+        "category": "health-drugs",
+        "profile": "health-news"
+      },
+      {
+        "name": "FDA — communiqués",
+        "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-releases/rss.xml",
+        "category": "health-drugs",
+        "profile": "health-news"
+      },
+      {
+        "name": "FDA — alertes de sécurité (MedWatch)",
+        "url": "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/medwatch/rss.xml",
+        "category": "health-drugs",
+        "profile": "health-news"
+      },
+      {
+        "name": "Inserm — presse",
+        "url": "https://presse.inserm.fr/feed/",
+        "category": "health-trials",
+        "profile": "health-news"
+      },
+      {
+        "name": "The New England Journal of Medicine",
+        "url": "https://www.nejm.org/action/showFeed?type=etoc&feed=rss&jc=nejm",
+        "category": "health-trials",
+        "profile": "health-news"
+      },
+      {
+        "name": "The Lancet",
+        "url": "https://www.thelancet.com/rssfeed/lancet_current.xml",
+        "category": "health-trials",
+        "profile": "health-news"
+      },
+      {
+        "name": "The BMJ",
+        "url": "https://www.bmj.com/rss/recent.xml",
+        "category": "health-trials",
+        "profile": "health-news"
+      },
+      {
+        "name": "Nature Medicine",
+        "url": "https://www.nature.com/nm.rss",
+        "category": "health-trials",
+        "profile": "health-news"
+      },
+      {
+        "name": "MedTech Dive",
+        "url": "https://www.medtechdive.com/feeds/news/",
+        "category": "health-devices",
+        "profile": "health-news"
+      },
+      {
+        "name": "ECDC — Centre européen de prévention des maladies",
+        "url": "https://www.ecdc.europa.eu/en/taxonomy/term/1307/feed",
+        "category": "health-public",
+        "profile": "health-news"
+      },
+      {
+        "name": "CDC — Centres américains de contrôle des maladies",
+        "url": "https://tools.cdc.gov/api/v2/resources/media/132608.rss",
+        "category": "health-public",
+        "profile": "health-news"
+      },
+      {
+        "name": "Le Monde — Santé",
+        "url": "https://www.lemonde.fr/sante/rss_full.xml",
+        "category": "health-public",
+        "profile": "health-news"
+      },
+      {
+        "name": "DSIH — systèmes d'information de santé",
+        "url": "https://www.dsih.fr/rss",
+        "category": "health-digital",
+        "profile": "health-news"
+      },
+      {
+        "name": "STAT",
+        "url": "https://www.statnews.com/feed/",
+        "category": "health-biotech",
+        "profile": "health-news"
+      },
+      {
+        "name": "BioPharma Dive",
+        "url": "https://www.biopharmadive.com/feeds/news/",
+        "category": "health-biotech",
+        "profile": "health-news"
+      },
+      {
+        "name": "Healthcare Dive",
+        "url": "https://www.healthcaredive.com/feeds/news/",
+        "category": "health-care",
+        "profile": "health-news"
+      },
+      {
+        "name": "Hospitalia",
+        "url": "https://www.hospitalia.fr/xml/syndication.rss",
+        "category": "health-care",
+        "profile": "health-news"
+      }
+    ],
+    "pages": [
+      {
+        "name": "ANSM — actualités",
+        "url": "https://ansm.sante.fr/actualites",
+        "item_selector": "div:has(> a.news-item)",
+        "link_selector": "a.news-item",
+        "date_selector": ".ni-date",
+        "title_selector": ".ni-text",
+        "category": "health-regulation",
+        "profile": "health-news",
+        "max_items": 10
+      },
+      {
+        "name": "Santé publique France — communiqués",
+        "url": "https://www.santepubliquefrance.fr/presse",
+        "item_selector": "div.views-row",
+        "link_selector": "a.download",
+        "date_selector": "time",
+        "title_selector": "h3",
+        "category": "health-public",
+        "profile": "health-news",
+        "max_items": 10
+      }
+    ],
+    "gdelt": {
+      "enabled": false,
+      "query": "(\"drug approval\" OR \"autorisation de mise sur le marché\" OR \"clinical trial\" OR \"essai clinique\" OR \"health authority\")",
+      "mode": "ArtList",
+      "max_records": 75,
+      "timespan": null,
+      "language": null,
+      "country": null,
+      "category": "health-drugs",
+      "profile": "health-news"
+    },
+    "google_news": {
+      "enabled": false,
+      "query": "\"FDA approval\" OR \"EMA\" OR \"clinical trial results\"",
+      "language": "en",
+      "country": "US",
+      "ceid": null,
+      "max_results": 100,
+      "category": "health-drugs",
+      "profile": "health-news"
+    }
+  }
+}

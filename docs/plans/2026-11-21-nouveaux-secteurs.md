@@ -9,7 +9,7 @@
 | **Date et version** | 21 novembre 2026, v1 |
 | **Auteur** | Claude, pour Oussama |
 | **Branche de travail** | `dev` (dépôt perso `oussamaalmouallim/LucidNews`) ; `main` seulement sur validation |
-| **État** | 22/11/2026 — Phase 1 **clôturée**. Phases 2 (Finance) et 3 (Juridique) : lots x.1 à x.4 faits (collecte seule, décision 11) ; relectures 2.5 et 3.5 en attente d'une IA avec quota. Prochaine : phase 4 (Santé). |
+| **État** | 22/11/2026 — Phase 1 **clôturée**. Phases 2 (Finance), 3 (Juridique) et 4 (Santé) : lots x.1 à x.4 faits (collecte seule, décision 11) ; relectures 2.5, 3.5 et 4.5 en attente d'une IA avec quota. Prochaine : phase 5 (Énergie et climat). |
 
 ---
 
@@ -267,6 +267,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : phase 3 clôturée.
 - **Tests du lot** : identifiants uniques, libellés, portée.
 - **Résultat attendu** : « Santé et pharma » dans Réglages avec ses domaines.
+- **Fait (2026-11-22)** : secteur `health`, 8 domaines (`health-regulation`, `-drugs`, `-trials`, `-devices`, `-public`, `-digital`, `-biotech`, `-care`), libellés FR/EN, portée, alias, icônes ; règle « jamais de conseil ». Preuve : `tests/test_health_sector.py` (lot 4.1, 3 tests).
 
 <a id="lot-4-2"></a>
 ### Lot 4.2 — La consigne santé
@@ -276,6 +277,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : 4.1.
 - **Tests du lot** : consigne construite, règles présentes.
 - **Résultat attendu** : la consigne santé est lisible dans les tests.
+- **Fait (2026-11-22)** : profil `profiles/health-news/` : l'annonce d'une entreprise, un communiqué ou une prépublication ne sont pas une preuve (« non vérifié » sans revue à comité de lecture ni avis d'autorité) ; une autorisation n'est confirmée que publiée par l'autorité qui l'accorde ; phase, population et effectif cités quand la source les donne ; jamais de conseil médical ni de « guérison ». Preuve : `tests/test_health_sector.py` (lot 4.2, 3 tests).
 
 <a id="lot-4-3"></a>
 ### Lot 4.3 — Les sources santé
@@ -285,6 +287,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : 4.1, 1.5, 1.6.
 - **Tests du lot** : catalogue chargé ; rapport sans source écartée.
 - **Résultat attendu** : rapport de vérification daté, avec 15 sources gardées ou plus.
+- **Fait (2026-11-22)** : `data/sectors/health.json` : 20 flux et 2 pages officielles, **22 gardées sur 22** (rapport : `docs/sources/verification/health-2026-11-22.md`). Autorités : HAS, EMA, FDA (communiqués, alertes MedWatch), MHRA, ministère britannique de la Santé, ECDC, CDC, Inserm ; pages : ANSM, Santé publique France. Revues : NEJM, The Lancet, The BMJ, Nature Medicine. Presse : STAT, BioPharma Dive, MedTech Dive, Healthcare Dive, Le Monde Santé, DSIH, Hospitalia. **Écartées** : OMS (flux arrêté depuis 43 jours, page sans news), ministère de la Santé et ANS (pas de flux), NIH, Fierce, Endpoints, MobiHealthNews, MassDevice (403), Egora, What's up doc, ARS (trop anciens) ; payantes ou inconnues : Medscape, Le Quotidien du médecin, Le Quotidien du pharmacien ; les rappels FDA (mêlent l'alimentaire). **En plus du prévu** : le lecteur de pages lit une date ISO année-mois-jour (le 5 novembre était lu 11 mai) et prend la première de deux dates (« publié le … mis à jour le … »). Preuve : `tests/test_health_sector.py` (lot 4.3), `tests/test_page_sources.py`.
 
 <a id="lot-4-4"></a>
 ### Lot 4.4 — Run réel en santé
@@ -294,6 +297,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : 4.2, 4.3.
 - **Tests du lot** : run en succès ; aucune annonce de laboratoire seule n'est « Confirmé ».
 - **Résultat attendu** : capture de l'édition et chiffres par domaine notés dans le plan.
+- **Fait (2026-11-22), en collecte seule (décision 11)** : copie des données Docker basculée en Santé (22 sources ajoutées, 33 tech désactivées), collecte sur 7 jours sans IA : **193 news**, 21 sources sur 22 en ramènent (HAS : rien depuis le 12/11). Par domaine : essais 55, réglementation 37, biotech 30, santé publique 27, établissements 15, médicaments 11, dispositifs 10, e-santé 8. Aucune news sans titre, hors HTTPS, en double, datée dans le futur ou hors fenêtre. Une annonce de laboratoire seule n'est jamais « Confirmé » : le site d'un laboratoire est inconnu du registre, seule une autorité donne le rang officiel (test). Copie supprimée. Preuve : `tests/test_health_sector.py` (lot 4.4).
 
 <a id="lot-4-5"></a>
 ### Lot 4.5 — Ta relecture de l'édition santé

@@ -149,3 +149,14 @@ def test_a_page_that_moved_is_followed_like_a_feed() -> None:
     items, errors = asyncio.run(run())
     assert errors == {}
     assert [item.title for item in items] == ["Sanction contre la société X"]
+
+
+def test_an_iso_date_is_never_read_day_first_and_two_dates_give_the_first() -> None:
+    # Phase 4 (Santé publique France): datetime="2026-11-05" was read as 11 May.
+    assert parse_date("2026-11-05") == datetime(2026, 11, 5, tzinfo=timezone.utc)
+    assert parse_date("2026-11-05T09:00:00Z") == datetime(2026, 11, 5, 9, tzinfo=timezone.utc)
+    assert parse_date("2026-11-19T16:16:31+01:00") == datetime(2026, 11, 19, 15, 16, 31, tzinfo=timezone.utc)
+    # Phase 4 (ANSM): "published … - updated …" was not read at all; the publication date counts.
+    assert parse_date("PUBLIÉ LE 14/11/2025 - MIS À JOUR LE 19/11/2026") == datetime(2025, 11, 14, tzinfo=timezone.utc)
+    assert parse_date("1er novembre 2026") == datetime(2026, 11, 1, tzinfo=timezone.utc)
+    assert parse_date("sans date") is None

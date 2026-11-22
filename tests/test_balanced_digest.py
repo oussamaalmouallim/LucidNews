@@ -213,7 +213,8 @@ def test_appends_profiles_missing_from_configured_order() -> None:
         "tech-news",
         "tech-blog",
         "ai-creator",
-        "finance-news",  # phases 2 and 3: every profile of the project, in folder order
+        "finance-news",  # phases 2 to 4: every profile of the project, in folder order
+        "health-news",
         "legal-news",
     ]
 

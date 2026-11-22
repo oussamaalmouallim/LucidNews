@@ -220,7 +220,73 @@ def _legal() -> Sector:
     )
 
 
-SECTORS: Dict[str, Sector] = {sector.id: sector for sector in (_tech(), _finance(), _legal())}
+def _health() -> Sector:
+    """Health and pharma (phase 4): authorities' decisions, medicines, trials, devices, public
+    health, digital health, biotech and care providers. A cautious watch: a promise is never a fact,
+    and it never gives medical advice."""
+    return Sector(
+        id="health",
+        labels={"en": "Health & pharma", "fr": "Santé et pharma"},
+        nouns={"en": "health", "fr": "santé"},
+        descriptions={
+            "en": "Health regulation, medicines, clinical trials, medical devices, public health, digital health and biotech.",
+            "fr": "Réglementation, médicaments, essais cliniques, dispositifs médicaux, santé publique, e-santé et biotechnologies.",
+        },
+        categories=(
+            SectorCategory(
+                "health-regulation",
+                {"en": "Health regulation", "fr": "Réglementation santé"},
+                "decisions, guidance and rules of health authorities and health ministries, pricing and reimbursement",
+                ("health-regulation", "réglementation-santé", "health-policy", "reimbursement", "remboursement"),
+            ),
+            SectorCategory(
+                "health-drugs",
+                {"en": "Medicines", "fr": "Médicaments"},
+                "medicines and vaccines: approvals, safety alerts, shortages, recalls and pharmaceutical companies",
+                ("drugs", "medicines", "médicaments", "pharma", "pharmaceuticals", "vaccines", "vaccins"),
+            ),
+            SectorCategory(
+                "health-trials",
+                {"en": "Clinical trials", "fr": "Essais cliniques"},
+                "clinical trials and medical research results, with their stage and whether they are peer reviewed",
+                ("clinical-trials", "essais-cliniques", "trials", "medical-research", "recherche-médicale"),
+            ),
+            SectorCategory(
+                "health-devices",
+                {"en": "Medical devices", "fr": "Dispositifs médicaux"},
+                "medical devices and diagnostics: approvals, recalls, safety notices and their makers",
+                ("medical-devices", "dispositifs-médicaux", "medtech", "diagnostics"),
+            ),
+            SectorCategory(
+                "health-public",
+                {"en": "Public health", "fr": "Santé publique"},
+                "epidemics, surveillance, prevention campaigns and population health data",
+                ("public-health", "santé-publique", "epidemics", "épidémies", "epidemiology", "épidémiologie"),
+            ),
+            SectorCategory(
+                "health-digital",
+                {"en": "Digital health", "fr": "E-santé"},
+                "digital health: health data, telemedicine, health apps and AI used in care",
+                ("digital-health", "e-santé", "esante", "telemedicine", "télémédecine", "health-data"),
+            ),
+            SectorCategory(
+                "health-biotech",
+                {"en": "Biotech", "fr": "Biotechnologies"},
+                "biotech companies, gene and cell therapies, and their funding and deals",
+                ("biotech", "biotechnologies", "biotechnology", "gene-therapy", "thérapie-génique"),
+            ),
+            SectorCategory(
+                "health-care",
+                {"en": "Care providers", "fr": "Établissements de santé"},
+                "hospitals, clinics, care homes and health professionals: organisation, funding and staffing",
+                ("hospitals", "hôpitaux", "hopital", "care-providers", "établissements-de-santé", "ehpad"),
+            ),
+        ),
+        rules=(NO_ADVICE_RULE,),
+    )
+
+
+SECTORS: Dict[str, Sector] = {sector.id: sector for sector in (_tech(), _finance(), _legal(), _health())}
 
 
 def get_sector(sector_id: str) -> Sector:
