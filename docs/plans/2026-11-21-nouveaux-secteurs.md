@@ -9,7 +9,7 @@
 | **Date et version** | 21 novembre 2026, v1 |
 | **Auteur** | Claude, pour Oussama |
 | **Branche de travail** | `dev` (dépôt perso `oussamaalmouallim/LucidNews`) ; `main` seulement sur validation |
-| **État** | 22/11/2026 — Phase 1 **clôturée**. Phase 2 (Finance) **en cours** : lots 2.1 à 2.4 faits (2.4 en collecte seule, décision 11) ; 2.5 attend une IA avec quota. |
+| **État** | 22/11/2026 — Phase 1 **clôturée**. Phases 2 (Finance) et 3 (Juridique) : lots x.1 à x.4 faits (collecte seule, décision 11) ; relectures 2.5 et 3.5 en attente d'une IA avec quota. Prochaine : phase 4 (Santé). |
 
 ---
 
@@ -76,6 +76,8 @@ domaines du secteur.
 | 9 | 22/11/2026 | Runs réels avec l'IA (D4) | Oui, avec un budget de tokens par run | Lots 2.4, 3.4, 4.4, 5.4 |
 | 10 | 22/11/2026 | Commit `e56476e` au message faux (D5) | On le laisse ; le journal des lots l'explique | Journal des lots, lot 47 |
 | 11 | 22/11/2026 | Runs réels avec l'IA (révise la décision 9) | Arrêtés : l'offre d'IA gratuite ne tient pas un run. On valide la **collecte** seule, source par source, sans IA | Lots 2.4, 3.4, 4.4, 5.4 ; lot 2.5 en attente d'une IA avec quota |
+| 12 | 22/11/2026 | GDELT et Google News dans les secteurs | Prêts mais **désactivés d'office** : ils font entrer des sites et des conseils qu'on ne contrôle pas | Lots 2.3, 3.3, 4.3, 5.3 |
+| 13 | 22/11/2026 | Phase 2 non clôturée | On passe à la phase 3 ; la relecture 2.5 attend une IA avec quota | Phases 2 à 5 : lots x.5 en attente |
 
 ---
 
@@ -206,6 +208,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : phase 2 clôturée.
 - **Tests du lot** : identifiants uniques, libellés, portée.
 - **Résultat attendu** : « Juridique et réglementaire » dans Réglages avec ses domaines.
+- **Fait (2026-11-22)** : secteur `legal`, 8 domaines (`legal-legislation`, `-case-law`, `-business`, `-employment`, `-data-protection`, `-eu`, `-compliance`, `-public`), libellés FR/EN, portée, alias, icônes ; règle « jamais de conseil ». Les mots déjà pris gardent leur secteur (« compliance » reste à la finance). Preuve : `tests/test_legal_sector.py` (lot 3.1, 3 tests).
 
 <a id="lot-3-2"></a>
 ### Lot 3.2 — La consigne juridique
@@ -215,6 +218,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : 3.1.
 - **Tests du lot** : consigne construite, règles présentes.
 - **Résultat attendu** : la consigne juridique est lisible dans les tests.
+- **Fait (2026-11-22)** : profil `profiles/legal-news/` : l'IA identifie le stade du texte (proposition, projet, adopté, publié, en vigueur, arrêt, conclusions) ; un texte publié par l'institution est la source première ; date d'entrée en vigueur seulement si la source la donne ; jamais un projet présenté comme loi. Preuve : `tests/test_legal_sector.py` (lot 3.2, 3 tests).
 
 <a id="lot-3-3"></a>
 ### Lot 3.3 — Les sources juridiques
@@ -224,6 +228,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : 3.1, 1.5, 1.6.
 - **Tests du lot** : catalogue chargé ; rapport sans source écartée.
 - **Résultat attendu** : rapport de vérification daté, avec 15 sources gardées ou plus.
+- **Fait (2026-11-22)** : `data/sectors/legal.json` : 16 flux et 4 pages officielles, **20 gardées sur 20** (rapport : `docs/sources/verification/legal-2026-11-22.md`). Institutions : Service-public.fr (professionnels), Sénat (textes), Conseil d'État, CNIL, DGCCRF, ANACT, DOJ ; pages lues par le lecteur du lot 1.6 : Conseil constitutionnel, Cour de justice de l'UE, Autorité de la concurrence, EDPB. Presse : Dalloz actualité, Le Monde Justice, SCOTUSblog, Village de la Justice, Personnel Today, HR Dive, noyb, Euractiv France, Compliance Week. **Écartées** : Légifrance (son robots.txt interdit la lecture), Cour de cassation (page construite par script, sans flux), EUR-Lex, Parlement européen, EDPS, ICO, FTC, Actu-Juridique (403 ou 404), Autorité de la concurrence en flux (59 jours sans news, lue par sa page), Legalis, Le Petit Juriste (trop anciens). GDELT et Google News prêts mais désactivés (décision 12). **En plus du prévu** : le lecteur de pages suit la balise `<base>` d'une page (liens CJUE en 404 sinon) ; le vérificateur lit les dates mal formées que le collecteur lit déjà (Sénat). Preuve : `tests/test_legal_sector.py` (lot 3.3, 3 tests), `tests/test_page_sources.py`, `tests/test_source_check.py`.
 
 <a id="lot-3-4"></a>
 ### Lot 3.4 — Run réel en juridique
@@ -233,6 +238,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : 3.2, 3.3.
 - **Tests du lot** : run en succès ; les textes officiels ont le rang officiel.
 - **Résultat attendu** : capture de l'édition et chiffres par domaine notés dans le plan.
+- **Fait (2026-11-22), en collecte seule (décision 11)** : copie des données Docker basculée en Juridique (20 sources ajoutées, 33 tech désactivées), collecte sur 7 jours sans IA : **207 news**, 18 sources sur 20 en ramènent (ANACT et noyb n'ont rien publié depuis 9 et 24 jours). Par domaine : droit européen 56, conformité 54, jurisprudence 43, travail 25, données personnelles 14, législation 10, affaires 4, droit public 1. Aucune news sans titre, hors HTTPS, en double ou hors fenêtre. **Corrigé en chemin** : le lecteur de pages suit les redirections (CJUE 302, EDPB 301 : 0 news avant, 14 après) ; un lien http vers le site même d'un flux HTTPS passe en https (Sénat, Conseil d'État). Les institutions ont le rang officiel (test). Copie supprimée. **Faible** : droit public et droit des affaires, peu de sources libres trouvées. Preuve : `tests/test_page_sources.py`, `tests/test_rss_secure_links.py`, `tests/test_legal_sector.py`.
 
 <a id="lot-3-5"></a>
 ### Lot 3.5 — Ta relecture de l'édition juridique

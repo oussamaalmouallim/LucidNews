@@ -127,7 +127,7 @@ def test_a_reader_reads_the_sector_and_its_categories(api) -> None:
     status, body, _ = reader.request("GET", "/api/sector")
     assert status == 200 and body["sector"]["id"] == "tech"
     assert body["sector"]["categories"][0] == {"id": "ai", "labels": {"en": "AI / LLM / Agents", "fr": "IA / LLM / Agents"}}
-    assert {sector["id"] for sector in body["sectors"]} == {"tech", "finance", "fake"}
+    assert {sector["id"] for sector in body["sectors"]} == {"tech", "finance", "legal", "fake"}
 
 
 def test_only_an_administrator_changes_the_sector(api) -> None:

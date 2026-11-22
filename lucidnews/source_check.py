@@ -19,6 +19,7 @@ import calendar
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Awaitable, Callable, List, Optional, Tuple
 
@@ -53,10 +54,17 @@ FUTURE_SLACK = timedelta(days=1)  # time zones and clocks; beyond it, a date is 
 
 
 def _entry_time(entry: dict) -> Optional[datetime]:
-    for key in ("published_parsed", "updated_parsed"):
-        value = entry.get(key)
+    for key in ("published", "updated"):
+        value = entry.get(f"{key}_parsed")
         if value:
             return datetime.fromtimestamp(calendar.timegm(value), tz=timezone.utc)
+        # The collector reads a date feedparser could not ("Sun,22 Nov 2026", the Senate's): so do we.
+        if entry.get(key):
+            try:
+                moment = parsedate_to_datetime(str(entry[key]))
+            except (TypeError, ValueError):
+                continue
+            return moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)
     return None
 
 

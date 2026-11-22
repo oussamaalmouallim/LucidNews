@@ -118,3 +118,34 @@ def test_the_title_is_read_where_the_page_puts_it_when_the_link_wraps_more() -> 
     # Without it, the whole link text is the title, as before.
     [plain] = parse_list_page(html, page.model_copy(update={"title_selector": None}))
     assert plain.title.startswith("One year to go") and "The EU will switch." in plain.title
+
+
+def test_relative_links_follow_the_base_address_the_page_declares() -> None:
+    # Phase 3 (CJEU): <base href="…/site/"> — without it the links led to a 404.
+    html = f"""<html><head><base href="https://cour.example/site/"></head><body>
+      <li class="item"><a href="upload/cp1.pdf">Communiqué 1</a><time datetime="{RECENT}">x</time></li></body></html>"""
+    page = PageSourceConfig(name="Cour", url="https://cour.example/jcms/list/fr/", item_selector="li.item")
+    [entry] = parse_list_page(html, page)
+    assert entry.url == "https://cour.example/site/upload/cp1.pdf"
+    # A base on another site does not let links leave the page's site.
+    other = html.replace("https://cour.example/site/", "https://ailleurs.example/")
+    assert parse_list_page(other, page) == []
+
+
+def test_a_page_that_moved_is_followed_like_a_feed() -> None:
+    # Phase 3 (CJEU 302, EDPB 301): the checker kept them, the collector read nothing.
+    def answer(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/robots.txt":
+            return httpx.Response(404)
+        if request.url.path == "/communiques":
+            return httpx.Response(301, headers={"Location": "https://autorite.example/fr/communiques"})
+        return httpx.Response(200, text=HTML)
+
+    async def run():  # type: ignore[no-untyped-def]
+        async with httpx.AsyncClient(transport=httpx.MockTransport(answer)) as http:
+            scraper = PageListScraper([PAGE], http, pause=0)
+            return await scraper.fetch(NOW - timedelta(days=30)), scraper.source_errors
+
+    items, errors = asyncio.run(run())
+    assert errors == {}
+    assert [item.title for item in items] == ["Sanction contre la société X"]

@@ -62,11 +62,14 @@ def parse_date(text: str) -> Optional[datetime]:
 
 def parse_list_page(html: str, page: PageSourceConfig) -> List[PageEntry]:
     """The dated news of a list page, in page order, links made absolute, same site only."""
-    base = str(page.url)
-    host = urlsplit(base).hostname
+    soup = BeautifulSoup(html, "html.parser")
+    host = urlsplit(str(page.url)).hostname
+    # Relative links resolve against the page's <base href> when it declares one (CJEU does).
+    declared = soup.find("base", href=True)
+    base = urljoin(str(page.url), str(declared["href"])) if declared is not None else str(page.url)
     entries: List[PageEntry] = []
     seen = set()
-    for block in BeautifulSoup(html, "html.parser").select(page.item_selector):
+    for block in soup.select(page.item_selector):
         link = block.select_one(page.link_selector) if page.link_selector else None
         date = block.select_one(page.date_selector) if page.date_selector else None
         if link is None or not link.get("href") or date is None:
@@ -89,7 +92,7 @@ def parse_list_page(html: str, page: PageSourceConfig) -> List[PageEntry]:
 async def robots_allow(client: httpx.AsyncClient, url: str) -> bool:
     """What the site's robots.txt says of ``url`` for us. No robots.txt (404): allowed."""
     parts = urlsplit(url)
-    response = await client.get(f"{parts.scheme}://{parts.netloc}/robots.txt", headers={"User-Agent": USER_AGENT})
+    response = await client.get(f"{parts.scheme}://{parts.netloc}/robots.txt", headers={"User-Agent": USER_AGENT}, follow_redirects=True)
     if response.status_code in (401, 403):
         return False
     if response.status_code != 200:
@@ -122,7 +125,8 @@ class PageListScraper(BaseScraper):
             if not await robots_allow(self.client, str(page.url)):
                 self.source_errors[key] = "robots.txt disallows this page"
                 return []
-            response = await self.client.get(str(page.url), headers={"User-Agent": USER_AGENT})
+            # Like the feeds and the checker, follow a redirect (CJEU, EDPB): the page moved, it is still theirs.
+            response = await self.client.get(str(page.url), headers={"User-Agent": USER_AGENT}, follow_redirects=True)
             response.raise_for_status()
         except httpx.HTTPError as exc:
             self.source_errors[key] = short_error(exc)

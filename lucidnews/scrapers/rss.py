@@ -2,6 +2,7 @@
 
 import calendar
 import hashlib
+from urllib.parse import urlsplit
 import logging
 import os
 import re
@@ -17,6 +18,17 @@ from ..source_health import rss_key
 from ..models import ContentItem, SourceType, RSSSourceConfig
 
 logger = logging.getLogger(__name__)
+
+
+def secure_link(link: str, feed_url: str) -> str:
+    """An ``http://`` link to the very site whose feed is served over HTTPS becomes ``https://``
+    (the Senate and the Council of State write http links in https feeds). A link to another
+    site is left as the publisher wrote it."""
+    if not link.startswith("http://") or not feed_url.startswith("https://"):
+        return link
+    if urlsplit(link).hostname != urlsplit(feed_url).hostname:
+        return link
+    return "https://" + link[len("http://"):]
 
 
 class RSSScraper(BaseScraper):
@@ -117,7 +129,7 @@ class RSSScraper(BaseScraper):
                     id=self._generate_id("rss", feed_id, entry_hash),
                     source_type=SourceType.RSS,
                     title=entry.get("title", "Untitled"),
-                    url=entry.get("link", str(source.url)),
+                    url=secure_link(entry.get("link", str(source.url)), feed_url),
                     content=content,
                     author=entry.get("author", source.name),
                     published_at=published_at,

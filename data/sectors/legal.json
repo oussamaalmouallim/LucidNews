@@ -1,0 +1,193 @@
+{
+  "profile": "legal-news",
+  "authorities": {
+    "service-public.fr": "official",
+    "conseil-etat.fr": "official",
+    "conseil-constitutionnel.fr": "official",
+    "curia.europa.eu": "official",
+    "autoritedelaconcurrence.fr": "official",
+    "edpb.europa.eu": "official",
+    "cnil.fr": "official",
+    "anact.fr": "official",
+    "justice.gov": "official",
+    "legifrance.gouv.fr": "official",
+    "eur-lex.europa.eu": "official",
+    "courdecassation.fr": "official",
+    "edps.europa.eu": "official",
+    "dalloz-actualite.fr": "reputable",
+    "lemonde.fr": "reputable",
+    "scotusblog.com": "reputable",
+    "personneltoday.com": "reputable",
+    "hrdive.com": "reputable",
+    "noyb.eu": "reputable",
+    "euractiv.fr": "reputable",
+    "complianceweek.com": "reputable",
+    "senat.fr": "official"
+  },
+  "sources": {
+    "rss": [
+      {
+        "name": "Service-public.fr — Professionnels",
+        "url": "https://www.service-public.fr/abonnements/rss/actu-actu-pro.rss",
+        "category": "legal-legislation",
+        "profile": "legal-news"
+      },
+      {
+        "name": "Sénat — textes législatifs",
+        "url": "https://www.senat.fr/rss/textes.rss",
+        "category": "legal-legislation",
+        "profile": "legal-news"
+      },
+      {
+        "name": "Conseil d'État — actualités",
+        "url": "https://www.conseil-etat.fr/rss/actualites-rss",
+        "category": "legal-public",
+        "profile": "legal-news"
+      },
+      {
+        "name": "Dalloz actualité",
+        "url": "https://www.dalloz-actualite.fr/rss.xml",
+        "category": "legal-case-law",
+        "profile": "legal-news"
+      },
+      {
+        "name": "Le Monde — Justice",
+        "url": "https://www.lemonde.fr/justice/rss_full.xml",
+        "category": "legal-case-law",
+        "profile": "legal-news"
+      },
+      {
+        "name": "SCOTUSblog",
+        "url": "https://www.scotusblog.com/feed/",
+        "category": "legal-case-law",
+        "profile": "legal-news"
+      },
+      {
+        "name": "Village de la Justice",
+        "url": "https://www.village-justice.com/articles/spip.php?page=backend",
+        "category": "legal-business",
+        "profile": "legal-news"
+      },
+      {
+        "name": "ANACT — conditions de travail",
+        "url": "https://www.anact.fr/rss.xml",
+        "category": "legal-employment",
+        "profile": "legal-news"
+      },
+      {
+        "name": "Personnel Today",
+        "url": "https://www.personneltoday.com/feed/",
+        "category": "legal-employment",
+        "profile": "legal-news"
+      },
+      {
+        "name": "HR Dive",
+        "url": "https://www.hrdive.com/feeds/news/",
+        "category": "legal-employment",
+        "profile": "legal-news"
+      },
+      {
+        "name": "CNIL — actualités",
+        "url": "https://www.cnil.fr/fr/rss.xml",
+        "category": "legal-data-protection",
+        "profile": "legal-news"
+      },
+      {
+        "name": "noyb",
+        "url": "https://noyb.eu/en/rss",
+        "category": "legal-data-protection",
+        "profile": "legal-news"
+      },
+      {
+        "name": "Euractiv France",
+        "url": "https://www.euractiv.fr/feed/",
+        "category": "legal-eu",
+        "profile": "legal-news"
+      },
+      {
+        "name": "DGCCRF",
+        "url": "https://www.economie.gouv.fr/dgccrf/rss",
+        "category": "legal-compliance",
+        "profile": "legal-news"
+      },
+      {
+        "name": "Département de la Justice américain (DOJ)",
+        "url": "https://www.justice.gov/news/rss",
+        "category": "legal-compliance",
+        "profile": "legal-news"
+      },
+      {
+        "name": "Compliance Week",
+        "url": "https://www.complianceweek.com/rss",
+        "category": "legal-compliance",
+        "profile": "legal-news"
+      }
+    ],
+    "pages": [
+      {
+        "name": "Conseil constitutionnel — actualités",
+        "url": "https://www.conseil-constitutionnel.fr/actualites",
+        "item_selector": "article.node--type-article",
+        "link_selector": "a[rel=bookmark]",
+        "date_selector": "time",
+        "category": "legal-case-law",
+        "profile": "legal-news",
+        "max_items": 10,
+        "title_selector": ".title"
+      },
+      {
+        "name": "Cour de justice de l'UE — communiqués",
+        "url": "https://curia.europa.eu/jcms/jcms/Jo2_7052/fr/",
+        "item_selector": "li.curia-itemlist-item",
+        "link_selector": ".curia-itemlist-item-title a",
+        "date_selector": "time",
+        "category": "legal-eu",
+        "profile": "legal-news",
+        "max_items": 10,
+        "title_selector": "h3"
+      },
+      {
+        "name": "Autorité de la concurrence — communiqués",
+        "url": "https://www.autoritedelaconcurrence.fr/fr/communiques-de-presse",
+        "item_selector": "div.search-index__header",
+        "link_selector": "h2 a",
+        "date_selector": "time",
+        "category": "legal-business",
+        "profile": "legal-news",
+        "max_items": 10
+      },
+      {
+        "name": "Comité européen de la protection des données (EDPB)",
+        "url": "https://www.edpb.europa.eu/news/news_en",
+        "item_selector": "div.node-article-card",
+        "link_selector": "a.node-article-card__link",
+        "date_selector": "time",
+        "category": "legal-data-protection",
+        "profile": "legal-news",
+        "max_items": 10,
+        "title_selector": "h3.node-article-card__title"
+      }
+    ],
+    "gdelt": {
+      "enabled": false,
+      "query": "(\"court ruling\" OR \"arrêt\" OR \"décret\" OR \"new law\" OR \"GDPR fine\" OR \"sanction CNIL\")",
+      "mode": "ArtList",
+      "max_records": 75,
+      "timespan": null,
+      "language": null,
+      "country": null,
+      "category": "legal-legislation",
+      "profile": "legal-news"
+    },
+    "google_news": {
+      "enabled": false,
+      "query": "\"court ruling\" OR \"new regulation\" OR \"GDPR\" OR \"compliance\"",
+      "language": "en",
+      "country": "US",
+      "ceid": null,
+      "max_results": 100,
+      "category": "legal-legislation",
+      "profile": "legal-news"
+    }
+  }
+}

@@ -67,3 +67,13 @@ def test_a_date_in_the_future_does_not_make_a_stale_feed_look_fresh() -> None:
     # A few hours ahead is a time zone, not the future.
     soon = rss(("Ce matin", "https://example.org/now", NOW + timedelta(hours=5)))
     assert judge_feed("Fuseau", "https://example.org/feed", 200, soon, NOW).kept
+
+
+def test_a_date_the_collector_reads_is_read_by_the_checker_too() -> None:
+    # Phase 3: the Senate writes "Sun,22 Nov 2026 02:04:29 GMT"; feedparser gives up, the collector does not.
+    when = NOW - timedelta(days=1)
+    body = f"""<?xml version="1.0"?><rss version="2.0"><channel><title>Sénat</title>
+      <item><title>Projet de loi</title><link>https://example.org/pjl</link>
+      <pubDate>{when:%a},{when:%d %b %Y %H:%M:%S} GMT</pubDate></item></channel></rss>""".encode()
+    verdict = judge_feed("Sénat", "https://example.org/feed", 200, body, NOW)
+    assert verdict.kept and verdict.newest == when

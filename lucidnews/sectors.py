@@ -155,7 +155,72 @@ def _finance() -> Sector:
     )
 
 
-SECTORS: Dict[str, Sector] = {sector.id: sector for sector in (_tech(), _finance())}
+def _legal() -> Sector:
+    """Legal and regulatory (phase 3): new texts, court decisions and the authorities that apply
+    them. A watch that tells what a text or a decision says, never legal advice."""
+    return Sector(
+        id="legal",
+        labels={"en": "Legal & regulatory", "fr": "Juridique et réglementaire"},
+        nouns={"en": "legal", "fr": "juridique"},
+        descriptions={
+            "en": "Legislation, case law, business and employment law, data protection, EU law and compliance.",
+            "fr": "Législation, jurisprudence, droit des affaires et du travail, données personnelles, droit européen et conformité.",
+        },
+        categories=(
+            SectorCategory(
+                "legal-legislation",
+                {"en": "Legislation", "fr": "Législation"},
+                "laws, decrees, orders and bills: adopted, published, debated or entering into force",
+                ("legislation", "législation", "lois", "law-making", "decrees", "décrets"),
+            ),
+            SectorCategory(
+                "legal-case-law",
+                {"en": "Case law", "fr": "Jurisprudence"},
+                "decisions of courts and constitutional councils that settle or change how the law applies",
+                ("case-law", "jurisprudence", "court-decisions", "courts", "rulings"),
+            ),
+            SectorCategory(
+                "legal-business",
+                {"en": "Business law", "fr": "Droit des affaires"},
+                "company, contract, competition, insolvency and tax law affecting businesses",
+                ("business-law", "droit-des-affaires", "corporate-law", "competition-law", "concurrence"),
+            ),
+            SectorCategory(
+                "legal-employment",
+                {"en": "Employment law", "fr": "Droit du travail"},
+                "employment contracts, working time, dismissal, social security and labour relations law",
+                ("employment-law", "labour-law", "droit-du-travail", "droit-social"),
+            ),
+            SectorCategory(
+                "legal-data-protection",
+                {"en": "Data protection", "fr": "Données personnelles"},
+                "privacy and personal data law, GDPR, data protection authorities' decisions and fines",
+                ("data-protection", "privacy", "gdpr", "rgpd", "données-personnelles", "cnil"),
+            ),
+            SectorCategory(
+                "legal-eu",
+                {"en": "EU law", "fr": "Droit européen"},
+                "EU regulations and directives, the EU Court of Justice and European institutions' legal acts",
+                ("eu-law", "droit-européen", "droit-de-l'union", "european-law", "cjeu", "cjue"),
+            ),
+            SectorCategory(
+                "legal-compliance",
+                {"en": "Compliance", "fr": "Conformité"},
+                "obligations firms must meet: anti-corruption, sanctions, due diligence, sector rules and their enforcement",
+                ("legal-compliance", "conformité", "conformite", "anti-corruption", "due-diligence"),
+            ),
+            SectorCategory(
+                "legal-public",
+                {"en": "Public law", "fr": "Droit public"},
+                "administrative law, public procurement, local authorities, fundamental rights and the Council of State",
+                ("public-law", "droit-public", "administrative-law", "droit-administratif", "marchés-publics"),
+            ),
+        ),
+        rules=(NO_ADVICE_RULE,),
+    )
+
+
+SECTORS: Dict[str, Sector] = {sector.id: sector for sector in (_tech(), _finance(), _legal())}
 
 
 def get_sector(sector_id: str) -> Sector:
