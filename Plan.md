@@ -191,6 +191,7 @@ authentifié du lot 33) attendent l'hébergement.
 ## Phase F — Nouveaux secteurs (décision du 30 octobre 2026)
 
 Ouvrir LucidNews à d'autres métiers que la tech. Un secteur par installation, choisi dans Réglages.
+Plan détaillé, source de vérité du chantier : [docs/plans/2026-11-21-nouveaux-secteurs.md](docs/plans/2026-11-21-nouveaux-secteurs.md).
 
 - **Lot 47 — Socle** · ✅ clôturé le 30 octobre 2026 ([détail](docs/lots.md#lot-47--secteurs--le-socle)).
 - **Lot 48 — Finance** : marchés, banques, assurance, crypto-actifs, fusions-acquisitions, macroéconomie, régulation financière, fintech. Autorités : AMF, ACPR, Banque de France, BCE, ESMA, SEC.

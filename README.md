@@ -358,6 +358,7 @@ tests/                 tests automatisés (pytest)
 | [Plan de lancement](Plan.md) | Lots restants jusqu'à la commercialisation, dépendances, critères mesurables |
 | [Étude de marché](docs/etude-marche/rapport-lucidnews-2026-10.html) | Benchmark concurrentiel, besoins, audit, priorités, hébergement (octobre 2026) |
 | [Roadmap technique](docs/roadmap.md) | Prochaines étapes |
+| [Plan des nouveaux secteurs](docs/plans/2026-11-21-nouveaux-secteurs.md) | Finance, juridique, santé, énergie : phases, lots, décisions |
 | Références (en anglais) | [configuration](docs/configuration.md), [profils](docs/profiles.md), [score](docs/scoring.md), [scrapers](docs/scrapers.md), [extracteurs](docs/extractors.md), [cookies X](docs/twitter-cookies.md), [MCP](lucidnews/mcp/README.md) |
 
 ## Origine et licence
