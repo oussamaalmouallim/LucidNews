@@ -855,6 +855,8 @@ On garde les écrans existants et on n'ajoute qu'**une** page : Réglages.
 
 ✅ Clôturé le 30 octobre 2026, sur la branche `dev`. Demande : ouvrir l'application à d'autres domaines que la tech (finance, juridique…), choisis dans Réglages.
 
+**Note sur le commit** : le lot 47 est dans le commit `e56476e`, poussé sur `dev`. Son message parle d'épargne (« feat(savings)… ») : un texte venu par erreur d'un autre projet. Le contenu est bien le lot 47. Décision du 22 novembre 2026 : on le laisse, pour ne pas réécrire l'historique de `dev` déjà poussé.
+
 Décisions du 30 octobre : quatre secteurs (finance, juridique et réglementaire, santé et pharma, énergie et climat) ; **un secteur par installation**, choisi par l'administrateur ; changer de secteur remplace les sources par celles du nouveau secteur (anciennes désactivées, pas supprimées), et LucidNews prépare lui-même des sources fiables pour chaque secteur.
 
 - **Registre des secteurs** (`lucidnews/sectors.py`) : un secteur porte ses catégories (libellés FR/EN, portée d'une ligne lue par l'IA, alias). `tech` reprend la taxonomie d'origine, à l'identique, et reste le défaut. Les identifiants de catégorie sont uniques entre secteurs (vérifié au chargement) : une news garde ses catégories quel que soit le secteur actuel.

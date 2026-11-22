@@ -9,7 +9,7 @@
 | **Date et version** | 21 novembre 2026, v1 |
 | **Auteur** | Claude, pour Oussama |
 | **Branche de travail** | `dev` (dépôt perso `oussamaalmouallim/LucidNews`) ; `main` seulement sur validation |
-| **État** | 21/11/2026 — Phase 0 (socle, lot 47) clôturée. Phase 1 (mécanique commune) à ouvrir : décisions D1 à D4 à trancher avant. |
+| **État** | 22/11/2026 — Phase 0 clôturée. Décisions D1 à D5 tranchées. Phase 1 (mécanique commune) ouverte : analyse faite, en attente du feu vert pour le lot 1.1. |
 
 ---
 
@@ -56,7 +56,7 @@ domaines du secteur.
 | Des sources fiables, prêtes | Le catalogue du secteur, appliqué au changement de secteur |
 | Les autorités comptent comme officielles | Le registre de confiance, complété par secteur |
 | Une IA qui comprend le métier | Un profil éditorial (consigne) par secteur |
-| Des sources sans flux RSS | Un lecteur de pages de liste, si D2 le permet |
+| Des sources sans flux RSS | Un lecteur de pages de liste, limité aux sites officiels |
 
 ---
 
@@ -70,6 +70,11 @@ domaines du secteur.
 | 3 | 30/10/2026 | Changer de secteur | Remplace les sources : les anciennes sont désactivées, pas supprimées | Lot 1.4 |
 | 4 | 30/10/2026 | Les sources | LucidNews les cherche et les prépare lui-même ; elles doivent être fiables | Lots 1.5, 2.3, 3.3, 4.3, 5.3 |
 | 5 | 30/10/2026 | Méthode git | Travail sur `dev` ; `main` seulement quand l'utilisateur valide | Lot 6.3 |
+| 6 | 22/11/2026 | Ordre des secteurs (D1) | Finance, juridique, santé, énergie | Phases 2 à 5 dans cet ordre |
+| 7 | 22/11/2026 | Sources sans RSS (D2) | A : lecteur de pages de liste, limité aux sites officiels, respect de `robots.txt`, lecture lente | Lot 1.6 ; les lots 2.3, 3.3, 4.3 et 5.3 peuvent s'en servir |
+| 8 | 22/11/2026 | Langues des sources (D3) | Français et anglais ; l'édition reste traduite | Lots 2.3, 3.3, 4.3, 5.3 |
+| 9 | 22/11/2026 | Runs réels avec l'IA (D4) | Oui, avec un budget de tokens par run | Lots 2.4, 3.4, 4.4, 5.4 |
+| 10 | 22/11/2026 | Commit `e56476e` au message faux (D5) | On le laisse ; le journal des lots l'explique | Journal des lots, lot 47 |
 
 ---
 
@@ -193,11 +198,9 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 <a id="lot-1-6"></a>
 ### Lot 1.6 — Lire une source qui n'a pas de flux RSS
 
-- **Décision nécessaire (D2)** : beaucoup d'autorités publient une page de liste (communiqués, délibérations) sans flux RSS.
-  - **A** : un lecteur générique de pages de liste, qui respecte le fichier `robots.txt` (règles d'accès posées par le site) et lit lentement. Plus de sources officielles, mais un réglage par site, qui casse si le site change.
-  - **B** : seulement les flux RSS et les requêtes GDELT et Google News. Moins de sources officielles, mais plus robuste.
-  - **Avis** : A, limité aux sites officiels et publics, avec l'outil 1.5 qui détecte la casse.
-- **À faire (si A)** : un lecteur configuré par site (adresse de la liste, sélecteur des liens), qui respecte `robots.txt`, avec un délai entre deux pages ; il passe par la vérification 1.5.
+- **Objectif** : une autorité qui publie une page de communiqués sans flux RSS devient une source.
+- **Décidé (22/11/2026, décision 7)** : un lecteur de pages de liste, limité aux sites officiels et publics. Il respecte `robots.txt` (règles d'accès posées par le site) et lit lentement. L'outil 1.5 détecte quand une page change de forme.
+- **À faire** : un lecteur configuré par site (adresse de la liste, sélecteur des liens), qui respecte `robots.txt`, avec un délai entre deux pages ; il passe par la vérification 1.5.
 - **Dépend de** : 1.5.
 - **Tests du lot** : une page de liste enregistrée donne ses news ; une page interdite par `robots.txt` n'est pas lue.
 - **Résultat attendu** : une page d'autorité factice devient une source comme une autre.
@@ -248,9 +251,9 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Objectif** : 15 à 25 sources finance, toutes vérifiées par l'outil 1.5.
 - **À faire**
   - Chercher les flux des autorités (AMF, ACPR, Banque de France, BCE, ESMA, SEC) et des éditeurs reconnus qui offrent un flux gratuit. Écarter les contenus payants.
-  - Requêtes GDELT et Google News finance, en français et en anglais (selon D3).
+  - Requêtes GDELT et Google News finance, en français et en anglais (décision 8).
   - Les autorités entrent dans le catalogue comme sources officielles.
-- **Dépend de** : 2.1, 1.5 (et 1.6 si D2 = A).
+- **Dépend de** : 2.1, 1.5, 1.6.
 - **Tests du lot** : le catalogue finance se charge ; le rapport de vérification ne garde aucune source écartée.
 - **Résultat attendu** : rapport de vérification daté, avec 15 sources gardées ou plus.
 
@@ -258,7 +261,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 ### Lot 2.4 — Run réel en finance
 
 - **Objectif** : un vrai run, sur une copie des données, produit une édition finance.
-- **À faire** : copie des données dans le dossier temporaire ; bascule en Finance ; run avec l'IA selon D4 ; contrôle des domaines, des étiquettes et des sources ; copie supprimée ensuite.
+- **À faire** : copie des données dans le dossier temporaire ; bascule en Finance ; run avec l'IA et un budget de tokens (décision 9) ; contrôle des domaines, des étiquettes et des sources ; copie supprimée ensuite.
 - **Dépend de** : 2.2, 2.3.
 - **Tests du lot** : le run se termine en succès ; aucune news rangée « Autre » par erreur de domaine.
 - **Résultat attendu** : capture de l'édition finance, et nombre de news par domaine noté dans le plan.
@@ -305,7 +308,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 
 - **Objectif** : 15 à 25 sources juridiques vérifiées.
 - **À faire** : Légifrance et le Journal officiel, EUR-Lex, Conseil d'État, Cour de cassation, Conseil constitutionnel, CNIL, et des éditeurs juridiques à flux gratuit ; écarter le payant ; passage par l'outil 1.5.
-- **Dépend de** : 3.1, 1.5 (et 1.6 si D2 = A).
+- **Dépend de** : 3.1, 1.5, 1.6.
 - **Tests du lot** : catalogue chargé ; rapport sans source écartée.
 - **Résultat attendu** : rapport de vérification daté, avec 15 sources gardées ou plus.
 
@@ -360,7 +363,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 
 - **Objectif** : 15 à 25 sources santé vérifiées.
 - **À faire** : HAS, ANSM, ministère de la Santé, Santé publique France, EMA, OMS, FDA, et des revues ou éditeurs à flux gratuit ; passage par l'outil 1.5.
-- **Dépend de** : 4.1, 1.5 (et 1.6 si D2 = A).
+- **Dépend de** : 4.1, 1.5, 1.6.
 - **Tests du lot** : catalogue chargé ; rapport sans source écartée.
 - **Résultat attendu** : rapport de vérification daté, avec 15 sources gardées ou plus.
 
@@ -415,7 +418,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 
 - **Objectif** : 15 à 25 sources énergie vérifiées.
 - **À faire** : CRE, ADEME, ministère de la Transition écologique, RTE, AIE (Agence internationale de l'énergie), Commission européenne (énergie), et des éditeurs spécialisés à flux gratuit ; passage par l'outil 1.5.
-- **Dépend de** : 5.1, 1.5 (et 1.6 si D2 = A).
+- **Dépend de** : 5.1, 1.5, 1.6.
 - **Tests du lot** : catalogue chargé ; rapport sans source écartée.
 - **Résultat attendu** : rapport de vérification daté, avec 15 sources gardées ou plus.
 
@@ -496,12 +499,11 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 
 | Quand | Action |
 |---|---|
-| Avant la phase 1 | Trancher D1 à D4 (voir « Points à confirmer ») |
+| Avant la phase 1 | Trancher D1 à D5 — **fait le 22/11/2026** |
 | Fin de chaque lot | Commiter et pousser sur `dev` avec le libellé proposé |
 | Avant chaque run réel (2.4, 3.4, 4.4, 5.4) | Avoir une clé d'IA avec du quota, dans `.env` (Claude ne la lit ni ne l'écrit) |
 | Lots 2.5, 3.5, 4.5, 5.5 | Relire l'édition du secteur et donner ton accord |
 | Lot 6.3 | Dire « version validée », puis pousser `main` |
-| Quand tu veux | Corriger le message du commit `e56476e` si tu le souhaites (voir D5) |
 
 ---
 
@@ -510,11 +512,6 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 
 | # | Point | Quand | Pourquoi |
 |---|---|---|---|
-| D1 | Ordre des secteurs : finance, juridique, santé, énergie (l'ordre de ta demande) ; ou l'énergie d'abord, ton métier | Avant la phase 2 | Le premier secteur sert de modèle aux autres. Avis : garder l'ordre de ta demande |
-| D2 | Lecteur de pages sans RSS (lot 1.6) : A ou B | Avant le lot 1.6 | Beaucoup d'autorités n'ont pas de flux RSS. Avis : A, limité aux sites officiels |
-| D3 | Langues des sources : français et anglais, ou français seulement | Avant le lot 2.3 | Les autorités européennes et américaines publient en anglais. Avis : les deux, l'édition reste traduite |
-| D4 | Runs réels avec l'IA activée (consomme du quota) | Avant le lot 2.4 | Sans IA, aucune news n'a de domaine attribué par l'IA. Avis : oui, avec un budget de tokens par run |
-| D5 | Le commit `e56476e` porte un message d'un autre projet | Quand tu veux | Réécrire un commit déjà poussé demande un push forcé sur `dev`. Avis : le laisser, et l'expliquer dans le journal des lots |
 | — | Flux RSS publics des autorités | Lots 2.3, 3.3, 4.3, 5.3 | Vérifiés flux par flux par l'outil 1.5 |
 
 ---
