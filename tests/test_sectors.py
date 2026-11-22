@@ -2,10 +2,11 @@
 original taxonomy and the default; a change of sector keeps the archive readable."""
 
 import json
+import shutil
 
 import pytest
 
-from lucidnews import sectors
+from lucidnews import sector_catalog, sectors, source_catalog
 from lucidnews.ai.prompting.analysis import analysis_system_prompt
 from lucidnews.auth.passwords import hash_password
 from lucidnews.coverage import CoverageThresholds, compute_coverage
@@ -102,6 +103,15 @@ def test_coverage_lists_the_categories_it_is_given() -> None:
 
 @pytest.fixture
 def api(tmp_path, monkeypatch, two_sectors):  # type: ignore[no-untyped-def]
+    # The fake sector's catalog, in a copy of the project's data directory.
+    project_data = tmp_path / "project-data"
+    shutil.copytree(ROOT / "data" / "sectors", project_data / "sectors")
+    for name in ("config.example.json", "presets.json"):
+        shutil.copy(ROOT / "data" / name, project_data / name)
+    feed = {"name": "Marchés", "url": "https://example.org/m.xml", "category": "fake-markets"}
+    (project_data / "sectors" / "fake.json").write_text(json.dumps({"profile": "tech-news", "authorities": {}, "sources": {"rss": [feed]}}))
+    monkeypatch.setattr(sector_catalog, "PROJECT_DATA", project_data)
+    monkeypatch.setattr(source_catalog, "PROJECT_DATA", project_data)
     ctx, server = start_api(tmp_path, monkeypatch)
     ctx.auth.db.create_user("admin@example.com", "Admin", password_hash=hash_password(PASSWORD), role="admin")
     admin, reader = Client(server), Client(server)
@@ -140,6 +150,15 @@ def test_changing_the_sector_rewrites_the_configuration_and_is_served_at_once(ap
     assert list((tmp_path / "backups").glob("config-*.json"))  # the previous file is kept
 
     assert admin.request("PUT", "/api/settings/sector", {"sector": "tech"})[1]["sector"]["id"] == "tech"
+
+
+def test_a_sector_without_a_usable_catalog_is_not_switched_to(api) -> None:
+    _, tmp_path, admin, _ = api
+    (sector_catalog.PROJECT_DATA / "sectors" / "fake.json").unlink()
+    before = (tmp_path / "config.json").read_text()
+    status, body, _ = admin.request("PUT", "/api/settings/sector", {"sector": "fake"})
+    assert (status, body["error"]) == (422, "sector not ready") and "no catalog file" in body["detail"]
+    assert (tmp_path / "config.json").read_text() == before
 
 
 def test_an_unknown_sector_is_refused_by_the_api(api) -> None:

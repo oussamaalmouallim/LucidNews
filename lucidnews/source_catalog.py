@@ -19,7 +19,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from .models import Config
 from .source_health import github_repo_key, github_user_key, rss_key
-from .sectors import all_categories
+from .sectors import DEFAULT_SECTOR, all_categories
 from .taxonomy import Category
 
 PROJECT_DATA = Path(__file__).resolve().parents[1] / "data"
@@ -44,7 +44,7 @@ class CatalogEntry:
     category: str
     values: Dict[str, object]
     description: Optional[str]
-    origin: str  # example | presets
+    origin: str  # example | presets | sector
 
     def to_dict(self) -> Dict[str, object]:
         return asdict(self)
@@ -71,7 +71,12 @@ def _entry(kind: str, values: Dict[str, object], category: str, description: Opt
     return None
 
 
-def load_catalog(data_dir: Path = PROJECT_DATA) -> List[CatalogEntry]:
+def load_catalog(data_dir: Optional[Path] = None, sector: str = DEFAULT_SECTOR) -> List[CatalogEntry]:
+    """The sources recommended to an installation of ``sector``. Tech keeps its historical
+    catalog (example configuration and setup presets); another sector has its own file."""
+    if sector != DEFAULT_SECTOR:
+        return _sector_entries(sector, data_dir)
+    data_dir = data_dir or PROJECT_DATA
     known = {category.id for category in all_categories()}
     entries: List[CatalogEntry] = []
 
@@ -101,6 +106,23 @@ def load_catalog(data_dir: Path = PROJECT_DATA) -> List[CatalogEntry]:
         if entry is not None and entry.key.lower() not in unique:
             unique[entry.key.lower()] = entry
     return list(unique.values())
+
+
+def _sector_entries(sector: str, data_dir: Optional[Path]) -> List[CatalogEntry]:
+    from .sector_catalog import load_sector_catalog
+
+    catalog = load_sector_catalog(sector, data_dir)
+    entries: List[CatalogEntry] = []
+    for feed in catalog.sources.rss:
+        entry = _entry("rss", {"name": feed.name, "url": str(feed.url)}, feed.category or "", None, "sector")
+        if entry is not None and feed.category:
+            entries.append(entry)
+    for repo in catalog.sources.github:
+        if repo.category and repo.type == "repo_releases":
+            entry = _entry("github_repo", {"owner": repo.owner, "repo": repo.repo}, repo.category, None, "sector")
+            if entry is not None:
+                entries.append(entry)
+    return entries
 
 
 def configured_identities(config: Config) -> Tuple[Set[str], Set[str]]:

@@ -1,0 +1,5 @@
+{
+  "profile": "tech-news",
+  "authorities": {},
+  "sources_from": "config.example.json"
+}

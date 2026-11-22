@@ -9,7 +9,7 @@
 | **Date et version** | 21 novembre 2026, v1 |
 | **Auteur** | Claude, pour Oussama |
 | **Branche de travail** | `dev` (dépôt perso `oussamaalmouallim/LucidNews`) ; `main` seulement sur validation |
-| **État** | 22/11/2026 — Phase 0 clôturée. Décisions D1 à D5 tranchées. Phase 1 (mécanique commune) ouverte : analyse faite, en attente du feu vert pour le lot 1.1. |
+| **État** | 22/11/2026 — Phase 1 en cours : lot 1.1 fait. Prochain : lot 1.2 (profil éditorial d'un secteur). |
 
 ---
 
@@ -147,6 +147,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : rien.
 - **Tests du lot** : chargement et refus d'un catalogue invalide ; le catalogue tech donne les mêmes sources qu'avant.
 - **Résultat attendu** : `uv run pytest` vert, et le catalogue tech listé à l'identique dans l'écran Sources.
+- **Fait (2026-11-22)** : un fichier par secteur dans `data/sectors/`. Celui de la tech renvoie à la configuration d'exemple (`sources_from`), qui reste sa seule liste : 31 flux, 4 dépôts. Le chargeur refuse un profil inconnu, une catégorie d'un autre secteur, une adresse mal formée, un domaine ou un rang de confiance invalides. **En plus du prévu** : le serveur refuse de basculer vers un secteur sans catalogue utilisable (422 « sector not ready »), avant d'écrire la configuration ; l'image Docker embarque `data/sectors/`. Preuve : 12 tests nouveaux (`tests/test_sector_catalog.py`, `tests/test_sectors.py`) ; les recommandations tech de l'écran Sources sont identiques (test). Suite : 942 tests verts, 1 échec ancien sans lien (voir « Points à confirmer »).
 
 <a id="lot-1-2"></a>
 ### Lot 1.2 — Le profil éditorial d'un secteur
@@ -513,6 +514,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 | # | Point | Quand | Pourquoi |
 |---|---|---|---|
 | — | Flux RSS publics des autorités | Lots 2.3, 3.3, 4.3, 5.3 | Vérifiés flux par flux par l'outil 1.5 |
+| — | Le test `test_3xx_redirect_prints_warning` échoue en local depuis le 22/11 | Clôture de la phase 1 | Il résout un vrai nom de domaine (DNS) : il échoue sans réseau ou sans résolution. Déjà rouge avant le lot 1.1. À rendre indépendant du réseau, ou à confirmer vert en CI |
 
 ---
 
@@ -534,7 +536,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 <a id="zone-technique"></a>
 ## Zone technique concernée
 
-- **Secteurs** : `lucidnews/sectors.py`, `lucidnews/taxonomy.py`, `lucidnews/models.py` (`Config.sector`), nouveau dossier `data/sectors/`
+- **Secteurs** : `lucidnews/sectors.py`, `lucidnews/sector_catalog.py` (lot 1.1), `lucidnews/taxonomy.py`, `lucidnews/models.py` (`Config.sector`), `data/sectors/tech.json`, `.dockerignore`
 - **API** : `lucidnews/web_api.py` (`GET /api/sector`, `PUT /api/settings/sector`), `lucidnews/settings_api.py`
 - **Sources** : `lucidnews/source_catalog.py`, `lucidnews/sources_cli.py`, `lucidnews/scrapers/` (`rss.py`, `gdelt.py`, `google_news.py`), `data/config.example.json`, `data/presets.json`
 - **IA** : `lucidnews/ai/prompting/analysis.py`, `lucidnews/ai/analyzer.py`, `profiles/` (nouveaux profils par secteur)

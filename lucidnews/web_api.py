@@ -87,6 +87,7 @@ from .source_health import assess_health, configured_source_keys, health_to_dict
 from .source_quality import DEFAULT_DAYS, compute_source_quality, item_source_key, quality_to_dict
 from .storage.manager import StorageManager
 from .settings_api import SettingsService
+from .sector_catalog import CatalogError, load_sector_catalog
 from .source_catalog import CatalogEntry, load_catalog, recommendations
 from .sources_api import SourcesService
 from .newsletter.mailer import build_mailer
@@ -603,6 +604,10 @@ def change_sector(ctx: "ApiContext", body: Dict[str, Any]) -> tuple[int, Dict[st
     target = body.get("sector")
     if not isinstance(target, str) or target not in SECTORS:
         return HTTPStatus.UNPROCESSABLE_ENTITY, {"error": "unknown sector", "fields": {"sector": f"one of {', '.join(SECTORS)}"}}
+    try:
+        load_sector_catalog(target)  # a sector without a usable catalog is never switched to
+    except CatalogError as exc:
+        return HTTPStatus.UNPROCESSABLE_ENTITY, {"error": "sector not ready", "detail": str(exc)}
 
     def mutate(raw: Dict[str, Any]) -> None:
         raw["sector"] = target
@@ -1043,7 +1048,7 @@ def build_context(data_dir: str, config_path: Optional[str], *, local_features: 
         ),
         source_quality_days=config.digest.source_quality_days,
         config=config,
-        catalog=load_catalog(),
+        catalog=load_catalog(sector=config.sector),
         subscribers=(
             SubscriberService(
                 storage.subscribers,
