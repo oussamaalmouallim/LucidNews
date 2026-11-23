@@ -9,7 +9,7 @@
 | **Date et version** | 21 novembre 2026, v1 |
 | **Auteur** | Claude, pour Oussama |
 | **Branche de travail** | `dev` (dépôt perso `oussamaalmouallim/LucidNews`) ; `main` seulement sur validation |
-| **État** | 22/11/2026 — Phase 1 **clôturée**. Phases 2 (Finance), 3 (Juridique) et 4 (Santé) : lots x.1 à x.4 faits (collecte seule, décision 11) ; relectures 2.5, 3.5 et 4.5 en attente d'une IA avec quota. Prochaine : phase 5 (Énergie et climat). |
+| **État** | 22/11/2026 — Phase 1 **clôturée**. Phases 2 (Finance), 3 (Juridique), 4 (Santé) et 5 (Énergie) : lots x.1 à x.4 faits (collecte seule, décision 11) ; relectures 2.5, 3.5, 4.5 et 5.5 en attente d'une IA avec quota. Prochaine : phase 6 (fin du chantier). |
 
 ---
 
@@ -326,6 +326,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : phase 4 clôturée.
 - **Tests du lot** : identifiants uniques, libellés, portée.
 - **Résultat attendu** : « Énergie et climat » dans Réglages avec ses domaines.
+- **Fait (2026-11-22)** : secteur `energy`, 8 domaines (`energy-markets`, `-renewables`, `-efficiency`, `-renovation`, `-grids`, `-regulation`, `-climate`, `-mobility`), libellés FR/EN, portée (les CEE nommées pour l'IA), alias, icônes ; règle « jamais de conseil ». Preuve : `tests/test_energy_sector.py` (lot 5.1, 3 tests).
 
 <a id="lot-5-2"></a>
 ### Lot 5.2 — La consigne énergie
@@ -335,6 +336,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : 5.1.
 - **Tests du lot** : consigne construite, règles présentes.
 - **Résultat attendu** : la consigne énergie est lisible dans les tests.
+- **Fait (2026-11-22)** : profil `profiles/energy-news/` : l'IA cherche d'abord ce qui change pour un professionnel (règle, fiche d'opération, prix ou tarif, échéance) ; une loi, un décret, un arrêté ou une délibération publiés par l'autorité qui les adopte sont confirmés ; un projet, une consultation ou une annonce de ministre ne sont pas encore une règle ; échéance, date d'entrée en vigueur, prix ou volume seulement si la source les donne ; jamais de conseil d'achat, de contrat ou d'investissement. Preuve : `tests/test_energy_sector.py` (lot 5.2, 3 tests).
 
 <a id="lot-5-3"></a>
 ### Lot 5.3 — Les sources énergie
@@ -344,6 +346,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : 5.1, 1.5, 1.6.
 - **Tests du lot** : catalogue chargé ; rapport sans source écartée.
 - **Résultat attendu** : rapport de vérification daté, avec 15 sources gardées ou plus.
+- **Fait (2026-11-22)** : `data/sectors/energy.json` : 21 flux et 4 pages officielles, **25 gardées sur 25** (rapport : `docs/sources/verification/energy-2026-11-22.md`). Autorités : CRE, Commission européenne (énergie), RTE, Anah (pages), ADEME, Haut Conseil pour le climat, Agence européenne pour l'environnement, Copernicus, EIA (flux) ; Légifrance et le ministère comptent comme officiels quand une news y renvoie. Presse : Connaissance des Énergies, Le Monde Énergies, Clean Energy Wire, Révolution Énergétique, pv magazine, GreenUnivers, offshoreWIND.biz, Construction21, Batiactu, Energy-Storage.news, Utility Dive, Actu-Environnement, Carbon Brief, Novethic, Automobile Propre, electrive. **Écartées** : ministère de la Transition écologique (site injoignable depuis le poste de vérification), AIE et IRENA (403), Euractiv, Les Echos, Le Moniteur (403 ou payants), Ember, UNFCCC, ACER (flux sans news datées), Plan Bâtiment Durable (44 jours sans publication), Club C2E de l'ATEE (dernière news CEE en septembre), Légifrance (robots.txt).
 
 <a id="lot-5-4"></a>
 ### Lot 5.4 — Run réel en énergie
@@ -353,6 +356,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : 5.2, 5.3.
 - **Tests du lot** : run en succès ; les arrêtés et délibérations ont le rang officiel.
 - **Résultat attendu** : capture de l'édition et chiffres par domaine notés dans le plan.
+- **Fait (2026-11-22), en collecte seule (décision 11)** : copie des données Docker basculée en Énergie (25 sources ajoutées, 33 tech désactivées), collecte sur 7 jours sans IA : **265 news**, 21 sources sur 25 en ramènent (ADEME, Copernicus, Anah : rien cette semaine). Par domaine : renouvelables 63, mobilité 50, réseaux 47, rénovation 36, marchés 22, réglementation 21, climat 16, efficacité et CEE 10. Aucune news sans titre, hors HTTPS, en double ou hors fenêtre ; Batiactu date certains articles une heure en avance dans son propre flux (gardés : sous la marge d'un jour). Un arrêté au Journal officiel, une délibération de la CRE, une news du ministère, de RTE ou de la Commission ont le rang officiel ; la presse spécialisée est fiable ; le communiqué d'un énergéticien reste sous « Confirmé ». Preuve : `tests/test_energy_sector.py` (lot 5.4).
 
 <a id="lot-5-5"></a>
 ### Lot 5.5 — Ta relecture de l'édition énergie

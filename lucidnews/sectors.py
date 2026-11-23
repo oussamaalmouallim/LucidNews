@@ -286,7 +286,73 @@ def _health() -> Sector:
     )
 
 
-SECTORS: Dict[str, Sector] = {sector.id: sector for sector in (_tech(), _finance(), _legal(), _health())}
+def _energy() -> Sector:
+    """Energy and climate (phase 5): energy markets, renewables, energy efficiency and white
+    certificates (CEE), building renovation, grids and storage, regulation, climate and CSR, and
+    mobility. Useful to energy professionals: what changes, from when, for whom."""
+    return Sector(
+        id="energy",
+        labels={"en": "Energy & climate", "fr": "Énergie et climat"},
+        nouns={"en": "energy", "fr": "énergie"},
+        descriptions={
+            "en": "Energy markets, renewables, energy efficiency and white certificates, renovation, grids, regulation, climate and mobility.",
+            "fr": "Marchés de l'énergie, renouvelables, efficacité énergétique et CEE, rénovation, réseaux, réglementation, climat et mobilité.",
+        },
+        categories=(
+            SectorCategory(
+                "energy-markets",
+                {"en": "Energy markets", "fr": "Marchés de l'énergie"},
+                "prices and supply of electricity, gas, oil and nuclear power, energy companies and their results",
+                ("energy-markets", "marchés-de-l'énergie", "energy-prices", "prix-de-l'énergie", "oil", "pétrole", "gas", "gaz", "nuclear", "nucléaire"),
+            ),
+            SectorCategory(
+                "energy-renewables",
+                {"en": "Renewables", "fr": "Renouvelables"},
+                "solar, wind, hydro, biomass, biogas and hydrogen: projects, tenders, capacity and their makers",
+                ("renewables", "renouvelables", "énergies-renouvelables", "solar", "solaire", "wind", "éolien", "hydrogen", "hydrogène", "biogas", "biogaz"),
+            ),
+            SectorCategory(
+                "energy-efficiency",
+                {"en": "Energy efficiency & white certificates", "fr": "Efficacité énergétique et CEE"},
+                "energy savings in industry, buildings and services, and the white certificate scheme (CEE in France): standardised operations, obligations, prices and checks",
+                ("energy-efficiency", "efficacité-énergétique", "cee", "white-certificates", "certificats-d'économies-d'énergie", "économies-d'énergie"),
+            ),
+            SectorCategory(
+                "energy-renovation",
+                {"en": "Building renovation", "fr": "Rénovation"},
+                "energy renovation of homes and buildings: subsidies, energy performance ratings, heat pumps, insulation and certified installers",
+                ("renovation", "rénovation", "rénovation-énergétique", "building-renovation", "maprimerénov", "dpe", "rge", "heat-pumps", "pompes-à-chaleur"),
+            ),
+            SectorCategory(
+                "energy-grids",
+                {"en": "Grids & storage", "fr": "Réseaux et stockage"},
+                "electricity and gas networks, interconnections, storage, batteries and the balance of supply and demand",
+                ("grids", "réseaux", "réseaux-électriques", "power-grid", "storage", "stockage", "batteries", "energy-storage"),
+            ),
+            SectorCategory(
+                "energy-regulation",
+                {"en": "Energy regulation", "fr": "Réglementation énergie"},
+                "energy laws, decrees, orders and regulator decisions, tariffs, energy policy and planning",
+                ("energy-regulation", "réglementation-énergie", "energy-policy", "politique-énergétique", "tarifs-réglementés"),
+            ),
+            SectorCategory(
+                "energy-climate",
+                {"en": "Climate & CSR", "fr": "Climat et RSE"},
+                "climate policy and science, emissions and carbon markets, adaptation, corporate sustainability reporting and CSR",
+                ("climate", "climat", "csr", "rse", "esg", "csrd", "emissions", "émissions", "carbon", "carbone", "climate-change"),
+            ),
+            SectorCategory(
+                "energy-mobility",
+                {"en": "Mobility", "fr": "Mobilité"},
+                "electric vehicles, charging, low-carbon fuels and the energy transition of transport",
+                ("mobility", "mobilité", "electric-vehicles", "véhicules-électriques", "ev", "charging", "recharge", "biofuels", "biocarburants"),
+            ),
+        ),
+        rules=(NO_ADVICE_RULE,),
+    )
+
+
+SECTORS: Dict[str, Sector] = {sector.id: sector for sector in (_tech(), _finance(), _legal(), _health(), _energy())}
 
 
 def get_sector(sector_id: str) -> Sector:

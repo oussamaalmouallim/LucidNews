@@ -1,0 +1,225 @@
+{
+  "profile": "energy-news",
+  "authorities": {
+    "cre.fr": "official",
+    "ademe.fr": "official",
+    "infos.ademe.fr": "official",
+    "rte-france.com": "official",
+    "anah.gouv.fr": "official",
+    "ecologie.gouv.fr": "official",
+    "hautconseilclimat.fr": "official",
+    "eea.europa.eu": "official",
+    "energy.ec.europa.eu": "official",
+    "copernicus.eu": "official",
+    "climate.copernicus.eu": "official",
+    "eia.gov": "official",
+    "iea.org": "official",
+    "legifrance.gouv.fr": "official",
+    "connaissancedesenergies.org": "reputable",
+    "lemonde.fr": "reputable",
+    "cleanenergywire.org": "reputable",
+    "revolution-energetique.com": "reputable",
+    "pv-magazine.fr": "reputable",
+    "greenunivers.com": "reputable",
+    "offshorewind.biz": "reputable",
+    "construction21.org": "reputable",
+    "batiactu.com": "reputable",
+    "energy-storage.news": "reputable",
+    "utilitydive.com": "reputable",
+    "actu-environnement.com": "reputable",
+    "carbonbrief.org": "reputable",
+    "novethic.fr": "reputable",
+    "automobile-propre.com": "reputable",
+    "electrive.com": "reputable"
+  },
+  "sources": {
+    "rss": [
+      {
+        "name": "ADEME — Infos",
+        "url": "https://infos.ademe.fr/feed/",
+        "category": "energy-efficiency",
+        "profile": "energy-news"
+      },
+      {
+        "name": "Haut Conseil pour le climat",
+        "url": "https://www.hautconseilclimat.fr/feed/",
+        "category": "energy-climate",
+        "profile": "energy-news"
+      },
+      {
+        "name": "Agence européenne pour l'environnement (EEA)",
+        "url": "https://www.eea.europa.eu/en/newsroom/rss.xml",
+        "category": "energy-climate",
+        "profile": "energy-news"
+      },
+      {
+        "name": "Copernicus — changement climatique",
+        "url": "https://climate.copernicus.eu/rss.xml",
+        "category": "energy-climate",
+        "profile": "energy-news"
+      },
+      {
+        "name": "EIA — Today in Energy",
+        "url": "https://www.eia.gov/rss/todayinenergy.xml",
+        "category": "energy-markets",
+        "profile": "energy-news"
+      },
+      {
+        "name": "Connaissance des Énergies",
+        "url": "https://www.connaissancedesenergies.org/rss.xml",
+        "category": "energy-markets",
+        "profile": "energy-news"
+      },
+      {
+        "name": "Le Monde — Énergies",
+        "url": "https://www.lemonde.fr/energies/rss_full.xml",
+        "category": "energy-markets",
+        "profile": "energy-news"
+      },
+      {
+        "name": "Clean Energy Wire",
+        "url": "https://www.cleanenergywire.org/rss.xml",
+        "category": "energy-markets",
+        "profile": "energy-news"
+      },
+      {
+        "name": "Révolution Énergétique",
+        "url": "https://www.revolution-energetique.com/feed/",
+        "category": "energy-renewables",
+        "profile": "energy-news"
+      },
+      {
+        "name": "pv magazine France",
+        "url": "https://www.pv-magazine.fr/feed/",
+        "category": "energy-renewables",
+        "profile": "energy-news"
+      },
+      {
+        "name": "GreenUnivers",
+        "url": "https://www.greenunivers.com/feed/",
+        "category": "energy-renewables",
+        "profile": "energy-news"
+      },
+      {
+        "name": "offshoreWIND.biz",
+        "url": "https://www.offshorewind.biz/feed/",
+        "category": "energy-renewables",
+        "profile": "energy-news"
+      },
+      {
+        "name": "Construction21 France",
+        "url": "https://www.construction21.org/france/rss/lastnews.xml",
+        "category": "energy-efficiency",
+        "profile": "energy-news"
+      },
+      {
+        "name": "Batiactu",
+        "url": "https://www.batiactu.com/accueil.rss",
+        "category": "energy-renovation",
+        "profile": "energy-news"
+      },
+      {
+        "name": "Energy-Storage.news",
+        "url": "https://www.energy-storage.news/feed/",
+        "category": "energy-grids",
+        "profile": "energy-news"
+      },
+      {
+        "name": "Utility Dive",
+        "url": "https://www.utilitydive.com/feeds/news/",
+        "category": "energy-grids",
+        "profile": "energy-news"
+      },
+      {
+        "name": "Actu-Environnement",
+        "url": "https://www.actu-environnement.com/ae/news/archives/rss.php4",
+        "category": "energy-regulation",
+        "profile": "energy-news"
+      },
+      {
+        "name": "Carbon Brief",
+        "url": "https://www.carbonbrief.org/feed/",
+        "category": "energy-climate",
+        "profile": "energy-news"
+      },
+      {
+        "name": "Novethic",
+        "url": "https://www.novethic.fr/rss",
+        "category": "energy-climate",
+        "profile": "energy-news"
+      },
+      {
+        "name": "Automobile Propre",
+        "url": "https://www.automobile-propre.com/feed/",
+        "category": "energy-mobility",
+        "profile": "energy-news"
+      },
+      {
+        "name": "electrive",
+        "url": "https://www.electrive.com/feed/",
+        "category": "energy-mobility",
+        "profile": "energy-news"
+      }
+    ],
+    "pages": [
+      {
+        "name": "CRE — Commission de régulation de l'énergie",
+        "url": "https://www.cre.fr/actualites",
+        "item_selector": "div.card:has(time.card-time)",
+        "link_selector": "h3 a",
+        "category": "energy-regulation",
+        "profile": "energy-news",
+        "max_items": 20
+      },
+      {
+        "name": "Commission européenne — Énergie",
+        "url": "https://energy.ec.europa.eu/news_en",
+        "item_selector": "article.ecl-content-item",
+        "link_selector": "a",
+        "title_selector": ".ecl-content-block__title",
+        "category": "energy-regulation",
+        "profile": "energy-news",
+        "max_items": 10
+      },
+      {
+        "name": "RTE — presse",
+        "url": "https://www.rte-france.com/presse",
+        "item_selector": "div.views-field-nothing:has(time)",
+        "link_selector": "a[href]",
+        "category": "energy-grids",
+        "profile": "energy-news",
+        "max_items": 10
+      },
+      {
+        "name": "Anah — actualités",
+        "url": "https://www.anah.gouv.fr/actualites",
+        "item_selector": "div.fr-card:has(time)",
+        "link_selector": "h3 a",
+        "category": "energy-renovation",
+        "profile": "energy-news",
+        "max_items": 10
+      }
+    ],
+    "gdelt": {
+      "enabled": false,
+      "query": "(\"certificats d'économies d'énergie\" OR \"energy efficiency\" OR \"rénovation énergétique\" OR \"energy regulator\" OR \"renewable energy\")",
+      "mode": "ArtList",
+      "max_records": 75,
+      "timespan": null,
+      "language": null,
+      "country": null,
+      "category": "energy-efficiency",
+      "profile": "energy-news"
+    },
+    "google_news": {
+      "enabled": false,
+      "query": "\"certificats d'économies d'énergie\" OR \"rénovation énergétique\" OR \"CRE délibération\"",
+      "language": "fr",
+      "country": "FR",
+      "ceid": null,
+      "max_results": 100,
+      "category": "energy-efficiency",
+      "profile": "energy-news"
+    }
+  }
+}
