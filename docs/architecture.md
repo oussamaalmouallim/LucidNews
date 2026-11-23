@@ -45,7 +45,11 @@ LucidNews est une application Python asynchrone en ligne de commande. Elle n'a n
 | `lucidnews/processing/tools.py`, `history.py` | Outils d'enrichissement : recherche web, recherche dans l'historique |
 | `lucidnews/reliability/` | Registre de confiance des domaines, règles de combinaison, types |
 | `lucidnews/taxonomy.py` | 12 catégories IT, alias, libellés, niveaux d'importance ; lecture des catégories de tous les secteurs |
-| `lucidnews/sectors.py` | Secteurs (lot 47) : un secteur par installation (`Config.sector`, défaut `tech`), ses catégories et leur portée pour l'IA ; identifiants uniques entre secteurs |
+| `lucidnews/sectors.py` | Secteurs : un par installation (`Config.sector`, défaut `tech`) ; cinq installés (tech, finance, legal, health, energy), avec catégories, portée lue par l'IA, alias, règles (hors tech : jamais de conseil) ; identifiants uniques entre secteurs. Guide : [secteurs](secteurs.md) |
+| `lucidnews/sector_catalog.py` | Catalogue d'un secteur (`data/sectors/<id>.json`) : profil, autorités et leur rang, sources ; refusé en entier s'il est invalide |
+| `lucidnews/sector_switch.py` | Bascule des sources au changement de secteur : ajout ou réactivation, désactivation des autres, rien de supprimé |
+| `lucidnews/source_check.py` | Commande `lucidnews-sources-check` : vérifie chaque source d'un catalogue et écrit un rapport daté (`docs/sources/verification/`) |
+| `lucidnews/scrapers/pages.py` | Lecteur des pages officielles sans flux RSS (`sources.pages`) : `robots.txt`, une requête par run, même site seulement |
 | `lucidnews/i18n.py` | Registre des langues, textes fixes du digest, format des dates |
 | `lucidnews/archive/` | Archive SQLite des runs et des news ; réutilisation des analyses ; compteurs de sélection par run (schéma 5) |
 | `lucidnews/quality_overview.py` | Indicateurs de la page Qualité : couverture, diversité, santé, fraîcheur, doublons, filtrage, fiabilité publiée |

@@ -183,7 +183,17 @@ Sécurité, en bref : flux « code d'autorisation » avec PKCE, `state` à usage
 
 ### Secteur de la veille
 
-Une installation suit **un secteur** : `"sector": "tech"` dans `data/config.json` (défaut). Le secteur décide des domaines de l'édition et des catégories proposées à l'IA. Il se change dans l'écran **Réglages** (administrateur) : la configuration est sauvegardée avant, l'archive est gardée. Aujourd'hui seul `tech` est installé ; finance, juridique, santé et énergie arrivent (lots 48 à 51).
+Une installation suit **un secteur** : `"sector": "tech"` dans `data/config.json` (défaut). Cinq secteurs sont installés : Tech et IT, Finance, Juridique et réglementaire, Santé et pharma, Énergie et climat.
+
+Chaque secteur apporte :
+- ses domaines ;
+- sa consigne pour l'IA (hors tech : jamais de conseil) ;
+- ses sources vérifiées une à une ;
+- ses autorités reconnues comme sources officielles.
+
+Le secteur se change dans l'écran **Réglages** (administrateur). La fenêtre de confirmation donne le nombre de sources ajoutées et désactivées. La configuration est sauvegardée avant. Les sources des autres secteurs sont désactivées, jamais supprimées. L'archive est gardée.
+
+Choisir un secteur ou en ajouter un : [guide des secteurs](docs/secteurs.md).
 
 ### Serveur et sécurité
 
@@ -358,6 +368,7 @@ tests/                 tests automatisés (pytest)
 | [Plan de lancement](Plan.md) | Lots restants jusqu'à la commercialisation, dépendances, critères mesurables |
 | [Étude de marché](docs/etude-marche/rapport-lucidnews-2026-10.html) | Benchmark concurrentiel, besoins, audit, priorités, hébergement (octobre 2026) |
 | [Roadmap technique](docs/roadmap.md) | Prochaines étapes |
+| [Secteurs de la veille](docs/secteurs.md) | Les cinq secteurs, choisir le sien, ajouter un secteur (domaines, consigne, catalogue, vérification) |
 | [Plan des nouveaux secteurs](docs/plans/2026-11-21-nouveaux-secteurs.md) | Finance, juridique, santé, énergie : phases, lots, décisions |
 | Références (en anglais) | [configuration](docs/configuration.md), [profils](docs/profiles.md), [score](docs/scoring.md), [scrapers](docs/scrapers.md), [extracteurs](docs/extractors.md), [cookies X](docs/twitter-cookies.md), [MCP](lucidnews/mcp/README.md) |
 

@@ -9,7 +9,7 @@
 | **Date et version** | 21 novembre 2026, v1 |
 | **Auteur** | Claude, pour Oussama |
 | **Branche de travail** | `dev` (dépôt perso `oussamaalmouallim/LucidNews`) ; `main` seulement sur validation |
-| **État** | 22/11/2026 — Phase 1 **clôturée**. Phases 2 (Finance), 3 (Juridique), 4 (Santé) et 5 (Énergie) : lots x.1 à x.4 faits (collecte seule, décision 11) ; relectures 2.5, 3.5, 4.5 et 5.5 en attente d'une IA avec quota. Prochaine : phase 6 (fin du chantier). |
+| **État** | 22/11/2026 — Phase 1 **clôturée**. Phases 2 à 5 : lots x.1 à x.4 faits (collecte seule, décision 11) ; relectures 2.5, 3.5, 4.5 et 5.5 en attente d'une IA avec quota. Phase 6 : lots 6.1 et 6.2 faits, 6.3 préparé, en attente de « version validée ». |
 
 ---
 
@@ -385,6 +385,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : phases 1 à 5.
 - **Tests du lot** : ce parcours, plus toute la suite.
 - **Résultat attendu** : parcours vert, sur l'application compilée.
+- **Fait (2026-11-23)** : parcours Playwright « an administrator walks the watch through the five sectors » : Finance → Juridique → Santé → Énergie → Tech dans Réglages, nombre de sources affiché avant chaque confirmation, secteur lu par l'API après chaque bascule. Au retour : chaque source de départ dans le même état ; les 83 flux des quatre autres secteurs restent, tous désactivés (décision 3). 7 parcours verts sur l'application compilée. **Constat** : les pages officielles ne sont pas listées par l'écran Sources (`/api/sources/config`) ; elles basculent avec le secteur, mais ne se gèrent pas une par une.
 
 <a id="lot-6-2"></a>
 ### Lot 6.2 — Documentation
@@ -394,6 +395,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : 6.1.
 - **Tests du lot** : les liens de la documentation mènent à des fichiers qui existent.
 - **Résultat attendu** : le guide permet d'ajouter un sixième secteur sans lire le code.
+- **Fait (2026-11-23)** : guide [`docs/secteurs.md`](../secteurs.md) (les cinq secteurs, choisir le sien, ajouter un sixième en six étapes : secteur, consigne, catalogue, vérification, tests, image Docker ; limites connues) ; README (section « Secteur de la veille » et table des documents) ; architecture (registre, catalogue, bascule, vérificateur, lecteur de pages) ; journal des lots. Preuve : `tests/test_docs_links.py` (liens de cinq documents, chaque secteur et son rapport nommés dans le guide).
 
 <a id="lot-6-3"></a>
 ### Lot 6.3 — Validation et passage sur `main`
@@ -403,6 +405,7 @@ run du pipeline ──► collecte ──► IA (consigne du secteur, catégorie
 - **Dépend de** : 6.2.
 - **Tests du lot** : la CI de `main` est verte.
 - **Résultat attendu** : `main` contient les cinq secteurs, CI verte sur GitHub.
+- **Préparé (2026-11-23)** : `main` n'a aucun commit absent de `dev` : la fusion est une avance rapide, sans conflit. La CI de `dev` échouait depuis la phase 2 sur les seuls audits de dépendances (failles publiées après coup) : `brotli`, `certifi`, `pyasn1`, `soupsieve` (Python) et `undici`, `zod` (npm) mis à jour, audits propres, toutes les suites vertes, les 11 pages officielles relues avec soupsieve 4. **Reste** : ton « version validée », puis la fusion et ta poussée.
 
 **Clôture de la phase 6** : CI verte sur `main`, toutes les tâches (API, interface, parcours, pile Docker).
 

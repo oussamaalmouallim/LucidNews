@@ -878,6 +878,27 @@ Catalogue par secteur (`data/sectors/`), consigne de l'IA par secteur avec la r�
 
 ---
 
+## Nouveaux secteurs — Phases 2 à 6 : finance, juridique, santé, énergie
+
+✅ Lots 2.1 à 5.4 et 6.1, 6.2 faits le 23 novembre 2026, sur `dev`. Détail lot par lot : [plan du chantier](plans/2026-11-21-nouveaux-secteurs.md).
+
+- **Quatre secteurs** de plus que la tech : Finance, Juridique et réglementaire, Santé et pharma, Énergie et climat. Chacun a 8 domaines, une consigne pour l'IA, des autorités reconnues comme officielles et 20 à 27 sources vérifiées une à une. Rapports dans `docs/sources/verification/`.
+- **Collecte réelle validée sans IA** (décision 11 : l'offre gratuite ne tient pas un run) : finance 338 news, juridique 207, santé 193, énergie 265 sur 7 jours. Aucune news sans titre, hors HTTPS, en double ou datée dans le futur.
+- **GDELT et Google News** prêts dans chaque catalogue, désactivés d'office (décision 12).
+- **Corrigé en passant** :
+  - le lecteur de pages suit les redirections et respecte `<base href>` ;
+  - il lit une date ISO année d'abord, et prend la première de deux dates ;
+  - un lien `http` d'un flux `https` passe en `https` ;
+  - une news datée de plus d'un jour dans le futur est écartée.
+- **Lot 6.1** : un parcours Playwright bascule la veille par les cinq secteurs puis revient à la tech. Les sources de départ reviennent à l'identique ; celles des autres secteurs restent, désactivées.
+- **Lot 6.2** : [guide des secteurs](secteurs.md) (choisir, ajouter un sixième secteur), README, architecture. Un test vérifie que les liens de la documentation mènent à des fichiers qui existent.
+- **En attente** :
+  - les relectures 2.5, 3.5, 4.5 et 5.5, qui attendent une IA avec quota ;
+  - le lot 6.3, le passage sur `main` après validation.
+- **Tests** : 1 016 Python et plus, 181 interface, 7 parcours.
+
+---
+
 ## Lots 27 à 46 — Plan de lancement
 
 📋 Planifiés le 13 octobre 2026 après l'étude de marché et l'audit

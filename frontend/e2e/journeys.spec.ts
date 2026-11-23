@@ -151,3 +151,48 @@ test('an administrator switches the watch to another sector and back, and the so
   await page.getByRole('alertdialog').getByRole('button', { name: 'Changer' }).click()
   await expect(page.getByRole('region', { name: 'Ce que couvre la veille' }).getByText('La veille couvre maintenant « Tech et IT ».')).toBeVisible()
 })
+
+test('an administrator walks the watch through the five sectors and back to tech, and the sources come back as they were', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password)
+  await expect(page).not.toHaveURL(/\/sign-in/) // signed in before opening Settings
+  const sources = async () => {
+    const response = await page.request.get('/api/sources/config')
+    expect(response.status()).toBe(200)
+    const body = (await response.json()) as { sources: { key: string; enabled: boolean }[] }
+    return body.sources.map(({ key, enabled }) => `${key}:${enabled}`).sort()
+  }
+  const before = await sources()
+
+  // Lot 6.1: every real sector, one after the other, then tech again.
+  const steps = [
+    { id: 'finance', name: 'Finance' },
+    { id: 'legal', name: 'Juridique et réglementaire' },
+    { id: 'health', name: 'Santé et pharma' },
+    { id: 'energy', name: 'Énergie et climat' },
+    { id: 'tech', name: 'Tech et IT' },
+  ]
+  await page.goto('/settings?lang=fr')
+  for (const step of steps) {
+    const card = page.getByRole('region', { name: 'Ce que couvre la veille' })
+    const choose = card
+      .getByRole('listitem')
+      .filter({ has: page.getByText(step.name, { exact: true }) })
+      .getByRole('button', { name: 'Passer à ce secteur' })
+    await expect(choose).toBeEnabled() // once the effect on the sources is known
+    await choose.click()
+    const dialog = page.getByRole('alertdialog')
+    await expect(dialog.getByText(/Sources : \d+ ajoutées, \d+ réactivées, \d+ désactivées/)).toBeVisible()
+    await dialog.getByRole('button', { name: 'Changer' }).click()
+    await expect(card.getByText(`La veille couvre maintenant « ${step.name} ».`)).toBeVisible()
+    const sector = (await (await page.request.get('/api/sector')).json()) as { sector: { id: string } }
+    expect(sector.sector.id).toBe(step.id)
+  }
+
+  // Back on tech: every source of before, enabled or disabled as it was. The other sectors'
+  // sources stay in the configuration, all disabled: nothing is deleted (decision 3).
+  const after = await sources()
+  expect(after.filter((source) => before.includes(source))).toEqual(before)
+  const kept = after.filter((source) => !before.includes(source))
+  expect(kept.length).toBeGreaterThan(60) // the feeds of finance, legal, health and energy
+  expect(kept.filter((source) => !source.endsWith(':false'))).toEqual([])
+})
